@@ -789,8 +789,6 @@
 
 .master-table-scroll {
   overflow-x: auto;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
   background: var(--color-surface);
 }
 
@@ -818,7 +816,7 @@
 }
 
 .master-table tbody tr:last-child td {
-  border-bottom: 0;
+  border-bottom: 1px solid var(--color-border-soft);
 }
 
 .master-table tr:hover td {
@@ -847,7 +845,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-top: 16px;
+  padding: 16px 24px;
 }
 
 .master-pagination > span {
