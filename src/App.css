@@ -460,6 +460,7 @@
 .admin-layout[data-theme='dark'] .pagination-controls button,
 .admin-layout[data-theme='dark'] .row-actions button,
 .admin-layout[data-theme='dark'] .form-field input,
+.admin-layout[data-theme='dark'] .form-field select,
 .admin-layout[data-theme='dark'] .form-field textarea {
   background: var(--color-surface);
   color: var(--color-text);
@@ -1008,11 +1009,17 @@
 .master-error {
   border: 1px solid var(--color-danger-soft);
   border-radius: var(--radius-md);
-  background: #fff7f6;
+  background: var(--color-danger-soft);
   color: var(--color-danger);
   font-size: 13px;
   font-weight: 800;
   padding: 10px 12px;
+}
+
+.field-error {
+  color: var(--color-danger);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .login-support {
@@ -1118,6 +1125,7 @@
 }
 
 .form-field input,
+.form-field select,
 .form-field textarea {
   min-height: 42px;
   border: 1px solid var(--color-border);
@@ -1134,10 +1142,17 @@
 }
 
 .form-field input:focus,
+.form-field select:focus,
 .form-field textarea:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgb(0 121 111 / 14%);
   outline: 0;
+}
+
+.form-field input[aria-invalid='true'],
+.form-field select[aria-invalid='true'],
+.form-field textarea[aria-invalid='true'] {
+  border-color: var(--color-danger);
 }
 
 .form-field.is-wide {

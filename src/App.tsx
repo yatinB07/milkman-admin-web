@@ -4,6 +4,7 @@ import { AdminShell } from './components/AdminShell'
 import { LoginPage } from './components/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { StoresPage } from './pages/StoresPage'
+import { ZonesPage } from './pages/ZonesPage'
 import { api, clearAuthToken, getAuthToken, setAuthToken } from './lib/api'
 import './App.css'
 
@@ -71,7 +72,13 @@ function App() {
         setIsAuthenticated(false)
       }}
     >
-      {activePage === 'Stores' ? <StoresPage /> : <DashboardPage />}
+      {activePage === 'Stores' ? (
+        <StoresPage />
+      ) : activePage === 'Zones' ? (
+        <ZonesPage />
+      ) : (
+        <DashboardPage />
+      )}
     </AdminShell>
   )
 }
