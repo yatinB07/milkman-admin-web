@@ -2,13 +2,21 @@ import { Eye, LockKeyhole, Mail, Truck, ShieldCheck } from 'lucide-react'
 import type { FormEvent } from 'react'
 
 type LoginPageProps = {
-  onLogin: () => void
+  onLogin: (credentials: { email: string; password: string }) => void
+  error?: string
+  isLoading?: boolean
 }
 
-export function LoginPage({ onLogin }: LoginPageProps) {
+export function LoginPage({ onLogin, error, isLoading = false }: LoginPageProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    onLogin()
+
+    const form = new FormData(event.currentTarget)
+
+    onLogin({
+      email: String(form.get('email') ?? ''),
+      password: String(form.get('password') ?? ''),
+    })
   }
 
   return (
@@ -27,7 +35,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             <span>Email Address</span>
             <span className="input-shell">
               <Mail aria-hidden="true" size={19} />
-              <input autoComplete="email" defaultValue="admin@milkman.com" type="email" />
+              <input
+                autoComplete="email"
+                defaultValue="admin@milkman.test"
+                name="email"
+                type="email"
+              />
             </span>
           </label>
 
@@ -40,18 +53,25 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </span>
             <span className="input-shell">
               <LockKeyhole aria-hidden="true" size={19} />
-              <input autoComplete="current-password" defaultValue="password" type="password" />
+              <input
+                autoComplete="current-password"
+                defaultValue="password"
+                name="password"
+                type="password"
+              />
               <Eye aria-hidden="true" size={19} />
             </span>
           </label>
+
+          {error ? <div className="form-error">{error}</div> : null}
 
           <label className="toggle-row">
             <input type="checkbox" />
             <span>Remember me for 30 days</span>
           </label>
 
-          <button className="primary-button" type="submit">
-            Sign In to Dashboard
+          <button className="primary-button" type="submit" disabled={isLoading}>
+            {isLoading ? 'Signing In...' : 'Sign In to Dashboard'}
           </button>
 
           <div className="login-security">

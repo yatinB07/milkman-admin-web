@@ -13,9 +13,11 @@ import { navigationItems } from '../data/adminDashboard'
 type AdminShellProps = {
   children: ReactNode
   onLogout: () => void
+  activePage: string
+  onNavigate: (page: string) => void
 }
 
-export function AdminShell({ children, onLogout }: AdminShellProps) {
+export function AdminShell({ children, onLogout, activePage, onNavigate }: AdminShellProps) {
   return (
     <main className="admin-layout">
       <aside className="admin-sidebar" aria-label="Primary navigation">
@@ -31,8 +33,9 @@ export function AdminShell({ children, onLogout }: AdminShellProps) {
         <nav className="sidebar-nav">
           {navigationItems.map((item) => (
             <button
-              className={`sidebar-link ${item.active ? 'is-active' : ''}`}
+              className={`sidebar-link ${activePage === item.label ? 'is-active' : ''}`}
               key={item.label}
+              onClick={() => onNavigate(item.label)}
               type="button"
             >
               <item.icon aria-hidden="true" size={21} />

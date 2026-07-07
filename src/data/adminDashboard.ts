@@ -46,7 +46,7 @@ export type StoreEarning = {
 }
 
 export const navigationItems: NavigationItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard, active: true },
+  { label: 'Dashboard', icon: LayoutDashboard },
   { label: 'Reports', icon: Gauge },
   { label: 'Catalog', icon: Package },
   { label: 'Stores', icon: Store },
