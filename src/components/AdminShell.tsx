@@ -3,8 +3,10 @@ import {
   ChevronDown,
   LogOut,
   Menu,
+  Moon,
   Radio,
   Search,
+  Sun,
   UserRound,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -15,11 +17,20 @@ type AdminShellProps = {
   onLogout: () => void
   activePage: string
   onNavigate: (page: string) => void
+  theme: 'light' | 'dark'
+  onToggleTheme: () => void
 }
 
-export function AdminShell({ children, onLogout, activePage, onNavigate }: AdminShellProps) {
+export function AdminShell({
+  children,
+  onLogout,
+  activePage,
+  onNavigate,
+  theme,
+  onToggleTheme,
+}: AdminShellProps) {
   return (
-    <main className="admin-layout">
+    <main className="admin-layout" data-theme={theme}>
       <aside className="admin-sidebar" aria-label="Primary navigation">
         <div className="sidebar-brand">
           <h1>MilkMan Admin</h1>
@@ -44,14 +55,6 @@ export function AdminShell({ children, onLogout, activePage, onNavigate }: Admin
             </button>
           ))}
         </nav>
-
-        <div className="sidebar-user">
-          <div className="avatar">A</div>
-          <div>
-            <p>Admin Profile</p>
-            <span>System Superuser</span>
-          </div>
-        </div>
       </aside>
 
       <section className="admin-workspace">
@@ -64,6 +67,18 @@ export function AdminShell({ children, onLogout, activePage, onNavigate }: Admin
           <div className="topbar-actions">
             <button className="icon-action" type="button" aria-label="Live operations feed">
               <Radio aria-hidden="true" size={20} />
+            </button>
+            <button
+              className="icon-action"
+              type="button"
+              aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+              onClick={onToggleTheme}
+            >
+              {theme === 'dark' ? (
+                <Sun aria-hidden="true" size={20} />
+              ) : (
+                <Moon aria-hidden="true" size={20} />
+              )}
             </button>
             <button className="icon-action has-dot" type="button" aria-label="Notifications">
               <Bell aria-hidden="true" size={20} />

@@ -26,6 +26,9 @@ type LoginResponse = {
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(getAuthToken()))
   const [activePage, setActivePage] = useState('Dashboard')
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    return window.localStorage.getItem('milkman_admin_theme') === 'dark' ? 'dark' : 'light'
+  })
 
   const login = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
@@ -54,6 +57,15 @@ function App() {
     <AdminShell
       activePage={activePage}
       onNavigate={setActivePage}
+      theme={theme}
+      onToggleTheme={() => {
+        setTheme((currentTheme) => {
+          const nextTheme = currentTheme === 'dark' ? 'light' : 'dark'
+          window.localStorage.setItem('milkman_admin_theme', nextTheme)
+
+          return nextTheme
+        })
+      }}
       onLogout={() => {
         clearAuthToken()
         setIsAuthenticated(false)
