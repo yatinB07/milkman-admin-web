@@ -328,7 +328,9 @@ export function ZonesPage() {
             <form className="store-form" onSubmit={handleSubmit}>
               <div className="form-grid">
                 <label className="form-field">
-                  <span>Zone Title</span>
+                  <span>
+                    Zone Title <span className="required-mark" aria-hidden="true">*</span>
+                  </span>
                   <input
                     name="title"
                     required
@@ -361,7 +363,9 @@ export function ZonesPage() {
                 </label>
 
                 <label className="form-field is-wide">
-                  <span>Coordinates</span>
+                  <span>
+                    Coordinates <span className="required-mark" aria-hidden="true">*</span>
+                  </span>
                   <textarea
                     name="coordinates"
                     required
@@ -379,7 +383,9 @@ export function ZonesPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Status</span>
+                  <span>
+                    Status <span className="required-mark" aria-hidden="true">*</span>
+                  </span>
                   <select
                     name="is_active"
                     required

@@ -365,7 +365,9 @@ export function StoresPage() {
             <form className="store-form" onSubmit={handleSubmit}>
               <div className="form-grid">
                 <label className="form-field">
-                  <span>Store Name</span>
+                  <span>
+                    Store Name <span className="required-mark" aria-hidden="true">*</span>
+                  </span>
                   <input
                     name="title"
                     required
@@ -375,7 +377,9 @@ export function StoresPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Email</span>
+                  <span>
+                    Email <span className="required-mark" aria-hidden="true">*</span>
+                  </span>
                   <input
                     name="email"
                     type="email"
@@ -386,7 +390,9 @@ export function StoresPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Password</span>
+                  <span>
+                    Password {!editingStore ? <span className="required-mark" aria-hidden="true">*</span> : null}
+                  </span>
                   <input
                     name="password"
                     type="password"
