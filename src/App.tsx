@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { AdminShell } from './components/AdminShell'
 import { LoginPage } from './components/LoginPage'
+import { CategoriesPage } from './pages/CategoriesPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { StoresPage } from './pages/StoresPage'
 import { ZonesPage } from './pages/ZonesPage'
@@ -74,6 +75,8 @@ function App() {
     >
       {activePage === 'Stores' ? (
         <StoresPage />
+      ) : activePage === 'Categories' ? (
+        <CategoriesPage />
       ) : activePage === 'Zones' ? (
         <ZonesPage />
       ) : (
