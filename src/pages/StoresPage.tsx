@@ -1,5 +1,6 @@
-import { Banknote, Edit3, History, ImageIcon, Plus, Store, Trash2 } from 'lucide-react'
+import { ArrowLeft, Banknote, Edit3, History, ImageIcon, Plus, Store, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
 import { type FormEvent, type ReactNode, useMemo, useState } from 'react'
 import {
   MasterDataTable,
@@ -8,7 +9,9 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../components/master'
+import { AdminFilePicker } from '../components/forms/AdminFilePicker'
 import { AdminMultiSelect, AdminSelect, type AdminSelectOption } from '../components/forms/AdminSelect'
+import { AdminTextarea } from '../components/forms/AdminTextarea'
 import { StatusPill } from '../components/StatusPill'
 import { StoreLocationMap } from '../components/maps/StoreLocationMap'
 import { api } from '../lib/api'
@@ -149,6 +152,82 @@ const chargeTypeOptions: AdminSelectOption[] = [
   { label: 'Dynamic Charge', value: '2' },
 ]
 
+type StoreFormTabId = 'basic' | 'media' | 'login' | 'categories' | 'address' | 'service' | 'payout'
+type StoreValidationField = {
+  name: keyof StoreFormValues
+  label: string
+  tab: StoreFormTabId
+  when?: (values: StoreFormValues, isEditing: boolean) => boolean
+}
+
+const storeFormTabs: Array<{ id: StoreFormTabId; label: string }> = [
+  { id: 'basic', label: 'Basic Info' },
+  { id: 'media', label: 'Media' },
+  { id: 'login', label: 'Login' },
+  { id: 'categories', label: 'Categories' },
+  { id: 'address', label: 'Address' },
+  { id: 'service', label: 'Service' },
+  { id: 'payout', label: 'Payout' },
+]
+
+const storeValidationFields: StoreValidationField[] = [
+  { name: 'title', label: 'Store Name', tab: 'basic' },
+  { name: 'rating', label: 'Rating', tab: 'basic' },
+  { name: 'mobile', label: 'Mobile number', tab: 'basic' },
+  { name: 'slogan', label: 'Slogan Title', tab: 'basic' },
+  { name: 'slogan_title', label: 'Slogan Subtitle', tab: 'basic' },
+  { name: 'opens_at', label: 'Store Open Time', tab: 'basic' },
+  { name: 'closes_at', label: 'Store Close Time', tab: 'basic' },
+  { name: 'short_description', label: 'Tags', tab: 'basic' },
+  { name: 'content_description', label: 'Short Description', tab: 'basic' },
+  { name: 'cancel_policy', label: 'Cancel Policy', tab: 'basic' },
+  { name: 'image_path', label: 'Store Logo', tab: 'media' },
+  { name: 'cover_image_path', label: 'Store Cover Image', tab: 'media' },
+  { name: 'email', label: 'Email Address', tab: 'login' },
+  { name: 'password', label: 'Password', tab: 'login', when: (_values, isEditing) => !isEditing },
+  { name: 'category_reference', label: 'Store Category', tab: 'categories' },
+  { name: 'full_address', label: 'Full Address', tab: 'address' },
+  { name: 'pincode', label: 'Pincode', tab: 'address' },
+  { name: 'landmark', label: 'Landmark', tab: 'address' },
+  { name: 'zone_id', label: 'Select Zone', tab: 'address' },
+  { name: 'latitude', label: 'Latitude', tab: 'address' },
+  { name: 'longitude', label: 'Longitude', tab: 'address' },
+  { name: 'charge_type', label: 'Service Charge Type', tab: 'service' },
+  {
+    name: 'delivery_charge',
+    label: 'Service Charge',
+    tab: 'service',
+    when: (values) => values.charge_type === '1',
+  },
+  {
+    name: 'unit_kilometers',
+    label: 'Base Service Distance',
+    tab: 'service',
+    when: (values) => values.charge_type === '2',
+  },
+  {
+    name: 'unit_price',
+    label: 'Base Service Charge',
+    tab: 'service',
+    when: (values) => values.charge_type === '2',
+  },
+  {
+    name: 'additional_price',
+    label: 'Extra Service Charge',
+    tab: 'service',
+    when: (values) => values.charge_type === '2',
+  },
+  { name: 'store_charge', label: 'Store Charge', tab: 'service' },
+  { name: 'minimum_order_amount', label: 'Min.Order Price', tab: 'service' },
+  { name: 'commission_percent', label: 'Commission Rate', tab: 'service' },
+  { name: 'bank_name', label: 'Bank Name', tab: 'payout' },
+  { name: 'ifsc_code', label: 'Bank Code/IFSC', tab: 'payout' },
+  { name: 'receipt_name', label: 'Recipient Name', tab: 'payout' },
+  { name: 'account_number', label: 'Account Number', tab: 'payout' },
+  { name: 'paypal_id', label: 'Paypal ID', tab: 'payout' },
+  { name: 'upi_id', label: 'UPI ID', tab: 'payout' },
+]
+
 export function StoresPage() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
@@ -163,6 +242,11 @@ export function StoresPage() {
   const [formCategoryIds, setFormCategoryIds] = useState<string[]>([])
   const [formZoneId, setFormZoneId] = useState('')
   const [formChargeType, setFormChargeType] = useState('1')
+  const [logoPath, setLogoPath] = useState('')
+  const [coverPath, setCoverPath] = useState('')
+  const [contentDescription, setContentDescription] = useState('')
+  const [cancelPolicy, setCancelPolicy] = useState('')
+  const [activeStoreTab, setActiveStoreTab] = useState<StoreFormTabId>('basic')
 
   const stores = useQuery<PaginatedResponse<StoreRow>>({
     queryKey: ['admin-stores', search, page],
@@ -228,7 +312,15 @@ export function StoresPage() {
       await queryClient.invalidateQueries({ queryKey: ['admin-stores'] })
       closeForm()
     },
-    onError: () => {
+    onError: (error) => {
+      const validationError = extractStoreApiValidationError(error)
+
+      if (validationError) {
+        setActiveStoreTab(validationError.tab)
+        setFormError(validationError.message)
+        return
+      }
+
       setFormError('Store could not be saved. Check the required fields and try again.')
     },
   })
@@ -363,6 +455,11 @@ export function StoresPage() {
     setFormCategoryIds([])
     setFormZoneId('')
     setFormChargeType('1')
+    setLogoPath('')
+    setCoverPath('')
+    setContentDescription('')
+    setCancelPolicy('')
+    setActiveStoreTab('basic')
     setIsFormOpen(true)
   }
 
@@ -378,6 +475,11 @@ export function StoresPage() {
     setFormCategoryIds(splitCategoryReference(store.category_reference))
     setFormZoneId(stringifyValue(store.zone_id))
     setFormChargeType(String(store.charge_type ?? '1'))
+    setLogoPath(store.image_path ?? '')
+    setCoverPath(store.cover_image_path ?? '')
+    setContentDescription(store.content_description ?? '')
+    setCancelPolicy(store.cancel_policy ?? '')
+    setActiveStoreTab('basic')
     setIsFormOpen(true)
   }
 
@@ -387,20 +489,11 @@ export function StoresPage() {
     setIsFormOpen(false)
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    const form = new FormData(event.currentTarget)
-
-    if (!formZoneId || formCategoryIds.length === 0) {
-      setFormError('Select at least one category and one zone before saving the store.')
-      return
-    }
-
-    saveStore.mutate({
+  function validateStoreForm(form: FormData) {
+    const values = {
       title: String(form.get('title') ?? ''),
-      image_path: String(form.get('image_path') ?? ''),
-      cover_image_path: String(form.get('cover_image_path') ?? ''),
+      image_path: logoPath,
+      cover_image_path: coverPath,
       rating: String(form.get('rating') ?? ''),
       language_code: String(form.get('language_code') ?? ''),
       mobile: String(form.get('mobile') ?? ''),
@@ -411,8 +504,78 @@ export function StoresPage() {
       is_pickup_enabled: formPickupStatus === '1',
       is_active: formIsActive === '1',
       short_description: String(form.get('short_description') ?? ''),
-      content_description: String(form.get('content_description') ?? ''),
-      cancel_policy: String(form.get('cancel_policy') ?? ''),
+      content_description: contentDescription,
+      cancel_policy: cancelPolicy,
+      email: String(form.get('email') ?? ''),
+      password: String(form.get('password') ?? ''),
+      category_reference: formCategoryIds.join(','),
+      full_address: String(form.get('full_address') ?? ''),
+      pincode: String(form.get('pincode') ?? ''),
+      landmark: String(form.get('landmark') ?? ''),
+      zone_id: formZoneId,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      charge_type: formChargeType,
+      delivery_charge: String(form.get('delivery_charge') ?? ''),
+      unit_kilometers: String(form.get('unit_kilometers') ?? ''),
+      unit_price: String(form.get('unit_price') ?? ''),
+      additional_price: String(form.get('additional_price') ?? ''),
+      store_charge: String(form.get('store_charge') ?? ''),
+      minimum_order_amount: String(form.get('minimum_order_amount') ?? ''),
+      commission_percent: String(form.get('commission_percent') ?? ''),
+      bank_name: String(form.get('bank_name') ?? ''),
+      ifsc_code: String(form.get('ifsc_code') ?? ''),
+      receipt_name: String(form.get('receipt_name') ?? ''),
+      account_number: String(form.get('account_number') ?? ''),
+      paypal_id: String(form.get('paypal_id') ?? ''),
+      upi_id: String(form.get('upi_id') ?? ''),
+    } satisfies StoreFormValues
+
+    for (const field of storeValidationFields) {
+      if (field.when && !field.when(values, Boolean(editingStore))) {
+        continue
+      }
+
+      if (!String(values[field.name] ?? '').trim()) {
+        return {
+          message: `${field.label} is required. Complete the ${tabLabel(field.tab)} tab before continuing.`,
+          tab: field.tab,
+        }
+      }
+    }
+
+    return null
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const form = new FormData(event.currentTarget)
+    const validationError = validateStoreForm(form)
+
+    if (validationError) {
+      setActiveStoreTab(validationError.tab)
+      setFormError(validationError.message)
+      return
+    }
+
+    setFormError(null)
+    saveStore.mutate({
+      title: String(form.get('title') ?? ''),
+      image_path: logoPath,
+      cover_image_path: coverPath,
+      rating: String(form.get('rating') ?? ''),
+      language_code: String(form.get('language_code') ?? ''),
+      mobile: String(form.get('mobile') ?? ''),
+      slogan: String(form.get('slogan') ?? ''),
+      slogan_title: String(form.get('slogan_title') ?? ''),
+      opens_at: String(form.get('opens_at') ?? ''),
+      closes_at: String(form.get('closes_at') ?? ''),
+      is_pickup_enabled: formPickupStatus === '1',
+      is_active: formIsActive === '1',
+      short_description: String(form.get('short_description') ?? ''),
+      content_description: contentDescription,
+      cancel_policy: cancelPolicy,
       email: String(form.get('email') ?? ''),
       password: String(form.get('password') ?? ''),
       category_reference: formCategoryIds.join(','),
@@ -437,6 +600,454 @@ export function StoresPage() {
       paypal_id: String(form.get('paypal_id') ?? ''),
       upi_id: String(form.get('upi_id') ?? ''),
     })
+  }
+
+  if (isFormOpen) {
+    return (
+      <section className="store-form-page" aria-labelledby="store-form-title">
+        <div className="store-form-page-header">
+          <div className="store-form-title-block">
+            <button type="button" className="ghost-button" onClick={closeForm}>
+              <ArrowLeft aria-hidden="true" size={16} />
+              Stores
+            </button>
+            <h2 id="store-form-title">{editingStore ? 'Edit Store' : 'Add Store'}</h2>
+          </div>
+          <div className="store-form-page-actions">
+            <button className="secondary-button" type="button" onClick={closeForm}>
+              Cancel
+            </button>
+            <button
+              className="primary-button is-compact"
+              type="submit"
+              form="store-admin-form"
+              disabled={saveStore.isPending}
+            >
+              {saveStore.isPending ? 'Saving...' : editingStore ? 'Save Store' : 'Create Store'}
+            </button>
+          </div>
+        </div>
+
+        <form id="store-admin-form" className="store-form" noValidate onSubmit={handleSubmit}>
+          {formError ? <div className="form-error">{formError}</div> : null}
+          {zones.isError || categories.isError ? (
+            <div className="form-error">Zone or category options could not be loaded.</div>
+          ) : null}
+
+          <div className="store-form-tabs" role="tablist" aria-label="Store form sections">
+            {storeFormTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                className={activeStoreTab === tab.id ? 'store-form-tab is-active' : 'store-form-tab'}
+                aria-selected={activeStoreTab === tab.id}
+                aria-controls={`store-panel-${tab.id}`}
+                id={`store-tab-${tab.id}`}
+                onClick={() => setActiveStoreTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="store-tab-panels">
+            <TabPanel id="basic" activeTab={activeStoreTab}>
+              <FormSection title="Store Information">
+                <label className="form-field">
+                  <FieldLabel label="Store Name" required />
+                  <input name="title" maxLength={255} defaultValue={editingStore?.title ?? ''} />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Store Status" required />
+                  <AdminSelect
+                    isSearchable={false}
+                    options={publishOptions}
+                    value={formIsActive}
+                    onChange={setFormIsActive}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Rating" required />
+                  <input
+                    name="rating"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={editingStore?.rating ?? ''}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Certificate/License Code</span>
+                  <input name="language_code" maxLength={12} defaultValue={editingStore?.language_code ?? ''} />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Mobile number" required />
+                  <input name="mobile" maxLength={32} defaultValue={editingStore?.mobile ?? ''} />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Slogan Title" required />
+                  <input name="slogan" maxLength={255} defaultValue={editingStore?.slogan ?? ''} />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Slogan Subtitle" required />
+                  <input
+                    name="slogan_title"
+                    maxLength={255}
+                    defaultValue={editingStore?.slogan_title ?? ''}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Store Open Time" required />
+                  <input name="opens_at" type="time" defaultValue={toTimeInput(editingStore?.opens_at)} />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Store Close Time" required />
+                  <input
+                    name="closes_at"
+                    type="time"
+                    defaultValue={toTimeInput(editingStore?.closes_at)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Store Pickup Status" required />
+                  <AdminSelect
+                    isSearchable={false}
+                    options={pickupOptions}
+                    value={formPickupStatus}
+                    onChange={setFormPickupStatus}
+                  />
+                </label>
+
+                <label className="form-field is-wide">
+                  <FieldLabel label="Tags" required />
+                  <input
+                    name="short_description"
+                    defaultValue={editingStore?.short_description ?? ''}
+                  />
+                </label>
+
+                <label className="form-field is-wide">
+                  <FieldLabel label="Short Description" required />
+                  <AdminTextarea
+                    name="content_description"
+                    placeholder="Write the store description shown to customers"
+                    value={contentDescription}
+                    onChange={setContentDescription}
+                    helpText="Plain text shown on the customer-facing store details."
+                  />
+                </label>
+
+                <label className="form-field is-wide">
+                  <FieldLabel label="Cancel Policy" required />
+                  <AdminTextarea
+                    name="cancel_policy"
+                    placeholder="Write the cancellation policy for this store"
+                    value={cancelPolicy}
+                    onChange={setCancelPolicy}
+                    helpText="Plain text policy customers can read before ordering."
+                  />
+                </label>
+              </FormSection>
+            </TabPanel>
+
+            <TabPanel id="media" activeTab={activeStoreTab}>
+              <FormSection title="Store Media" columns={2}>
+                <label className="form-field">
+                  <FieldLabel label="Store Logo" required />
+                  <AdminFilePicker
+                    name="image_path"
+                    required
+                    label="Store logo"
+                    value={logoPath}
+                    onChange={setLogoPath}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Store Cover Image" required />
+                  <AdminFilePicker
+                    name="cover_image_path"
+                    required
+                    label="Store cover image"
+                    value={coverPath}
+                    onChange={setCoverPath}
+                  />
+                </label>
+              </FormSection>
+            </TabPanel>
+
+            <TabPanel id="login" activeTab={activeStoreTab}>
+              <FormSection title="Store Login Information" columns={2}>
+                <label className="form-field">
+                  <FieldLabel label="Email Address" required />
+                  <input
+                    name="email"
+                    type="email"
+                    maxLength={255}
+                    defaultValue={editingStore?.email ?? ''}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Password" required={!editingStore} />
+                  <input
+                    name="password"
+                    type="password"
+                    minLength={8}
+                    placeholder={editingStore ? 'Leave blank to keep current' : 'Minimum 8 chars'}
+                  />
+                </label>
+              </FormSection>
+            </TabPanel>
+
+            <TabPanel id="categories" activeTab={activeStoreTab}>
+              <FormSection title="Store Category Information" columns={1}>
+                <label className="form-field">
+                  <FieldLabel label="Store Category" required />
+                  <AdminMultiSelect
+                    options={categoryOptions}
+                    placeholder="Search and select store categories"
+                    values={formCategoryIds}
+                    onChange={setFormCategoryIds}
+                  />
+                </label>
+              </FormSection>
+            </TabPanel>
+
+            <TabPanel id="address" activeTab={activeStoreTab}>
+              <FormSection title="Store Address Information" columns={2}>
+                <label className="form-field is-wide">
+                  <FieldLabel label="Full Address" required />
+                  <input
+                    name="full_address"
+                    defaultValue={editingStore?.full_address ?? ''}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Pincode" required />
+                  <input name="pincode" maxLength={32} defaultValue={editingStore?.pincode ?? ''} />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Landmark" required />
+                  <input name="landmark" maxLength={255} defaultValue={editingStore?.landmark ?? ''} />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Select Zone" required />
+                  <AdminSelect
+                    options={zoneOptions}
+                    placeholder="Search and select zone"
+                    value={formZoneId}
+                    onChange={setFormZoneId}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Latitude" required />
+                  <input
+                    name="latitude"
+                    type="number"
+                    step="0.0000001"
+                    value={location.latitude}
+                    onChange={(event) => {
+                      setLocation((current) => ({ ...current, latitude: event.target.value }))
+                    }}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Longitude" required />
+                  <input
+                    name="longitude"
+                    type="number"
+                    step="0.0000001"
+                    value={location.longitude}
+                    onChange={(event) => {
+                      setLocation((current) => ({ ...current, longitude: event.target.value }))
+                    }}
+                  />
+                </label>
+
+                <div className="form-field is-wide">
+                  <FieldLabel label="Store Location Map" required />
+                  <StoreLocationMap
+                    latitude={location.latitude}
+                    longitude={location.longitude}
+                    onChange={(point) => {
+                      setLocation({
+                        latitude: point.lat.toFixed(7),
+                        longitude: point.lng.toFixed(7),
+                      })
+                    }}
+                  />
+                </div>
+              </FormSection>
+            </TabPanel>
+
+            <TabPanel id="service" activeTab={activeStoreTab}>
+              <FormSection title="Select Service Charge Type">
+                <label className="form-field is-wide">
+                  <FieldLabel label="Service Charge Type" required />
+                  <AdminSelect
+                    isSearchable={false}
+                    options={chargeTypeOptions}
+                    value={formChargeType}
+                    onChange={setFormChargeType}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Service Charge" required />
+                  <input
+                    name="delivery_charge"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    defaultValue={editingStore?.delivery_charge ?? ''}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Base Service Distance" required />
+                  <input
+                    name="unit_kilometers"
+                    type="number"
+                    min="0"
+                    required
+                    defaultValue={editingStore?.unit_kilometers ?? ''}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Base Service Charge" required />
+                  <input
+                    name="unit_price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    defaultValue={editingStore?.unit_price ?? ''}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Extra Service Charge" required />
+                  <input
+                    name="additional_price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    defaultValue={editingStore?.additional_price ?? ''}
+                  />
+                </label>
+              </FormSection>
+
+              <FormSection title="Store Service Information">
+                <label className="form-field">
+                  <FieldLabel label="Store Charge (Packing/Extra)" required />
+                  <input
+                    name="store_charge"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={editingStore?.store_charge ?? ''}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Min.Order Price" required />
+                  <input
+                    name="minimum_order_amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={editingStore?.minimum_order_amount ?? ''}
+                  />
+                </label>
+              </FormSection>
+
+              <FormSection title="Store Admin Commission" columns={1}>
+                <label className="form-field">
+                  <FieldLabel label="Commission Rate %" required />
+                  <input
+                    name="commission_percent"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={editingStore?.commission_percent ?? ''}
+                  />
+                </label>
+              </FormSection>
+            </TabPanel>
+
+            <TabPanel id="payout" activeTab={activeStoreTab}>
+              <FormSection title="Store Payout Information" columns={2}>
+                <label className="form-field">
+                  <FieldLabel label="Bank Name" required />
+                  <input name="bank_name" maxLength={255} defaultValue={editingStore?.bank_name ?? ''} />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Bank Code/IFSC" required />
+                  <input name="ifsc_code" maxLength={64} defaultValue={editingStore?.ifsc_code ?? ''} />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Recipient Name" required />
+                  <input
+                    name="receipt_name"
+                    maxLength={255}
+                    defaultValue={editingStore?.receipt_name ?? ''}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Account Number" required />
+                  <input
+                    name="account_number"
+                    maxLength={64}
+                    defaultValue={editingStore?.account_number ?? ''}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Paypal ID" required />
+                  <input name="paypal_id" maxLength={255} defaultValue={editingStore?.paypal_id ?? ''} />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="UPI ID" required />
+                  <input name="upi_id" maxLength={255} defaultValue={editingStore?.upi_id ?? ''} />
+                </label>
+              </FormSection>
+            </TabPanel>
+          </div>
+
+          <div className="store-form-sticky-actions">
+            <button className="secondary-button" type="button" onClick={closeForm}>
+              Cancel
+            </button>
+            <button className="primary-button is-compact" type="submit" disabled={saveStore.isPending}>
+              {saveStore.isPending ? 'Saving...' : editingStore ? 'Save Store' : 'Create Store'}
+            </button>
+          </div>
+        </form>
+      </section>
+    )
   }
 
   return (
@@ -508,411 +1119,6 @@ export function StoresPage() {
 
         <MasterPagination meta={meta} onPageChange={setPage} />
       </section>
-
-      {isFormOpen ? (
-        <div className="modal-backdrop" role="presentation">
-          <section
-            className="store-form-modal is-large"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="store-form-title"
-          >
-            <div className="modal-header">
-              <div>
-                <h3 id="store-form-title">{editingStore ? 'Edit Store' : 'Add Store'}</h3>
-                <p>Matches the legacy Store Management sections and Laravel StoreRequest contract.</p>
-              </div>
-              <button type="button" className="secondary-button" onClick={closeForm}>
-                Close
-              </button>
-            </div>
-
-            <form className="store-form" onSubmit={handleSubmit}>
-              <FormSection title="Store Information">
-                <label className="form-field">
-                  <FieldLabel label="Store Name" required />
-                  <input name="title" required maxLength={255} defaultValue={editingStore?.title ?? ''} />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Store Logo Path" required />
-                  <input
-                    name="image_path"
-                    required
-                    placeholder="images/store/logo.png"
-                    defaultValue={editingStore?.image_path ?? ''}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Store Cover Image Path" required />
-                  <input
-                    name="cover_image_path"
-                    required
-                    placeholder="images/store/cover.png"
-                    defaultValue={editingStore?.cover_image_path ?? ''}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Store Status" required />
-                  <AdminSelect
-                    isSearchable={false}
-                    options={publishOptions}
-                    value={formIsActive}
-                    onChange={setFormIsActive}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Rating" required />
-                  <input
-                    name="rating"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    defaultValue={editingStore?.rating ?? ''}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <span>Certificate/License Code</span>
-                  <input name="language_code" maxLength={12} defaultValue={editingStore?.language_code ?? ''} />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Mobile number" required />
-                  <input name="mobile" required maxLength={32} defaultValue={editingStore?.mobile ?? ''} />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Slogan Title" required />
-                  <input name="slogan" required maxLength={255} defaultValue={editingStore?.slogan ?? ''} />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Slogan Subtitle" required />
-                  <input
-                    name="slogan_title"
-                    required
-                    maxLength={255}
-                    defaultValue={editingStore?.slogan_title ?? ''}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Store Open Time" required />
-                  <input name="opens_at" type="time" required defaultValue={toTimeInput(editingStore?.opens_at)} />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Store Close Time" required />
-                  <input
-                    name="closes_at"
-                    type="time"
-                    required
-                    defaultValue={toTimeInput(editingStore?.closes_at)}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Store Pickup Status" required />
-                  <AdminSelect
-                    isSearchable={false}
-                    options={pickupOptions}
-                    value={formPickupStatus}
-                    onChange={setFormPickupStatus}
-                  />
-                </label>
-
-                <label className="form-field is-wide">
-                  <FieldLabel label="Tags" required />
-                  <input
-                    name="short_description"
-                    required
-                    defaultValue={editingStore?.short_description ?? ''}
-                  />
-                </label>
-
-                <label className="form-field is-wide">
-                  <FieldLabel label="Short Description" required />
-                  <textarea
-                    name="content_description"
-                    required
-                    defaultValue={editingStore?.content_description ?? ''}
-                  />
-                </label>
-
-                <label className="form-field is-wide">
-                  <FieldLabel label="Cancel Policy" required />
-                  <textarea name="cancel_policy" required defaultValue={editingStore?.cancel_policy ?? ''} />
-                </label>
-              </FormSection>
-
-              <FormSection title="Store Login Information" columns={2}>
-                <label className="form-field">
-                  <FieldLabel label="Email Address" required />
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    maxLength={255}
-                    defaultValue={editingStore?.email ?? ''}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Password" required={!editingStore} />
-                  <input
-                    name="password"
-                    type="password"
-                    required={!editingStore}
-                    minLength={8}
-                    placeholder={editingStore ? 'Leave blank to keep current' : 'Minimum 8 chars'}
-                  />
-                </label>
-              </FormSection>
-
-              <FormSection title="Store Category Information" columns={1}>
-                <label className="form-field">
-                  <FieldLabel label="Store Category" required />
-                  <AdminMultiSelect
-                    options={categoryOptions}
-                    placeholder="Search and select store categories"
-                    values={formCategoryIds}
-                    onChange={setFormCategoryIds}
-                  />
-                </label>
-              </FormSection>
-
-              <FormSection title="Store Address Information" columns={2}>
-                <label className="form-field is-wide">
-                  <FieldLabel label="Full Address" required />
-                  <input
-                    name="full_address"
-                    required
-                    defaultValue={editingStore?.full_address ?? ''}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Pincode" required />
-                  <input name="pincode" required maxLength={32} defaultValue={editingStore?.pincode ?? ''} />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Landmark" required />
-                  <input name="landmark" required maxLength={255} defaultValue={editingStore?.landmark ?? ''} />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Select Zone" required />
-                  <AdminSelect
-                    options={zoneOptions}
-                    placeholder="Search and select zone"
-                    value={formZoneId}
-                    onChange={setFormZoneId}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Latitude" required />
-                  <input
-                    name="latitude"
-                    type="number"
-                    step="0.0000001"
-                    required
-                    value={location.latitude}
-                    onChange={(event) => {
-                      setLocation((current) => ({ ...current, latitude: event.target.value }))
-                    }}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Longitude" required />
-                  <input
-                    name="longitude"
-                    type="number"
-                    step="0.0000001"
-                    required
-                    value={location.longitude}
-                    onChange={(event) => {
-                      setLocation((current) => ({ ...current, longitude: event.target.value }))
-                    }}
-                  />
-                </label>
-
-                <div className="form-field is-wide">
-                  <FieldLabel label="Store Location Map" required />
-                  <StoreLocationMap
-                    latitude={location.latitude}
-                    longitude={location.longitude}
-                    onChange={(point) => {
-                      setLocation({
-                        latitude: point.lat.toFixed(7),
-                        longitude: point.lng.toFixed(7),
-                      })
-                    }}
-                  />
-                </div>
-              </FormSection>
-
-              <FormSection title="Select Service Charge Type">
-                <label className="form-field is-wide">
-                  <FieldLabel label="Service Charge Type" required />
-                  <AdminSelect
-                    isSearchable={false}
-                    options={chargeTypeOptions}
-                    value={formChargeType}
-                    onChange={setFormChargeType}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Service Charge" required />
-                  <input
-                    name="delivery_charge"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    defaultValue={editingStore?.delivery_charge ?? ''}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Base Service Distance" required />
-                  <input
-                    name="unit_kilometers"
-                    type="number"
-                    min="0"
-                    defaultValue={editingStore?.unit_kilometers ?? ''}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Base Service Charge" required />
-                  <input
-                    name="unit_price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    defaultValue={editingStore?.unit_price ?? ''}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Extra Service Charge" required />
-                  <input
-                    name="additional_price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    defaultValue={editingStore?.additional_price ?? ''}
-                  />
-                </label>
-              </FormSection>
-
-              <FormSection title="Store Service Information">
-                <label className="form-field">
-                  <FieldLabel label="Store Charge (Packing/Extra)" required />
-                  <input
-                    name="store_charge"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    defaultValue={editingStore?.store_charge ?? ''}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Min.Order Price" required />
-                  <input
-                    name="minimum_order_amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    defaultValue={editingStore?.minimum_order_amount ?? ''}
-                  />
-                </label>
-              </FormSection>
-
-              <FormSection title="Store Admin Commission" columns={1}>
-                <label className="form-field">
-                  <FieldLabel label="Commission Rate %" required />
-                  <input
-                    name="commission_percent"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    defaultValue={editingStore?.commission_percent ?? ''}
-                  />
-                </label>
-              </FormSection>
-
-              <FormSection title="Store Payout Information" columns={2}>
-                <label className="form-field">
-                  <FieldLabel label="Bank Name" required />
-                  <input name="bank_name" required maxLength={255} defaultValue={editingStore?.bank_name ?? ''} />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Bank Code/IFSC" required />
-                  <input name="ifsc_code" required maxLength={64} defaultValue={editingStore?.ifsc_code ?? ''} />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Recipient Name" required />
-                  <input
-                    name="receipt_name"
-                    required
-                    maxLength={255}
-                    defaultValue={editingStore?.receipt_name ?? ''}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Account Number" required />
-                  <input
-                    name="account_number"
-                    required
-                    maxLength={64}
-                    defaultValue={editingStore?.account_number ?? ''}
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="Paypal ID" required />
-                  <input name="paypal_id" required maxLength={255} defaultValue={editingStore?.paypal_id ?? ''} />
-                </label>
-
-                <label className="form-field">
-                  <FieldLabel label="UPI ID" required />
-                  <input name="upi_id" required maxLength={255} defaultValue={editingStore?.upi_id ?? ''} />
-                </label>
-              </FormSection>
-
-              {formError ? <div className="form-error">{formError}</div> : null}
-              {zones.isError || categories.isError ? (
-                <div className="form-error">Zone or category options could not be loaded.</div>
-              ) : null}
-
-              <div className="modal-actions">
-                <button className="secondary-button" type="button" onClick={closeForm}>
-                  Cancel
-                </button>
-                <button className="primary-button is-compact" type="submit" disabled={saveStore.isPending}>
-                  {saveStore.isPending ? 'Saving...' : editingStore ? 'Edit Store' : 'Add Store'}
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      ) : null}
     </>
   )
 }
@@ -942,6 +1148,72 @@ function FormSection({
       </div>
     </section>
   )
+}
+
+function TabPanel({
+  id,
+  activeTab,
+  children,
+}: {
+  id: StoreFormTabId
+  activeTab: StoreFormTabId
+  children: ReactNode
+}) {
+  const isActive = id === activeTab
+
+  return (
+    <div
+      id={`store-panel-${id}`}
+      role="tabpanel"
+      aria-labelledby={`store-tab-${id}`}
+      className={isActive ? 'store-tab-panel is-active' : 'store-tab-panel'}
+    >
+      {children}
+    </div>
+  )
+}
+
+function extractStoreApiValidationError(error: unknown) {
+  if (!isAxiosError(error) || error.response?.status !== 422) {
+    return null
+  }
+
+  const responseData = error.response.data as {
+    message?: string
+    errors?: Record<string, string[]>
+  }
+  const errors = responseData.errors
+
+  if (!errors) {
+    return null
+  }
+
+  for (const field of storeValidationFields) {
+    const fieldErrors = errors[field.name]
+
+    if (fieldErrors?.length) {
+      return {
+        message: `${fieldErrors[0]} Complete the ${tabLabel(field.tab)} tab before continuing.`,
+        tab: field.tab,
+      }
+    }
+  }
+
+  const firstErrorKey = Object.keys(errors)[0]
+  const firstMessage = firstErrorKey ? errors[firstErrorKey]?.[0] : responseData.message
+
+  if (!firstMessage) {
+    return null
+  }
+
+  return {
+    message: firstMessage,
+    tab: 'basic' as StoreFormTabId,
+  }
+}
+
+function tabLabel(tab: StoreFormTabId) {
+  return storeFormTabs.find((item) => item.id === tab)?.label ?? 'current'
 }
 
 function StoreImagePreview({ src, alt }: { src: string | null; alt: string }) {

@@ -34,6 +34,8 @@ export function AdminSelect({
       className="admin-react-select"
       classNamePrefix="admin-react-select"
       isSearchable={isSearchable}
+      menuPortalTarget={menuPortalTarget}
+      menuPosition="fixed"
       options={options}
       placeholder={placeholder}
       styles={selectStyles}
@@ -58,6 +60,8 @@ export function AdminMultiSelect({
       closeMenuOnSelect={false}
       isMulti
       isSearchable
+      menuPortalTarget={menuPortalTarget}
+      menuPosition="fixed"
       options={options}
       placeholder={placeholder}
       styles={selectStyles}
@@ -78,6 +82,7 @@ const selectStyles: StylesConfig<AdminSelectOption, boolean> = {
     backgroundColor: 'var(--color-surface)',
     boxShadow: state.isFocused ? '0 0 0 3px rgb(0 121 111 / 14%)' : 'none',
     color: 'var(--color-text)',
+    cursor: 'pointer',
     ':hover': {
       borderColor: 'var(--color-primary)',
     },
@@ -94,6 +99,10 @@ const selectStyles: StylesConfig<AdminSelectOption, boolean> = {
     backgroundColor: 'var(--color-surface)',
     boxShadow: 'var(--shadow-popover)',
     overflow: 'hidden',
+  }),
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 10000,
   }),
   menuList: (base) => ({
     ...base,
@@ -143,3 +152,5 @@ const selectStyles: StylesConfig<AdminSelectOption, boolean> = {
     fontWeight: 800,
   }),
 }
+
+const menuPortalTarget = typeof document === 'undefined' ? undefined : document.body
