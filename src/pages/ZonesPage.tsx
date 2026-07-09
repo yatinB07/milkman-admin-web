@@ -8,6 +8,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../components/master'
+import { ZonePolygonMap } from '../components/maps/ZonePolygonMap'
 import { StatusPill } from '../components/StatusPill'
 import { api } from '../lib/api'
 import {
@@ -57,6 +58,7 @@ export function ZonesPage() {
   const [page, setPage] = useState(1)
   const [editingZone, setEditingZone] = useState<ZoneRow | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [coordinatesValue, setCoordinatesValue] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
   const [formErrors, setFormErrors] = useState<ZoneFormErrors>({})
 
@@ -194,6 +196,7 @@ export function ZonesPage() {
 
   function openCreateForm() {
     setEditingZone(null)
+    setCoordinatesValue('')
     setFormError(null)
     setFormErrors({})
     setIsFormOpen(true)
@@ -201,6 +204,7 @@ export function ZonesPage() {
 
   function openEditForm(zone: ZoneRow) {
     setEditingZone(zone)
+    setCoordinatesValue(zone.alias ?? zone.coordinates)
     setFormError(null)
     setFormErrors({})
     setIsFormOpen(true)
@@ -208,6 +212,7 @@ export function ZonesPage() {
 
   function closeForm() {
     setEditingZone(null)
+    setCoordinatesValue('')
     setFormError(null)
     setFormErrors({})
     setIsFormOpen(false)
@@ -220,7 +225,7 @@ export function ZonesPage() {
     const statusValue = String(form.get('is_active') ?? '')
     const values: ZoneFormValues = {
       title: String(form.get('title') ?? ''),
-      coordinates: String(form.get('coordinates') ?? ''),
+      coordinates: coordinatesValue,
       alias: String(form.get('alias') ?? ''),
       is_active: statusValue === 'true',
     }
@@ -366,14 +371,11 @@ export function ZonesPage() {
                   <span>
                     Coordinates <span className="required-mark" aria-hidden="true">*</span>
                   </span>
-                  <textarea
-                    name="coordinates"
-                    required
-                    aria-invalid={Boolean(formErrors.coordinates)}
-                    aria-describedby={
-                      formErrors.coordinates ? 'zone-coordinates-error' : undefined
-                    }
-                    defaultValue={editingZone?.coordinates ?? ''}
+                  <ZonePolygonMap
+                    value={coordinatesValue}
+                    onChange={setCoordinatesValue}
+                    hasError={Boolean(formErrors.coordinates)}
+                    errorId={formErrors.coordinates ? 'zone-coordinates-error' : undefined}
                   />
                   {formErrors.coordinates ? (
                     <small className="field-error" id="zone-coordinates-error">
@@ -423,10 +425,13 @@ export function ZonesPage() {
 }
 
 function toZonePayload(values: ZoneFormValues) {
+  const coordinates = values.coordinates.trim()
+  const alias = values.alias.trim()
+
   return {
     title: values.title.trim(),
-    coordinates: values.coordinates.trim(),
-    alias: values.alias.trim() === '' ? null : values.alias.trim(),
+    coordinates,
+    alias: alias === '' ? coordinates : alias,
     is_active: values.is_active,
   }
 }
