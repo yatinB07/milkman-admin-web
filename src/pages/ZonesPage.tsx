@@ -98,7 +98,20 @@ export function ZonesPage() {
 
       return response.data.data
     },
-    onSuccess: async () => {
+    onSuccess: async (savedZone) => {
+      queryClient.setQueriesData<PaginatedResponse<ZoneRow>>(
+        { queryKey: ['admin-zones'] },
+        (currentData) => {
+          if (!currentData) {
+            return currentData
+          }
+
+          return {
+            ...currentData,
+            data: currentData.data.map((zone) => (zone.id === savedZone.id ? savedZone : zone)),
+          }
+        },
+      )
       await queryClient.invalidateQueries({ queryKey: ['admin-zones'] })
       closeForm()
     },
@@ -204,7 +217,7 @@ export function ZonesPage() {
 
   function openEditForm(zone: ZoneRow) {
     setEditingZone(zone)
-    setCoordinatesValue(zone.alias ?? zone.coordinates)
+    setCoordinatesValue(zone.coordinates)
     setFormError(null)
     setFormErrors({})
     setIsFormOpen(true)
@@ -226,7 +239,7 @@ export function ZonesPage() {
     const values: ZoneFormValues = {
       title: String(form.get('title') ?? ''),
       coordinates: coordinatesValue,
-      alias: String(form.get('alias') ?? ''),
+      alias: resolveZoneAlias(String(form.get('alias') ?? ''), coordinatesValue, editingZone),
       is_active: statusValue === 'true',
     }
     const errors = validateZoneForm(values, statusValue)
@@ -434,6 +447,22 @@ function toZonePayload(values: ZoneFormValues) {
     alias: alias === '' ? coordinates : alias,
     is_active: values.is_active,
   }
+}
+
+function resolveZoneAlias(alias: string, coordinates: string, editingZone: ZoneRow | null) {
+  const trimmedAlias = alias.trim()
+  const trimmedCoordinates = coordinates.trim()
+
+  if (!editingZone || !trimmedAlias) {
+    return trimmedAlias
+  }
+
+  const aliasWasNotEdited = trimmedAlias === (editingZone.alias ?? '').trim()
+  const polygonChanged =
+    trimmedCoordinates !== editingZone.coordinates.trim() &&
+    trimmedCoordinates !== (editingZone.alias ?? '').trim()
+
+  return aliasWasNotEdited && polygonChanged ? trimmedCoordinates : trimmedAlias
 }
 
 function validateZoneForm(values: ZoneFormValues, statusValue: string) {

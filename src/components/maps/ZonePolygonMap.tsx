@@ -17,12 +17,13 @@ type GoogleMapsNamespace = {
   maps: {
     Map: new (element: HTMLElement, options: Record<string, unknown>) => GoogleMap
     LatLngBounds: new () => GoogleLatLngBounds
-    Marker: new (options: Record<string, unknown>) => GoogleMarker
     Polygon: new (options: Record<string, unknown>) => GooglePolygon
-    Polyline: new (options: Record<string, unknown>) => GooglePolyline
     ControlPosition: Record<string, number>
     MapTypeControlStyle: Record<string, number>
-    SymbolPath: Record<string, string>
+    drawing: {
+      DrawingManager: new (options: Record<string, unknown>) => GoogleDrawingManager
+      OverlayType: Record<string, string>
+    }
     event: {
       addListener: (
         instance: object,
@@ -55,19 +56,21 @@ type GoogleLatLngBounds = {
 
 type GooglePolygon = {
   setMap: (map: GoogleMap | null) => void
+  getPath: () => GoogleMapsPath
 }
 
-type GooglePolyline = {
-  setMap: (map: GoogleMap | null) => void
-  setPath: (path: CoordinatePoint[]) => void
-}
-
-type GoogleMarker = {
-  setMap: (map: GoogleMap | null) => void
+type GoogleMapsPath = {
+  getArray: () => GoogleLatLng[]
 }
 
 type GoogleMapEvent = {
   latLng?: GoogleLatLng
+  overlay?: GooglePolygon
+}
+
+type GoogleDrawingManager = {
+  setMap: (map: GoogleMap | null) => void
+  setDrawingMode: (mode: string | null) => void
 }
 
 type GoogleMapsListener = {
@@ -96,6 +99,7 @@ declare global {
 const defaultCenter: CoordinatePoint = { lat: 21.2408, lng: 72.8806 }
 const defaultZoom = 13
 const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined
+const mapsApiVersion = (import.meta.env.VITE_GOOGLE_MAPS_VERSION as string | undefined) ?? '3.64'
 let googleMapsPromise: Promise<GoogleMapsNamespace> | null = null
 
 export function ZonePolygonMap({ value, onChange, hasError = false, errorId }: ZonePolygonMapProps) {
@@ -106,16 +110,10 @@ export function ZonePolygonMap({ value, onChange, hasError = false, errorId }: Z
   const locateControlRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<GoogleMap | null>(null)
   const polygonRef = useRef<GooglePolygon | null>(null)
-  const polylineRef = useRef<GooglePolyline | null>(null)
-  const previewPolylineRef = useRef<GooglePolyline | null>(null)
-  const markersRef = useRef<GoogleMarker[]>([])
-  const pointsRef = useRef<CoordinatePoint[]>([])
+  const drawingManagerRef = useRef<GoogleDrawingManager | null>(null)
   const pathListenersRef = useRef<GoogleMapsListener[]>([])
   const mapListenersRef = useRef<GoogleMapsListener[]>([])
   const lastGeneratedValueRef = useRef('')
-  const renderPointsRef = useRef<((google: GoogleMapsNamespace, map: GoogleMap, shouldEmit: boolean) => void) | null>(
-    null,
-  )
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
     mapsApiKey ? 'idle' : 'error',
   )
@@ -124,46 +122,9 @@ export function ZonePolygonMap({ value, onChange, hasError = false, errorId }: Z
   const clearPolygon = useCallback(() => {
     pathListenersRef.current.forEach((listener) => listener.remove())
     pathListenersRef.current = []
-    markersRef.current.forEach((marker) => marker.setMap(null))
-    markersRef.current = []
-    polylineRef.current?.setMap(null)
-    polylineRef.current = null
     polygonRef.current?.setMap(null)
     polygonRef.current = null
   }, [])
-
-  const clearPreviewLine = useCallback(() => {
-    previewPolylineRef.current?.setMap(null)
-    previewPolylineRef.current = null
-  }, [])
-
-  const renderPreviewLine = useCallback(
-    (google: GoogleMapsNamespace, map: GoogleMap, point: CoordinatePoint) => {
-      const lastPoint = pointsRef.current.at(-1)
-
-      if (!lastPoint) {
-        clearPreviewLine()
-        return
-      }
-
-      const path = [lastPoint, point]
-
-      if (previewPolylineRef.current) {
-        previewPolylineRef.current.setPath(path)
-        return
-      }
-
-      previewPolylineRef.current = new google.maps.Polyline({
-        map,
-        path,
-        strokeColor: '#1f2937',
-        strokeOpacity: 0.95,
-        strokeWeight: 2,
-        clickable: false,
-      })
-    },
-    [clearPreviewLine],
-  )
 
   const emitPoints = useCallback(
     (points: CoordinatePoint[]) => {
@@ -174,74 +135,35 @@ export function ZonePolygonMap({ value, onChange, hasError = false, errorId }: Z
     [onChange],
   )
 
-  const renderPoints = useCallback(
-    (google: GoogleMapsNamespace, map: GoogleMap, points: CoordinatePoint[], shouldEmit: boolean) => {
+  const emitPolygon = useCallback(
+    (polygon: GooglePolygon) => {
+      emitPoints(
+        polygon
+          .getPath()
+          .getArray()
+          .map((point) => ({ lat: point.lat(), lng: point.lng() })),
+      )
+    },
+    [emitPoints],
+  )
+
+  const setActivePolygon = useCallback(
+    (google: GoogleMapsNamespace, polygon: GooglePolygon, shouldEmit: boolean) => {
       clearPolygon()
-      clearPreviewLine()
-      pointsRef.current = points
-      markersRef.current = points.map((point, index) => {
-        const marker = new google.maps.Marker({
-          map,
-          position: point,
-          draggable: true,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 6,
-            fillColor: '#ffffff',
-            fillOpacity: 1,
-            strokeColor: '#1f2937',
-            strokeWeight: 2,
-          },
-          title: `Point ${index + 1}`,
-        })
+      polygonRef.current = polygon
+      drawingManagerRef.current?.setDrawingMode(null)
 
-        pathListenersRef.current.push(
-          google.maps.event.addListener(marker, 'dragend', (event) => {
-            if (!event?.latLng) {
-              return
-            }
-
-            const nextPoints = [...pointsRef.current]
-            nextPoints[index] = {
-              lat: event.latLng.lat(),
-              lng: event.latLng.lng(),
-            }
-            pointsRef.current = nextPoints
-            renderPointsRef.current?.(google, map, true)
-          }),
-        )
-
-        return marker
-      })
-
-      if (points.length >= 2) {
-        polylineRef.current = new google.maps.Polyline({
-          map,
-          path: points,
-          strokeColor: '#1f2937',
-          strokeOpacity: 0.95,
-          strokeWeight: 2,
-        })
-      }
-
-      if (points.length >= 3) {
-        polygonRef.current = new google.maps.Polygon({
-          ...getPolygonOptions(map),
-          paths: points,
-        })
-      }
+      const path = polygon.getPath()
+      pathListenersRef.current = ['set_at', 'insert_at', 'remove_at'].map((eventName) =>
+        google.maps.event.addListener(path, eventName, () => emitPolygon(polygon)),
+      )
 
       if (shouldEmit) {
-        emitPoints(points)
+        emitPolygon(polygon)
       }
     },
-    [clearPolygon, clearPreviewLine, emitPoints],
+    [clearPolygon, emitPolygon],
   )
-  useEffect(() => {
-    renderPointsRef.current = (google, map, shouldEmit) => {
-      renderPoints(google, map, [...pointsRef.current], shouldEmit)
-    }
-  }, [renderPoints])
 
   useEffect(() => {
     if (!mapsApiKey || !mapRef.current || !searchInputRef.current) {
@@ -270,37 +192,25 @@ export function ZonePolygonMap({ value, onChange, hasError = false, errorId }: Z
         })
         mapInstanceRef.current = map
 
+        const drawingManager = new google.maps.drawing.DrawingManager({
+          drawingMode: google.maps.drawing.OverlayType.POLYGON,
+          drawingControl: true,
+          drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_CENTER,
+            drawingModes: [google.maps.drawing.OverlayType.POLYGON],
+          },
+          polygonOptions: getPolygonOptions(map),
+        })
+        drawingManager.setMap(map)
+        drawingManagerRef.current = drawingManager
+
         mapListenersRef.current = [
-          google.maps.event.addListener(map, 'click', (event) => {
-            if (!event?.latLng) {
+          google.maps.event.addListener(drawingManager, 'overlaycomplete', (event) => {
+            if (!event?.overlay) {
               return
             }
 
-            clearPreviewLine()
-            const point = {
-              lat: event.latLng.lat(),
-              lng: event.latLng.lng(),
-            }
-
-            if (!polygonRef.current) {
-              renderPoints(google, map, [...pointsRef.current, point], true)
-              return
-            }
-
-            renderPoints(google, map, [...pointsRef.current, point], true)
-          }),
-          google.maps.event.addListener(map, 'mousemove', (event) => {
-            if (!event?.latLng) {
-              return
-            }
-
-            renderPreviewLine(google, map, {
-              lat: event.latLng.lat(),
-              lng: event.latLng.lng(),
-            })
-          }),
-          google.maps.event.addListener(map, 'mouseout', () => {
-            clearPreviewLine()
+            setActivePolygon(google, event.overlay, true)
           }),
         ]
 
@@ -350,12 +260,13 @@ export function ZonePolygonMap({ value, onChange, hasError = false, errorId }: Z
     return () => {
       isCancelled = true
       clearPolygon()
-      clearPreviewLine()
+      drawingManagerRef.current?.setMap(null)
+      drawingManagerRef.current = null
       mapListenersRef.current.forEach((listener) => listener.remove())
       mapListenersRef.current = []
       mapInstanceRef.current = null
     }
-  }, [clearPolygon, clearPreviewLine, renderPoints, renderPreviewLine])
+  }, [clearPolygon, setActivePolygon])
 
   useEffect(() => {
     const google = window.google
@@ -371,9 +282,9 @@ export function ZonePolygonMap({ value, onChange, hasError = false, errorId }: Z
 
     const points = parseCoordinates(value)
     clearPolygon()
-    clearPreviewLine()
 
     if (points.length < 3) {
+      drawingManagerRef.current?.setDrawingMode(google.maps.drawing.OverlayType.POLYGON)
       if (!value.trim()) {
         map.setCenter(defaultCenter)
         map.setZoom(defaultZoom)
@@ -381,16 +292,22 @@ export function ZonePolygonMap({ value, onChange, hasError = false, errorId }: Z
       return
     }
 
-    renderPoints(google, map, points, false)
+    const polygon = new google.maps.Polygon({
+      ...getPolygonOptions(map),
+      paths: points,
+    })
+    setActivePolygon(google, polygon, false)
     fitToPoints(google, map, points)
-  }, [clearPolygon, clearPreviewLine, loadState, renderPoints, value])
+  }, [clearPolygon, loadState, setActivePolygon, value])
 
 function handleClear() {
+    const google = window.google
     clearPolygon()
-    clearPreviewLine()
-    pointsRef.current = []
     lastGeneratedValueRef.current = ''
     onChange('')
+    if (google) {
+      drawingManagerRef.current?.setDrawingMode(google.maps.drawing.OverlayType.POLYGON)
+    }
     mapInstanceRef.current?.setCenter(defaultCenter)
     mapInstanceRef.current?.setZoom(defaultZoom)
   }
@@ -463,8 +380,7 @@ function handleClear() {
       {mapMessage && loadState === 'ready' ? <small className="zone-map-message">{mapMessage}</small> : null}
 
       <small className="zone-map-message">
-        Click the map to add points. Move the cursor to preview the next edge; a zone polygon appears after 3
-        points.
+        Select the polygon tool, click the map to draw the boundary, and click the first point to finish it.
       </small>
 
       <textarea
@@ -480,7 +396,7 @@ function handleClear() {
 }
 
 function loadGoogleMaps(apiKey: string) {
-  if (window.google?.maps?.places) {
+  if (window.google?.maps?.places && window.google.maps.drawing) {
     return Promise.resolve(window.google)
   }
 
@@ -496,10 +412,10 @@ function loadGoogleMaps(apiKey: string) {
     }
 
     window.initMilkmanGoogleMaps = () => {
-      if (window.google?.maps?.places) {
+      if (window.google?.maps?.places && window.google.maps.drawing) {
         resolve(window.google)
       } else {
-        reject(new Error('Google Maps loaded without the Places library. Enable Places API and restart.'))
+        reject(new Error('Google Maps loaded without required drawing or places libraries.'))
       }
     }
 
@@ -511,9 +427,9 @@ function loadGoogleMaps(apiKey: string) {
     const script = document.createElement('script')
     const params = new URLSearchParams({
       key: apiKey,
-      libraries: 'places',
+      libraries: 'drawing,places',
       callback: 'initMilkmanGoogleMaps',
-      v: 'weekly',
+      v: mapsApiVersion,
     })
 
     script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`
