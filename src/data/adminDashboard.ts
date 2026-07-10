@@ -55,6 +55,7 @@ export const navigationItems: NavigationItem[] = [
   { label: 'Categories', icon: Shapes },
   { label: 'Store Categories', icon: ListTree },
   { label: 'Products', icon: Package },
+  { label: 'Product Variants', icon: Package },
   { label: 'Stores', icon: Store },
   { label: 'Zones', icon: MapPinned },
   { label: 'Riders', icon: Bike },
