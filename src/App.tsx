@@ -1,25 +1,23 @@
-import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { lazy, Suspense, useEffect } from 'react'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { AdminShell } from './components/AdminShell'
 import { LoginPage } from './components/LoginPage'
-import { CategoriesPage } from './pages/CategoriesPage'
-import { DashboardPage } from './pages/DashboardPage'
-import { ProductVariantsPage } from './pages/ProductVariantsPage'
-import { ProductsPage } from './pages/ProductsPage'
-import { StoreCategoriesPage } from './pages/StoreCategoriesPage'
-import { StoresPage } from './pages/StoresPage'
-import { ZonesPage } from './pages/ZonesPage'
-import { api, clearAuthToken, getAuthToken, setAuthToken } from './lib/api'
+import { navigationItems } from './data/adminDashboard'
+import { api } from './lib/api'
+import { adminStore, canAccess, type AdminUser, useAdminStore } from './store/adminStore'
 import './App.css'
 
-type AdminUser = {
-  id: number
-  type: string
-  name: string
-  email: string
-  roles: string[]
-  permissions: string[]
-}
+const CategoriesPage = lazy(() => import('./pages/CategoriesPage').then((module) => ({ default: module.CategoriesPage })))
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then((module) => ({ default: module.DashboardPage })))
+const ProductVariantsPage = lazy(() =>
+  import('./pages/ProductVariantsPage').then((module) => ({ default: module.ProductVariantsPage })),
+)
+const ProductsPage = lazy(() => import('./pages/ProductsPage').then((module) => ({ default: module.ProductsPage })))
+const StoreCategoriesPage = lazy(() =>
+  import('./pages/StoreCategoriesPage').then((module) => ({ default: module.StoreCategoriesPage })),
+)
+const StoresPage = lazy(() => import('./pages/StoresPage').then((module) => ({ default: module.StoresPage })))
+const ZonesPage = lazy(() => import('./pages/ZonesPage').then((module) => ({ default: module.ZonesPage })))
 
 type LoginResponse = {
   data: {
@@ -28,11 +26,26 @@ type LoginResponse = {
   }
 }
 
+type CurrentUserResponse = {
+  data: {
+    user: AdminUser
+  }
+}
+
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(getAuthToken()))
-  const [activePage, setActivePage] = useState('Dashboard')
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    return window.localStorage.getItem('milkman_admin_theme') === 'dark' ? 'dark' : 'light'
+  const { activePage, theme, token, user } = useAdminStore()
+  const visibleNavigationItems = navigationItems.filter((item) => canAccess(user, item.permission))
+
+  const currentUser = useQuery({
+    queryKey: ['admin-auth-me'],
+    queryFn: async () => {
+      const response = await api.get<CurrentUserResponse>('/api/v1/admin/auth/me')
+
+      return response.data.data.user
+    },
+    enabled: Boolean(token),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
   })
 
   const login = useMutation({
@@ -42,13 +55,31 @@ function App() {
       return response.data.data
     },
     onSuccess: (result) => {
-      setAuthToken(result.token)
-      setIsAuthenticated(true)
-      setActivePage('Dashboard')
+      adminStore.login(result.token, result.user)
     },
   })
 
-  if (!isAuthenticated) {
+  useEffect(() => {
+    if (currentUser.data) {
+      adminStore.setUser(currentUser.data)
+    }
+  }, [currentUser.data])
+
+  useEffect(() => {
+    if (currentUser.isError) {
+      adminStore.logout()
+    }
+  }, [currentUser.isError])
+
+  useEffect(() => {
+    const activeItem = navigationItems.find((item) => item.label === activePage)
+
+    if (activeItem && !canAccess(user, activeItem.permission)) {
+      adminStore.setActivePage('Dashboard')
+    }
+  }, [activePage, user])
+
+  if (!token) {
     return (
       <LoginPage
         onLogin={(credentials) => login.mutate(credentials)}
@@ -58,39 +89,37 @@ function App() {
     )
   }
 
+  if (!user && currentUser.isLoading) {
+    return <div className="module-loading">Loading admin session...</div>
+  }
+
   return (
     <AdminShell
       activePage={activePage}
-      onNavigate={setActivePage}
+      onNavigate={adminStore.setActivePage}
       theme={theme}
-      onToggleTheme={() => {
-        setTheme((currentTheme) => {
-          const nextTheme = currentTheme === 'dark' ? 'light' : 'dark'
-          window.localStorage.setItem('milkman_admin_theme', nextTheme)
-
-          return nextTheme
-        })
-      }}
-      onLogout={() => {
-        clearAuthToken()
-        setIsAuthenticated(false)
-      }}
+      onToggleTheme={adminStore.toggleTheme}
+      onLogout={adminStore.logout}
+      user={user}
+      navigationItems={visibleNavigationItems}
     >
-      {activePage === 'Stores' ? (
-        <StoresPage />
-      ) : activePage === 'Products' ? (
-        <ProductsPage />
-      ) : activePage === 'Product Variants' ? (
-        <ProductVariantsPage />
-      ) : activePage === 'Store Categories' ? (
-        <StoreCategoriesPage />
-      ) : activePage === 'Categories' ? (
-        <CategoriesPage />
-      ) : activePage === 'Zones' ? (
-        <ZonesPage />
-      ) : (
-        <DashboardPage />
-      )}
+      <Suspense fallback={<div className="module-loading">Loading module...</div>}>
+        {activePage === 'Stores' ? (
+          <StoresPage />
+        ) : activePage === 'Products' ? (
+          <ProductsPage />
+        ) : activePage === 'Product Variants' ? (
+          <ProductVariantsPage />
+        ) : activePage === 'Store Categories' ? (
+          <StoreCategoriesPage />
+        ) : activePage === 'Categories' ? (
+          <CategoriesPage />
+        ) : activePage === 'Zones' ? (
+          <ZonesPage />
+        ) : (
+          <DashboardPage />
+        )}
+      </Suspense>
     </AdminShell>
   )
 }

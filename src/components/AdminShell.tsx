@@ -10,7 +10,8 @@ import {
   UserRound,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { navigationItems } from '../data/adminDashboard'
+import type { AdminUser } from '../store/adminStore'
+import type { NavigationItem } from '../data/adminDashboard'
 
 type AdminShellProps = {
   children: ReactNode
@@ -19,6 +20,8 @@ type AdminShellProps = {
   onNavigate: (page: string) => void
   theme: 'light' | 'dark'
   onToggleTheme: () => void
+  user: AdminUser | null
+  navigationItems: NavigationItem[]
 }
 
 export function AdminShell({
@@ -28,7 +31,12 @@ export function AdminShell({
   onNavigate,
   theme,
   onToggleTheme,
+  user,
+  navigationItems,
 }: AdminShellProps) {
+  const displayName = user?.name ?? 'Admin Profile'
+  const displayRole = user?.roles[0]?.replace('-', ' ') ?? 'Admin'
+
   return (
     <main className="admin-layout" data-theme={theme}>
       <aside className="admin-sidebar" aria-label="Primary navigation">
@@ -89,8 +97,8 @@ export function AdminShell({
                 <UserRound aria-hidden="true" size={18} />
               </span>
               <span>
-                Admin Profile
-                <small>Super Admin</small>
+                {displayName}
+                <small>{displayRole}</small>
               </span>
               <ChevronDown aria-hidden="true" size={16} />
             </button>

@@ -22,6 +22,7 @@ import {
 export type NavigationItem = {
   label: string
   icon: LucideIcon
+  permission?: string
   badge?: string
   active?: boolean
 }
@@ -50,20 +51,20 @@ export type StoreEarning = {
 
 export const navigationItems: NavigationItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard },
-  { label: 'Reports', icon: Gauge },
-  { label: 'Catalog', icon: Package },
-  { label: 'Categories', icon: Shapes },
-  { label: 'Store Categories', icon: ListTree },
-  { label: 'Products', icon: Package },
-  { label: 'Product Variants', icon: Package },
-  { label: 'Stores', icon: Store },
-  { label: 'Zones', icon: MapPinned },
-  { label: 'Riders', icon: Bike },
-  { label: 'Customers', icon: Users },
-  { label: 'Orders', icon: ShoppingCart, badge: '18' },
-  { label: 'Subscriptions', icon: CalendarDays },
-  { label: 'Payouts', icon: Banknote, badge: '12' },
-  { label: 'Settings', icon: Settings },
+  { label: 'Reports', icon: Gauge, permission: 'reports.view' },
+  { label: 'Catalog', icon: Package, permission: 'products.manage' },
+  { label: 'Categories', icon: Shapes, permission: 'products.manage' },
+  { label: 'Store Categories', icon: ListTree, permission: 'products.manage' },
+  { label: 'Products', icon: Package, permission: 'products.manage' },
+  { label: 'Product Variants', icon: Package, permission: 'products.manage' },
+  { label: 'Stores', icon: Store, permission: 'stores.manage' },
+  { label: 'Zones', icon: MapPinned, permission: 'settings.update' },
+  { label: 'Riders', icon: Bike, permission: 'riders.manage' },
+  { label: 'Customers', icon: Users, permission: 'users.manage' },
+  { label: 'Orders', icon: ShoppingCart, permission: 'orders.view', badge: '18' },
+  { label: 'Subscriptions', icon: CalendarDays, permission: 'subscriptions.manage' },
+  { label: 'Payouts', icon: Banknote, permission: 'payouts.approve', badge: '12' },
+  { label: 'Settings', icon: Settings, permission: 'settings.update' },
 ]
 
 export const dashboardMetrics: Metric[] = [
