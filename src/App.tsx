@@ -4,6 +4,7 @@ import { AdminShell } from './components/AdminShell'
 import { LoginPage } from './components/LoginPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { StoreCategoriesPage } from './pages/StoreCategoriesPage'
 import { StoresPage } from './pages/StoresPage'
 import { ZonesPage } from './pages/ZonesPage'
 import { api, clearAuthToken, getAuthToken, setAuthToken } from './lib/api'
@@ -75,6 +76,8 @@ function App() {
     >
       {activePage === 'Stores' ? (
         <StoresPage />
+      ) : activePage === 'Store Categories' ? (
+        <StoreCategoriesPage />
       ) : activePage === 'Categories' ? (
         <CategoriesPage />
       ) : activePage === 'Zones' ? (
