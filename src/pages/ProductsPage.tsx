@@ -1,4 +1,4 @@
-import { Edit3, ImageIcon, ListTree, Plus, Trash2 } from 'lucide-react'
+import { Edit3, ImageIcon, PackageOpen, Plus, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { type FormEvent, type ReactNode, useMemo, useState } from 'react'
@@ -11,6 +11,7 @@ import {
 } from '../components/master'
 import { AdminFilePicker } from '../components/forms/AdminFilePicker'
 import { AdminSelect, type AdminSelectOption } from '../components/forms/AdminSelect'
+import { AdminTextarea } from '../components/forms/AdminTextarea'
 import { StatusPill } from '../components/StatusPill'
 import { api } from '../lib/api'
 import {
@@ -20,32 +21,38 @@ import {
   type PaginationMeta,
 } from '../lib/apiTypes'
 
-type StoreCategoryRow = {
+type ProductRow = {
   id: number
   store_id: number
+  store_category_id: number
   title: string
   image_path: string | null
+  description: string | null
   is_active: boolean
   store?: { id: number; title: string } | null
+  store_category?: { id: number; title: string } | null
   created_at: string
   updated_at: string
 }
 
 type StoreOption = { id: number; title: string }
-type OptionsApiResponse = { data: StoreOption[] }
-type StoreCategoriesApiResponse = {
-  data: StoreCategoryRow[]
+type StoreCategoryOption = { id: number; store_id: number; title: string }
+type OptionsApiResponse<T> = { data: T[] }
+type ProductsApiResponse = {
+  data: ProductRow[]
   meta: Parameters<typeof normalizePaginationMeta>[0]
 }
 
-type StoreCategoryFormValues = {
+type ProductFormValues = {
   store_id: string
+  store_category_id: string
   title: string
   image_path: string
+  description: string
   is_active: boolean
 }
 
-type StoreCategoryListRow = StoreCategoryRow & { serialNumber: number }
+type ProductListRow = ProductRow & { serialNumber: number }
 
 const defaultMeta: PaginationMeta = {
   currentPage: 1,
@@ -61,22 +68,24 @@ const statusOptions: AdminSelectOption[] = [
   { label: 'Unpublish', value: '0' },
 ]
 
-export function StoreCategoriesPage() {
+export function ProductsPage() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
-  const [editingCategory, setEditingCategory] = useState<StoreCategoryRow | null>(null)
+  const [editingProduct, setEditingProduct] = useState<ProductRow | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formStoreId, setFormStoreId] = useState('')
+  const [formCategoryId, setFormCategoryId] = useState('')
   const [formStatus, setFormStatus] = useState('1')
   const [imagePath, setImagePath] = useState('')
+  const [description, setDescription] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
 
-  const storeCategories = useQuery<PaginatedResponse<StoreCategoryRow>>({
-    queryKey: ['admin-store-categories', search, page],
+  const products = useQuery<PaginatedResponse<ProductRow>>({
+    queryKey: ['admin-products', search, page],
     queryFn: async () => {
-      const response = await api.get<StoreCategoriesApiResponse>('/api/v1/admin/store-categories', {
+      const response = await api.get<ProductsApiResponse>('/api/v1/admin/products', {
         params: toApiListParams({ page, perPage: 10, search }),
       })
 
@@ -86,9 +95,21 @@ export function StoreCategoriesPage() {
   })
 
   const stores = useQuery<StoreOption[]>({
-    queryKey: ['admin-store-category-store-options'],
+    queryKey: ['admin-product-store-options'],
     queryFn: async () => {
-      const response = await api.get<OptionsApiResponse>('/api/v1/admin/stores', {
+      const response = await api.get<OptionsApiResponse<StoreOption>>('/api/v1/admin/stores', {
+        params: toApiListParams({ perPage: 100 }),
+      })
+
+      return response.data.data
+    },
+    retry: false,
+  })
+
+  const storeCategories = useQuery<StoreCategoryOption[]>({
+    queryKey: ['admin-product-store-category-options'],
+    queryFn: async () => {
+      const response = await api.get<OptionsApiResponse<StoreCategoryOption>>('/api/v1/admin/store-categories', {
         params: toApiListParams({ perPage: 100 }),
       })
 
@@ -102,110 +123,125 @@ export function StoreCategoriesPage() {
     [stores.data],
   )
 
-  const saveCategory = useMutation({
-    mutationFn: async (values: StoreCategoryFormValues) => {
-      const payload = toStoreCategoryPayload(values)
+  const categoryOptions = useMemo(
+    () =>
+      storeCategories.data
+        ?.filter((category) => !formStoreId || String(category.store_id) === formStoreId)
+        .map((category) => ({ label: category.title, value: String(category.id) })) ?? [],
+    [formStoreId, storeCategories.data],
+  )
 
-      if (editingCategory) {
-        const response = await api.put<{ data: StoreCategoryRow }>(
-          `/api/v1/admin/store-categories/${editingCategory.id}`,
+  const saveProduct = useMutation({
+    mutationFn: async (values: ProductFormValues) => {
+      const payload = toProductPayload(values)
+
+      if (editingProduct) {
+        const response = await api.put<{ data: ProductRow }>(
+          `/api/v1/admin/products/${editingProduct.id}`,
           payload,
         )
         return response.data.data
       }
 
-      const response = await api.post<{ data: StoreCategoryRow }>('/api/v1/admin/store-categories', payload)
+      const response = await api.post<{ data: ProductRow }>('/api/v1/admin/products', payload)
       return response.data.data
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['admin-store-categories'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-products'] })
       closeForm()
     },
     onError: (error) => {
       if (isAxiosError(error) && error.response?.status === 422) {
         const data = error.response.data as { errors?: Record<string, string[]> }
-        setFormError(data.errors?.store_id?.[0] ?? data.errors?.title?.[0] ?? 'Check required fields.')
+        setFormError(
+          data.errors?.store_id?.[0] ??
+            data.errors?.store_category_id?.[0] ??
+            data.errors?.title?.[0] ??
+            'Check required fields.',
+        )
         return
       }
 
-      setFormError('Store category could not be saved.')
+      setFormError('Product could not be saved.')
     },
   })
 
-  const deleteCategory = useMutation({
-    mutationFn: async (category: StoreCategoryRow) => {
-      await api.delete(`/api/v1/admin/store-categories/${category.id}`)
+  const deleteProduct = useMutation({
+    mutationFn: async (product: ProductRow) => {
+      await api.delete(`/api/v1/admin/products/${product.id}`)
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['admin-store-categories'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin-products'] })
     },
   })
 
-  const apiRows = storeCategories.data?.data ?? []
+  const apiRows = products.data?.data ?? []
   const filteredRows =
-    status === 'all'
-      ? apiRows
-      : apiRows.filter((category) => category.is_active === (status === 'active'))
-  const meta = storeCategories.data?.meta ?? defaultMeta
-  const rows: StoreCategoryListRow[] = filteredRows.map((category, index) => ({
-    ...category,
+    status === 'all' ? apiRows : apiRows.filter((product) => product.is_active === (status === 'active'))
+  const meta = products.data?.meta ?? defaultMeta
+  const rows: ProductListRow[] = filteredRows.map((product, index) => ({
+    ...product,
     serialNumber: (meta.from || 1) + index,
   }))
 
-  const columns = useMemo<MasterTableColumn<StoreCategoryListRow>[]>(
+  const columns = useMemo<MasterTableColumn<ProductListRow>[]>(
     () => [
-      { key: 'serial', header: 'Sr No.', render: (category) => category.serialNumber, width: '90px' },
-      {
-        key: 'title',
-        header: 'Menu Category',
-        render: (category) => (
-          <span className="stacked-cell">
-            <strong>{category.title}</strong>
-            <small>{category.store?.title ?? `Store #${category.store_id}`}</small>
-          </span>
-        ),
-      },
+      { key: 'serial', header: 'Sr No.', render: (product) => product.serialNumber, width: '90px' },
       {
         key: 'image',
         header: 'Image',
         align: 'center',
-        render: (category) => (
-          <StoreCategoryImagePreview src={category.image_path} alt={`${category.title} image`} />
+        render: (product) => <ProductImagePreview src={product.image_path} alt={`${product.title} image`} />,
+      },
+      {
+        key: 'title',
+        header: 'Product',
+        render: (product) => (
+          <span className="stacked-cell">
+            <strong>{product.title}</strong>
+            <small>#{product.id}</small>
+          </span>
         ),
+      },
+      { key: 'store', header: 'Store', render: (product) => product.store?.title ?? `Store #${product.store_id}` },
+      {
+        key: 'category',
+        header: 'Category',
+        render: (product) => product.store_category?.title ?? `Category #${product.store_category_id}`,
       },
       {
         key: 'status',
         header: 'Status',
         align: 'center',
-        render: (category) => (
-          <StatusPill tone={category.is_active ? 'success' : 'danger'}>
-            {category.is_active ? 'Publish' : 'Unpublish'}
+        render: (product) => (
+          <StatusPill tone={product.is_active ? 'success' : 'danger'}>
+            {product.is_active ? 'Publish' : 'Unpublish'}
           </StatusPill>
         ),
       },
-      { key: 'updated', header: 'Updated', render: (category) => formatDate(category.updated_at) },
+      { key: 'updated', header: 'Updated', render: (product) => formatDate(product.updated_at) },
       {
         key: 'actions',
         header: 'Action',
         align: 'right',
-        render: (category) => (
+        render: (product) => (
           <span className="row-actions">
             <button
               type="button"
-              aria-label="Edit store category"
-              data-tooltip="Edit store category"
-              title="Edit store category"
-              onClick={() => openEditForm(category)}
+              aria-label="Edit product"
+              data-tooltip="Edit product"
+              title="Edit product"
+              onClick={() => openEditForm(product)}
             >
               <Edit3 aria-hidden="true" size={16} />
             </button>
             <button
               type="button"
-              aria-label="Delete store category"
-              data-tooltip="Delete store category"
-              title="Delete store category"
+              aria-label="Delete product"
+              data-tooltip="Delete product"
+              title="Delete product"
               onClick={() => {
-                if (window.confirm(`Delete ${category.title}?`)) deleteCategory.mutate(category)
+                if (window.confirm(`Delete ${product.title}?`)) deleteProduct.mutate(product)
               }}
             >
               <Trash2 aria-hidden="true" size={16} />
@@ -214,34 +250,45 @@ export function StoreCategoriesPage() {
         ),
       },
     ],
-    [deleteCategory],
+    [deleteProduct],
   )
 
   function openCreateForm() {
-    setEditingCategory(null)
+    setEditingProduct(null)
     setFormStoreId('')
+    setFormCategoryId('')
     setFormStatus('1')
     setImagePath('')
+    setDescription('')
     setFormError(null)
     setIsFormOpen(true)
   }
 
-  function openEditForm(category: StoreCategoryRow) {
-    setEditingCategory(category)
-    setFormStoreId(String(category.store_id))
-    setFormStatus(category.is_active ? '1' : '0')
-    setImagePath(category.image_path ?? '')
+  function openEditForm(product: ProductRow) {
+    setEditingProduct(product)
+    setFormStoreId(String(product.store_id))
+    setFormCategoryId(String(product.store_category_id))
+    setFormStatus(product.is_active ? '1' : '0')
+    setImagePath(product.image_path ?? '')
+    setDescription(product.description ?? '')
     setFormError(null)
     setIsFormOpen(true)
   }
 
   function closeForm() {
-    setEditingCategory(null)
+    setEditingProduct(null)
     setFormStoreId('')
+    setFormCategoryId('')
     setFormStatus('1')
     setImagePath('')
+    setDescription('')
     setFormError(null)
     setIsFormOpen(false)
+  }
+
+  function handleStoreChange(storeId: string) {
+    setFormStoreId(storeId)
+    setFormCategoryId('')
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -249,16 +296,18 @@ export function StoreCategoriesPage() {
     const form = new FormData(event.currentTarget)
     const title = String(form.get('title') ?? '').trim()
 
-    if (!formStoreId || !title) {
-      setFormError('Store and Category Name are required.')
+    if (!formStoreId || !formCategoryId || !title) {
+      setFormError('Store, Category, and Product Title are required.')
       return
     }
 
     setFormError(null)
-    saveCategory.mutate({
+    saveProduct.mutate({
       store_id: formStoreId,
+      store_category_id: formCategoryId,
       title,
       image_path: imagePath,
+      description,
       is_active: formStatus === '1',
     })
   }
@@ -266,19 +315,19 @@ export function StoreCategoriesPage() {
   return (
     <>
       <MasterPageHeader
-        title="Store Categories"
-        description="Manage per-store menu categories used by products."
+        title="Products"
+        description="Manage store products before adding variants and gallery images."
         actions={
           <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
-            Add Store Category
+            Add Product
           </button>
         }
       />
 
       <MasterFilterBar
-        searchLabel="Search store categories"
-        searchPlaceholder="Search categories or stores..."
+        searchLabel="Search products"
+        searchPlaceholder="Search products..."
         searchValue={search}
         onSearchChange={(value) => {
           setSearch(value)
@@ -293,7 +342,7 @@ export function StoreCategoriesPage() {
               setPage(1)
             },
             options: [
-              { label: 'All categories', value: 'all' },
+              { label: 'All products', value: 'all' },
               { label: 'Publish', value: 'active' },
               { label: 'Unpublish', value: 'inactive' },
             ],
@@ -304,39 +353,35 @@ export function StoreCategoriesPage() {
       <section className="data-panel">
         <div className="data-panel-header">
           <div>
-            <h3>Store Category Directory</h3>
+            <h3>Product Directory</h3>
           </div>
         </div>
 
         <MasterDataTable
           columns={columns}
           rows={rows}
-          getRowKey={(category) => category.id}
+          getRowKey={(product) => product.id}
           emptyState={
             <span className="master-empty-state">
-              <ListTree aria-hidden="true" size={30} />
-              No store categories found
+              <PackageOpen aria-hidden="true" size={30} />
+              No products found
             </span>
           }
-          isLoading={storeCategories.isLoading}
-          minWidth={900}
+          isLoading={products.isLoading}
+          minWidth={1040}
         />
 
-        {storeCategories.isError ? (
-          <div className="master-error">Store categories could not be loaded.</div>
-        ) : null}
+        {products.isError ? <div className="master-error">Products could not be loaded.</div> : null}
 
         <MasterPagination meta={meta} onPageChange={setPage} />
       </section>
 
       {isFormOpen ? (
         <div className="modal-backdrop" role="presentation">
-          <section className="store-form-modal" role="dialog" aria-modal="true" aria-labelledby="store-category-title">
+          <section className="store-form-modal" role="dialog" aria-modal="true" aria-labelledby="product-form-title">
             <div className="modal-header">
               <div>
-                <h3 id="store-category-title">
-                  {editingCategory ? 'Edit Store Category' : 'Add Store Category'}
-                </h3>
+                <h3 id="product-form-title">{editingProduct ? 'Edit Product' : 'Add Product'}</h3>
               </div>
               <button type="button" className="secondary-button" onClick={closeForm}>
                 Close
@@ -344,30 +389,30 @@ export function StoreCategoriesPage() {
             </div>
 
             <form className="store-form" onSubmit={handleSubmit}>
-              <FormSection title="Store Category Information" columns={2}>
+              <FormSection title="Product Information" columns={2}>
                 <label className="form-field">
                   <FieldLabel label="Store" required />
                   <AdminSelect
                     options={storeOptions}
                     placeholder="Search and select store"
                     value={formStoreId}
-                    onChange={setFormStoreId}
+                    onChange={handleStoreChange}
                   />
                 </label>
 
                 <label className="form-field">
-                  <FieldLabel label="Category Name" required />
-                  <input name="title" maxLength={255} defaultValue={editingCategory?.title ?? ''} />
+                  <FieldLabel label="Product Category" required />
+                  <AdminSelect
+                    options={categoryOptions}
+                    placeholder={formStoreId ? 'Search and select category' : 'Select store first'}
+                    value={formCategoryId}
+                    onChange={setFormCategoryId}
+                  />
                 </label>
 
                 <label className="form-field">
-                  <FieldLabel label="Category Image" />
-                  <AdminFilePicker
-                    name="image_path"
-                    label="Category image"
-                    value={imagePath}
-                    onChange={setImagePath}
-                  />
+                  <FieldLabel label="Product Title" required />
+                  <input name="title" maxLength={255} defaultValue={editingProduct?.title ?? ''} />
                 </label>
 
                 <label className="form-field">
@@ -381,15 +426,41 @@ export function StoreCategoriesPage() {
                 </label>
               </FormSection>
 
+              <FormSection title="Media And Description" columns={2}>
+                <label className="form-field">
+                  <FieldLabel label="Product Image" />
+                  <AdminFilePicker
+                    name="image_path"
+                    label="Product image"
+                    value={imagePath}
+                    onChange={setImagePath}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FieldLabel label="Product Description" />
+                  <AdminTextarea
+                    name="description"
+                    value={description}
+                    maxLength={1200}
+                    placeholder="Enter product description"
+                    helpText="Shown in product details"
+                    onChange={setDescription}
+                  />
+                </label>
+              </FormSection>
+
               {formError ? <div className="form-error">{formError}</div> : null}
-              {stores.isError ? <div className="form-error">Stores could not be loaded.</div> : null}
+              {stores.isError || storeCategories.isError ? (
+                <div className="form-error">Store or category options could not be loaded.</div>
+              ) : null}
 
               <div className="modal-actions">
                 <button className="secondary-button" type="button" onClick={closeForm}>
                   Cancel
                 </button>
-                <button className="primary-button is-compact" type="submit" disabled={saveCategory.isPending}>
-                  {saveCategory.isPending ? 'Saving...' : editingCategory ? 'Save Category' : 'Add Category'}
+                <button className="primary-button is-compact" type="submit" disabled={saveProduct.isPending}>
+                  {saveProduct.isPending ? 'Saving...' : editingProduct ? 'Save Product' : 'Add Product'}
                 </button>
               </div>
             </form>
@@ -419,7 +490,7 @@ function FormSection({ title, columns = 2, children }: { title: string; columns?
   )
 }
 
-function StoreCategoryImagePreview({ src, alt }: { src: string | null; alt: string }) {
+function ProductImagePreview({ src, alt }: { src: string | null; alt: string }) {
   if (!src) {
     return (
       <span className="store-image-placeholder">
@@ -432,11 +503,13 @@ function StoreCategoryImagePreview({ src, alt }: { src: string | null; alt: stri
   return <img className="store-table-image" src={assetUrl(src)} alt={alt} />
 }
 
-function toStoreCategoryPayload(values: StoreCategoryFormValues) {
+function toProductPayload(values: ProductFormValues) {
   return {
     store_id: Number(values.store_id),
+    store_category_id: Number(values.store_category_id),
     title: values.title,
     image_path: values.image_path.trim() || null,
+    description: values.description.trim() || null,
     is_active: values.is_active,
   }
 }

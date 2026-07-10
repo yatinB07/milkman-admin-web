@@ -4,6 +4,7 @@ import { AdminShell } from './components/AdminShell'
 import { LoginPage } from './components/LoginPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { ProductsPage } from './pages/ProductsPage'
 import { StoreCategoriesPage } from './pages/StoreCategoriesPage'
 import { StoresPage } from './pages/StoresPage'
 import { ZonesPage } from './pages/ZonesPage'
@@ -76,6 +77,8 @@ function App() {
     >
       {activePage === 'Stores' ? (
         <StoresPage />
+      ) : activePage === 'Products' ? (
+        <ProductsPage />
       ) : activePage === 'Store Categories' ? (
         <StoreCategoriesPage />
       ) : activePage === 'Categories' ? (
