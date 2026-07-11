@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { useSyncExternalStore } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AdminShell } from './components/AdminShell'
@@ -27,6 +27,7 @@ type CurrentUserResponse = {
 function App() {
   const { sidebarCollapsed, theme, token, user } = useAdminStore()
   const activePath = useHashPath()
+  const confirmedPathRef = useRef(activePath)
   const visibleModules = adminModules.filter((module) => canAccess(user, module.permission))
   const sidebarModules = visibleModules.filter((module) => module.showInSidebar !== false)
   const profileModule = visibleModules.find((module) => module.id === 'profile')
@@ -87,6 +88,22 @@ function App() {
 
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [])
+
+  useEffect(() => {
+    if (activePath === confirmedPathRef.current) return
+
+    if (!dirtyFormStore.isDirty()) {
+      confirmedPathRef.current = activePath
+      return
+    }
+
+    if (dirtyFormStore.confirmDiscard()) {
+      confirmedPathRef.current = activePath
+      return
+    }
+
+    navigateToPath(confirmedPathRef.current)
+  }, [activePath])
 
   useEffect(() => {
     if (!shouldRedirectUnauthorizedRoute(activePath, user)) return
