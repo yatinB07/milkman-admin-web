@@ -20,6 +20,7 @@ type AdminMultiSelectProps = {
   values: string[]
   options: AdminSelectOption[]
   placeholder?: string
+  hasError?: boolean
   onChange: (values: string[]) => void
 }
 
@@ -57,6 +58,7 @@ export function AdminMultiSelect({
   values,
   options,
   placeholder = 'Select options',
+  hasError = false,
   onChange,
 }: AdminMultiSelectProps) {
   const selected = options.filter((option) => values.includes(option.value))
@@ -72,7 +74,7 @@ export function AdminMultiSelect({
       menuPosition="fixed"
       options={options}
       placeholder={placeholder}
-      styles={selectStyles(false)}
+      styles={selectStyles(hasError)}
       value={selected}
       onChange={(nextValues: MultiValue<AdminSelectOption>) => {
         onChange(nextValues.map((option) => option.value))

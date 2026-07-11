@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react'
-import { type FormEvent, type ReactNode, useState } from 'react'
+import { type FormEvent, type InputHTMLAttributes, type ReactNode, useState } from 'react'
+import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminMultiSelect, AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
 import { AdminTextarea } from '../../components/forms/AdminTextarea'
@@ -10,20 +11,20 @@ import {
   storeFormTabs,
   stringifyValue,
   toTimeInput,
-  validateStoreValues,
+  validateStoreFieldErrors,
 } from './storeService'
-import type { StoreFormTabId, StoreFormValues, StoreRow } from './storeTypes'
+import type { StoreFormErrors, StoreFormTabId, StoreFormValues, StoreRow } from './storeTypes'
 
 type StoreFormProps = {
   store: StoreRow | null
   categoryOptions: AdminSelectOption[]
   zoneOptions: AdminSelectOption[]
-  formError: string | null
+  formErrors: StoreFormErrors
   optionError: boolean
   isSaving: boolean
   activeTab: StoreFormTabId
   onActiveTabChange: (tab: StoreFormTabId) => void
-  onFormError: (message: string | null) => void
+  onFormErrorsChange: (errors: StoreFormErrors) => void
   onCancel: () => void
   onSubmit: (values: StoreFormValues) => void
 }
@@ -47,12 +48,12 @@ export function StoreForm({
   store,
   categoryOptions,
   zoneOptions,
-  formError,
+  formErrors,
   optionError,
   isSaving,
   activeTab,
   onActiveTabChange,
-  onFormError,
+  onFormErrorsChange,
   onCancel,
   onSubmit,
 }: StoreFormProps) {
@@ -116,15 +117,15 @@ export function StoreForm({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const values = buildValues(new FormData(event.currentTarget))
-    const validationError = validateStoreValues(values, Boolean(store))
+    const validation = validateStoreFieldErrors(values, Boolean(store))
 
-    if (validationError) {
-      onActiveTabChange(validationError.tab)
-      onFormError(validationError.message)
+    onFormErrorsChange(validation.errors)
+
+    if (validation.firstTab) {
+      onActiveTabChange(validation.firstTab)
       return
     }
 
-    onFormError(null)
     onSubmit(values)
   }
 
@@ -132,26 +133,23 @@ export function StoreForm({
     <section className="store-form-page" aria-labelledby="store-form-title">
       <div className="store-form-page-header">
         <div className="store-form-title-block">
-          <button type="button" className="ghost-button" onClick={onCancel}>
+          <Button variant="ghost" onClick={onCancel}>
             <ArrowLeft aria-hidden="true" size={16} />
             Stores
-          </button>
+          </Button>
           <h2 id="store-form-title">{store ? 'Edit Store' : 'Add Store'}</h2>
         </div>
         <div className="store-form-page-actions">
-          <button className="secondary-button" type="button" onClick={onCancel}>
+          <Button variant="secondary" onClick={onCancel}>
             Cancel
-          </button>
-          <button className="primary-button is-compact" type="submit" form="store-admin-form" disabled={isSaving}>
+          </Button>
+          <Button variant="primary" size="compact" type="submit" form="store-admin-form" disabled={isSaving}>
             {isSaving ? 'Saving...' : store ? 'Save Store' : 'Create Store'}
-          </button>
+          </Button>
         </div>
       </div>
 
       <form id="store-admin-form" className="store-form" noValidate onSubmit={handleSubmit}>
-        {formError ? <div className="form-error">{formError}</div> : null}
-        {optionError ? <div className="form-error">Zone or category options could not be loaded.</div> : null}
-
         <div className="store-form-tabs" role="tablist" aria-label="Store form sections">
           {storeFormTabs.map((tab) => (
             <button
@@ -172,50 +170,82 @@ export function StoreForm({
         <div className="store-tab-panels">
           <TabPanel id="basic" activeTab={activeTab}>
             <StoreFormSection title="Store Information">
-              <label className="form-field">
-                <FieldLabel label="Store Name" required />
-                <input name="title" maxLength={255} defaultValue={store?.title ?? ''} />
-              </label>
+              <StoreInputField
+                name="title"
+                label="Store Name"
+                required
+                maxLength={255}
+                defaultValue={store?.title ?? ''}
+                error={formErrors.title}
+              />
 
               <label className="form-field">
                 <FieldLabel label="Store Status" required />
                 <AdminSelect isSearchable={false} options={publishOptions} value={formIsActive} onChange={setFormIsActive} />
               </label>
 
-              <label className="form-field">
-                <FieldLabel label="Rating" required />
-                <input name="rating" type="number" min="0" step="0.01" defaultValue={store?.rating ?? ''} />
-              </label>
+              <StoreInputField
+                name="rating"
+                label="Rating"
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={store?.rating ?? ''}
+                error={formErrors.rating}
+              />
 
-              <label className="form-field">
-                <span>Certificate/License Code</span>
-                <input name="language_code" maxLength={12} defaultValue={store?.language_code ?? ''} />
-              </label>
+              <StoreInputField
+                name="language_code"
+                label="Certificate/License Code"
+                maxLength={12}
+                defaultValue={store?.language_code ?? ''}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Mobile number" required />
-                <input name="mobile" maxLength={32} defaultValue={store?.mobile ?? ''} />
-              </label>
+              <StoreInputField
+                name="mobile"
+                label="Mobile number"
+                required
+                maxLength={32}
+                defaultValue={store?.mobile ?? ''}
+                error={formErrors.mobile}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Slogan Title" required />
-                <input name="slogan" maxLength={255} defaultValue={store?.slogan ?? ''} />
-              </label>
+              <StoreInputField
+                name="slogan"
+                label="Slogan Title"
+                required
+                maxLength={255}
+                defaultValue={store?.slogan ?? ''}
+                error={formErrors.slogan}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Slogan Subtitle" required />
-                <input name="slogan_title" maxLength={255} defaultValue={store?.slogan_title ?? ''} />
-              </label>
+              <StoreInputField
+                name="slogan_title"
+                label="Slogan Subtitle"
+                required
+                maxLength={255}
+                defaultValue={store?.slogan_title ?? ''}
+                error={formErrors.slogan_title}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Store Open Time" required />
-                <input name="opens_at" type="time" defaultValue={toTimeInput(store?.opens_at)} />
-              </label>
+              <StoreInputField
+                name="opens_at"
+                label="Store Open Time"
+                required
+                type="time"
+                defaultValue={toTimeInput(store?.opens_at)}
+                error={formErrors.opens_at}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Store Close Time" required />
-                <input name="closes_at" type="time" defaultValue={toTimeInput(store?.closes_at)} />
-              </label>
+              <StoreInputField
+                name="closes_at"
+                label="Store Close Time"
+                required
+                type="time"
+                defaultValue={toTimeInput(store?.closes_at)}
+                error={formErrors.closes_at}
+              />
 
               <label className="form-field">
                 <FieldLabel label="Store Pickup Status" required />
@@ -229,7 +259,12 @@ export function StoreForm({
 
               <label className="form-field is-wide">
                 <FieldLabel label="Tags" required />
-                <input name="short_description" defaultValue={store?.short_description ?? ''} />
+                <Input
+                  name="short_description"
+                  aria-invalid={Boolean(formErrors.short_description)}
+                  defaultValue={store?.short_description ?? ''}
+                />
+                <FieldError message={formErrors.short_description} />
               </label>
 
               <label className="form-field is-wide">
@@ -241,6 +276,7 @@ export function StoreForm({
                   onChange={setContentDescription}
                   helpText="Plain text shown on the customer-facing store details."
                 />
+                <FieldError message={formErrors.content_description} />
               </label>
 
               <label className="form-field is-wide">
@@ -252,6 +288,7 @@ export function StoreForm({
                   onChange={setCancelPolicy}
                   helpText="Plain text policy customers can read before ordering."
                 />
+                <FieldError message={formErrors.cancel_policy} />
               </label>
             </StoreFormSection>
           </TabPanel>
@@ -261,6 +298,7 @@ export function StoreForm({
               <label className="form-field">
                 <FieldLabel label="Store Logo" required />
                 <AdminFilePicker name="image_path" required label="Store logo" value={logoPath} onChange={setLogoPath} />
+                <FieldError message={formErrors.image_path} />
               </label>
 
               <label className="form-field">
@@ -272,21 +310,32 @@ export function StoreForm({
                   value={coverPath}
                   onChange={setCoverPath}
                 />
+                <FieldError message={formErrors.cover_image_path} />
               </label>
             </StoreFormSection>
           </TabPanel>
 
           <TabPanel id="login" activeTab={activeTab}>
             <StoreFormSection title="Store Login Information" columns={2}>
-              <label className="form-field">
-                <FieldLabel label="Email Address" required />
-                <input name="email" type="email" maxLength={255} defaultValue={store?.email ?? ''} />
-              </label>
+              <StoreInputField
+                name="email"
+                label="Email Address"
+                required
+                type="email"
+                maxLength={255}
+                defaultValue={store?.email ?? ''}
+                error={formErrors.email}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Password" required={!store} />
-                <input name="password" type="password" minLength={8} placeholder={store ? 'Leave blank to keep current' : 'Minimum 8 chars'} />
-              </label>
+              <StoreInputField
+                name="password"
+                label="Password"
+                required={!store}
+                type="password"
+                minLength={8}
+                placeholder={store ? 'Leave blank to keep current' : 'Minimum 8 chars'}
+                error={formErrors.password}
+              />
             </StoreFormSection>
           </TabPanel>
 
@@ -299,57 +348,82 @@ export function StoreForm({
                   placeholder="Search and select store categories"
                   values={formCategoryIds}
                   onChange={setFormCategoryIds}
+                  hasError={Boolean(formErrors.category_reference || optionError)}
                 />
+                <FieldError message={formErrors.category_reference ?? (optionError ? 'Zone or category options could not be loaded.' : undefined)} />
               </label>
             </StoreFormSection>
           </TabPanel>
 
           <TabPanel id="address" activeTab={activeTab}>
             <StoreFormSection title="Store Address Information" columns={2}>
-              <label className="form-field is-wide">
-                <FieldLabel label="Full Address" required />
-                <input name="full_address" defaultValue={store?.full_address ?? ''} />
-              </label>
+              <StoreInputField
+                name="full_address"
+                label="Full Address"
+                required
+                wide
+                defaultValue={store?.full_address ?? ''}
+                error={formErrors.full_address}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Pincode" required />
-                <input name="pincode" maxLength={32} defaultValue={store?.pincode ?? ''} />
-              </label>
+              <StoreInputField
+                name="pincode"
+                label="Pincode"
+                required
+                maxLength={32}
+                defaultValue={store?.pincode ?? ''}
+                error={formErrors.pincode}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Landmark" required />
-                <input name="landmark" maxLength={255} defaultValue={store?.landmark ?? ''} />
-              </label>
+              <StoreInputField
+                name="landmark"
+                label="Landmark"
+                required
+                maxLength={255}
+                defaultValue={store?.landmark ?? ''}
+                error={formErrors.landmark}
+              />
 
               <label className="form-field">
                 <FieldLabel label="Select Zone" required />
-                <AdminSelect options={zoneOptions} placeholder="Search and select zone" value={formZoneId} onChange={setFormZoneId} />
+                <AdminSelect
+                  options={zoneOptions}
+                  placeholder="Search and select zone"
+                  value={formZoneId}
+                  onChange={setFormZoneId}
+                  hasError={Boolean(formErrors.zone_id || optionError)}
+                />
+                <FieldError message={formErrors.zone_id ?? (optionError ? 'Zone or category options could not be loaded.' : undefined)} />
               </label>
 
               <label className="form-field">
                 <FieldLabel label="Latitude" required />
-                <input
+                <Input
                   name="latitude"
                   type="number"
                   step="0.0000001"
+                  aria-invalid={Boolean(formErrors.latitude)}
                   value={location.latitude}
                   onChange={(event) => {
                     setLocation((current) => ({ ...current, latitude: event.target.value }))
                   }}
                 />
+                <FieldError message={formErrors.latitude} />
               </label>
 
               <label className="form-field">
                 <FieldLabel label="Longitude" required />
-                <input
+                <Input
                   name="longitude"
                   type="number"
                   step="0.0000001"
+                  aria-invalid={Boolean(formErrors.longitude)}
                   value={location.longitude}
                   onChange={(event) => {
                     setLocation((current) => ({ ...current, longitude: event.target.value }))
                   }}
                 />
+                <FieldError message={formErrors.longitude} />
               </label>
 
               <div className="form-field is-wide">
@@ -377,92 +451,159 @@ export function StoreForm({
                   options={chargeTypeOptions}
                   value={formChargeType}
                   onChange={setFormChargeType}
+                  hasError={Boolean(formErrors.charge_type)}
                 />
+                <FieldError message={formErrors.charge_type} />
               </label>
 
-              <label className="form-field">
-                <FieldLabel label="Service Charge" required />
-                <input name="delivery_charge" type="number" min="0" step="0.01" required defaultValue={store?.delivery_charge ?? ''} />
-              </label>
+              <StoreInputField
+                name="delivery_charge"
+                label="Service Charge"
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={store?.delivery_charge ?? ''}
+                error={formErrors.delivery_charge}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Base Service Distance" required />
-                <input name="unit_kilometers" type="number" min="0" required defaultValue={store?.unit_kilometers ?? ''} />
-              </label>
+              <StoreInputField
+                name="unit_kilometers"
+                label="Base Service Distance"
+                required
+                type="number"
+                min="0"
+                defaultValue={store?.unit_kilometers ?? ''}
+                error={formErrors.unit_kilometers}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Base Service Charge" required />
-                <input name="unit_price" type="number" min="0" step="0.01" required defaultValue={store?.unit_price ?? ''} />
-              </label>
+              <StoreInputField
+                name="unit_price"
+                label="Base Service Charge"
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={store?.unit_price ?? ''}
+                error={formErrors.unit_price}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Extra Service Charge" required />
-                <input name="additional_price" type="number" min="0" step="0.01" required defaultValue={store?.additional_price ?? ''} />
-              </label>
+              <StoreInputField
+                name="additional_price"
+                label="Extra Service Charge"
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={store?.additional_price ?? ''}
+                error={formErrors.additional_price}
+              />
             </StoreFormSection>
 
             <StoreFormSection title="Store Service Information">
-              <label className="form-field">
-                <FieldLabel label="Store Charge (Packing/Extra)" required />
-                <input name="store_charge" type="number" min="0" step="0.01" defaultValue={store?.store_charge ?? ''} />
-              </label>
+              <StoreInputField
+                name="store_charge"
+                label="Store Charge (Packing/Extra)"
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={store?.store_charge ?? ''}
+                error={formErrors.store_charge}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Min.Order Price" required />
-                <input name="minimum_order_amount" type="number" min="0" step="0.01" defaultValue={store?.minimum_order_amount ?? ''} />
-              </label>
+              <StoreInputField
+                name="minimum_order_amount"
+                label="Min.Order Price"
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={store?.minimum_order_amount ?? ''}
+                error={formErrors.minimum_order_amount}
+              />
             </StoreFormSection>
 
             <StoreFormSection title="Store Admin Commission" columns={1}>
-              <label className="form-field">
-                <FieldLabel label="Commission Rate %" required />
-                <input name="commission_percent" type="number" min="0" step="0.01" defaultValue={store?.commission_percent ?? ''} />
-              </label>
+              <StoreInputField
+                name="commission_percent"
+                label="Commission Rate %"
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={store?.commission_percent ?? ''}
+                error={formErrors.commission_percent}
+              />
             </StoreFormSection>
           </TabPanel>
 
           <TabPanel id="payout" activeTab={activeTab}>
             <StoreFormSection title="Store Payout Information" columns={2}>
-              <label className="form-field">
-                <FieldLabel label="Bank Name" required />
-                <input name="bank_name" maxLength={255} defaultValue={store?.bank_name ?? ''} />
-              </label>
+              <StoreInputField
+                name="bank_name"
+                label="Bank Name"
+                required
+                maxLength={255}
+                defaultValue={store?.bank_name ?? ''}
+                error={formErrors.bank_name}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Bank Code/IFSC" required />
-                <input name="ifsc_code" maxLength={64} defaultValue={store?.ifsc_code ?? ''} />
-              </label>
+              <StoreInputField
+                name="ifsc_code"
+                label="Bank Code/IFSC"
+                required
+                maxLength={64}
+                defaultValue={store?.ifsc_code ?? ''}
+                error={formErrors.ifsc_code}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Recipient Name" required />
-                <input name="receipt_name" maxLength={255} defaultValue={store?.receipt_name ?? ''} />
-              </label>
+              <StoreInputField
+                name="receipt_name"
+                label="Recipient Name"
+                required
+                maxLength={255}
+                defaultValue={store?.receipt_name ?? ''}
+                error={formErrors.receipt_name}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Account Number" required />
-                <input name="account_number" maxLength={64} defaultValue={store?.account_number ?? ''} />
-              </label>
+              <StoreInputField
+                name="account_number"
+                label="Account Number"
+                required
+                maxLength={64}
+                defaultValue={store?.account_number ?? ''}
+                error={formErrors.account_number}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="Paypal ID" required />
-                <input name="paypal_id" maxLength={255} defaultValue={store?.paypal_id ?? ''} />
-              </label>
+              <StoreInputField
+                name="paypal_id"
+                label="Paypal ID"
+                required
+                maxLength={255}
+                defaultValue={store?.paypal_id ?? ''}
+                error={formErrors.paypal_id}
+              />
 
-              <label className="form-field">
-                <FieldLabel label="UPI ID" required />
-                <input name="upi_id" maxLength={255} defaultValue={store?.upi_id ?? ''} />
-              </label>
+              <StoreInputField
+                name="upi_id"
+                label="UPI ID"
+                required
+                maxLength={255}
+                defaultValue={store?.upi_id ?? ''}
+                error={formErrors.upi_id}
+              />
             </StoreFormSection>
           </TabPanel>
         </div>
 
         <div className="store-form-sticky-actions">
-          <button className="secondary-button" type="button" onClick={onCancel}>
+          <Button variant="secondary" onClick={onCancel}>
             Cancel
-          </button>
-          <button className="primary-button is-compact" type="submit" disabled={isSaving}>
+          </Button>
+          <Button variant="primary" size="compact" type="submit" disabled={isSaving}>
             {isSaving ? 'Saving...' : store ? 'Save Store' : 'Create Store'}
-          </button>
+          </Button>
         </div>
       </form>
     </section>
@@ -486,6 +627,28 @@ function StoreFormSection({
       </div>
     </section>
   )
+}
+
+type StoreInputFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'name'> & {
+  error?: string
+  label: string
+  name: keyof StoreFormValues
+  required?: boolean
+  wide?: boolean
+}
+
+function StoreInputField({ error, label, name, required = false, wide = false, ...props }: StoreInputFieldProps) {
+  return (
+    <label className={wide ? 'form-field is-wide' : 'form-field'}>
+      {required ? <FieldLabel label={label} required /> : <span>{label}</span>}
+      <Input name={name} aria-invalid={Boolean(error)} {...props} />
+      <FieldError message={error} />
+    </label>
+  )
+}
+
+function FieldError({ message }: { message?: string }) {
+  return message ? <small className="field-error">{message}</small> : null
 }
 
 function TabPanel({

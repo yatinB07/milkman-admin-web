@@ -9,6 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
+import { Button, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
@@ -26,11 +27,10 @@ import {
 import {
   serialNumber,
   storeValidationFields,
-  tabLabel,
   toSelectOptions,
   toStorePayload,
 } from './storeService'
-import type { StoreFormTabId, StoreFormValues, StoreListRow, StoreRow } from './storeTypes'
+import type { StoreFormErrors, StoreFormTabId, StoreFormValues, StoreListRow, StoreRow } from './storeTypes'
 
 const defaultMeta: PaginationMeta = {
   currentPage: 1,
@@ -49,7 +49,7 @@ export function StoresPage() {
   const [page, setPage] = useState(1)
   const [editingStore, setEditingStore] = useState<StoreRow | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [formError, setFormError] = useState<string | null>(null)
+  const [formErrors, setFormErrors] = useState<StoreFormErrors>({})
   const [activeStoreTab, setActiveStoreTab] = useState<StoreFormTabId>('basic')
   const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { store: StoreRow }) | null>(null)
   const canCreate = adminStore.can(getModuleActionPermission('stores', 'create'))
@@ -82,6 +82,7 @@ export function StoresPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-stores'] })
+      toast.success(editingStore ? 'Store updated successfully.' : 'Store created successfully.')
       closeForm()
     },
     onError: (error) => {
@@ -89,11 +90,11 @@ export function StoresPage() {
 
       if (validationError) {
         setActiveStoreTab(validationError.tab)
-        setFormError(validationError.message)
+        setFormErrors(validationError.errors)
         return
       }
 
-      setFormError('Store could not be saved. Check the required fields and try again.')
+      toast.error('Store could not be saved. Check the highlighted fields and try again.')
     },
   })
 
@@ -101,6 +102,10 @@ export function StoresPage() {
     mutationFn: async (store: StoreRow) => removeStore(store.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-stores'] })
+      toast.success('Store deleted successfully.')
+    },
+    onError: () => {
+      toast.error('Store could not be deleted. Try again.')
     },
   })
 
@@ -203,21 +208,21 @@ export function StoresPage() {
 
   function openCreateForm() {
     setEditingStore(null)
-    setFormError(null)
+    setFormErrors({})
     setActiveStoreTab('basic')
     setIsFormOpen(true)
   }
 
   function openEditForm(store: StoreRow) {
     setEditingStore(store)
-    setFormError(null)
+    setFormErrors({})
     setActiveStoreTab('basic')
     setIsFormOpen(true)
   }
 
   function closeForm() {
     setEditingStore(null)
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(false)
   }
 
@@ -227,12 +232,12 @@ export function StoresPage() {
         store={editingStore}
         categoryOptions={categoryOptions}
         zoneOptions={zoneOptions}
-        formError={formError}
+        formErrors={formErrors}
         optionError={zones.isError || categories.isError}
         isSaving={saveStore.isPending}
         activeTab={activeStoreTab}
         onActiveTabChange={setActiveStoreTab}
-        onFormError={setFormError}
+        onFormErrorsChange={setFormErrors}
         onCancel={closeForm}
         onSubmit={(values) => saveStore.mutate(values)}
       />
@@ -245,10 +250,10 @@ export function StoresPage() {
         title="Stores"
         description="Manage store onboarding, addresses, service fees, payout details, and status."
         actions={canCreate ? (
-          <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
+          <Button variant="primary" size="compact" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
             Add Store
-          </button>
+          </Button>
         ) : null}
       />
 
@@ -345,15 +350,20 @@ function extractStoreApiValidationError(error: unknown) {
     return null
   }
 
-  for (const field of storeValidationFields) {
-    const fieldErrors = errors[field.name]
+  const fieldErrors: StoreFormErrors = {}
+  let tab: StoreFormTabId | null = null
 
-    if (fieldErrors?.length) {
-      return {
-        message: `${fieldErrors[0]} Complete the ${tabLabel(field.tab)} tab before continuing.`,
-        tab: field.tab,
-      }
+  for (const field of storeValidationFields) {
+    const messages = errors[field.name]
+
+    if (messages?.length) {
+      fieldErrors[field.name] = messages[0]
+      tab ??= field.tab
     }
+  }
+
+  if (tab) {
+    return { errors: fieldErrors, tab }
   }
 
   const firstErrorKey = Object.keys(errors)[0]
@@ -364,7 +374,7 @@ function extractStoreApiValidationError(error: unknown) {
   }
 
   return {
-    message: firstMessage,
+    errors: { title: firstMessage },
     tab: 'basic' as StoreFormTabId,
   }
 }

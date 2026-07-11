@@ -1,5 +1,12 @@
 import type { AdminSelectOption } from '../../components/forms/AdminSelect'
-import type { SelectOption, StoreFormTabId, StoreFormValues, StorePayload, StoreValidationField } from './storeTypes'
+import type {
+  SelectOption,
+  StoreFormErrors,
+  StoreFormTabId,
+  StoreFormValues,
+  StorePayload,
+  StoreValidationField,
+} from './storeTypes'
 
 export const storeFormTabs: Array<{ id: StoreFormTabId; label: string }> = [
   { id: 'basic', label: 'Basic Info' },
@@ -64,20 +71,35 @@ export function tabLabel(tab: StoreFormTabId) {
 }
 
 export function validateStoreValues(values: StoreFormValues, isEditing: boolean) {
+  const validation = validateStoreFieldErrors(values, isEditing)
+  const firstField = storeValidationFields.find((field) => validation.errors[field.name])
+
+  if (firstField) {
+    return {
+      message: `${firstField.label} is required. Complete the ${tabLabel(firstField.tab)} tab before continuing.`,
+      tab: firstField.tab,
+    }
+  }
+
+  return null
+}
+
+export function validateStoreFieldErrors(values: StoreFormValues, isEditing: boolean) {
+  const errors: StoreFormErrors = {}
+  let firstTab: StoreFormTabId | null = null
+
   for (const field of storeValidationFields) {
     if (field.when && !field.when(values, isEditing)) {
       continue
     }
 
     if (!String(values[field.name] ?? '').trim()) {
-      return {
-        message: `${field.label} is required. Complete the ${tabLabel(field.tab)} tab before continuing.`,
-        tab: field.tab,
-      }
+      errors[field.name] = `${field.label} is required.`
+      firstTab ??= field.tab
     }
   }
 
-  return null
+  return { errors, firstTab }
 }
 
 export function toStorePayload(values: StoreFormValues, isEditing: boolean): StorePayload {

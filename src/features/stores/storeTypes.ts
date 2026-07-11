@@ -88,6 +88,8 @@ export type StoreFormValues = {
   upi_id: string
 }
 
+export type StoreFormErrors = Partial<Record<keyof StoreFormValues, string>>
+
 export type SelectOption = {
   id: number
   title: string
