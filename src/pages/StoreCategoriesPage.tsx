@@ -9,6 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../components/master'
+import { ConfirmDialog, type ConfirmDialogOptions } from '../components/common/ConfirmDialog'
 import { AdminFilePicker } from '../components/forms/AdminFilePicker'
 import { AdminSelect, type AdminSelectOption } from '../components/forms/AdminSelect'
 import { StatusPill } from '../components/StatusPill'
@@ -19,6 +20,8 @@ import {
   type PaginatedResponse,
   type PaginationMeta,
 } from '../lib/apiTypes'
+import { getModuleActionPermission } from '../routes/adminModules'
+import { adminStore } from '../store/adminStore'
 
 type StoreCategoryRow = {
   id: number
@@ -72,6 +75,12 @@ export function StoreCategoriesPage() {
   const [formStatus, setFormStatus] = useState('1')
   const [imagePath, setImagePath] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<
+    (ConfirmDialogOptions & { category: StoreCategoryRow }) | null
+  >(null)
+  const canCreate = adminStore.can(getModuleActionPermission('store-categories', 'create'))
+  const canUpdate = adminStore.can(getModuleActionPermission('store-categories', 'update'))
+  const canDelete = adminStore.can(getModuleActionPermission('store-categories', 'delete'))
 
   const storeCategories = useQuery<PaginatedResponse<StoreCategoryRow>>({
     queryKey: ['admin-store-categories', search, page],
@@ -190,31 +199,40 @@ export function StoreCategoriesPage() {
         align: 'right',
         render: (category) => (
           <span className="row-actions">
-            <button
-              type="button"
-              aria-label="Edit store category"
-              data-tooltip="Edit store category"
-              title="Edit store category"
-              onClick={() => openEditForm(category)}
-            >
-              <Edit3 aria-hidden="true" size={16} />
-            </button>
-            <button
-              type="button"
-              aria-label="Delete store category"
-              data-tooltip="Delete store category"
-              title="Delete store category"
-              onClick={() => {
-                if (window.confirm(`Delete ${category.title}?`)) deleteCategory.mutate(category)
-              }}
-            >
-              <Trash2 aria-hidden="true" size={16} />
-            </button>
+            {canUpdate ? (
+              <button
+                type="button"
+                aria-label="Edit store category"
+                data-tooltip="Edit store category"
+                title="Edit store category"
+                onClick={() => openEditForm(category)}
+              >
+                <Edit3 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
+            {canDelete ? (
+              <button
+                type="button"
+                aria-label="Delete store category"
+                data-tooltip="Delete store category"
+                title="Delete store category"
+                onClick={() => {
+                  setConfirmDelete({
+                    title: 'Delete store category',
+                    message: `Delete ${category.title}? This can be restored only from the backend.`,
+                    confirmLabel: 'Delete',
+                    category,
+                  })
+                }}
+              >
+                <Trash2 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
           </span>
         ),
       },
     ],
-    [deleteCategory],
+    [canDelete, canUpdate],
   )
 
   function openCreateForm() {
@@ -268,12 +286,12 @@ export function StoreCategoriesPage() {
       <MasterPageHeader
         title="Store Categories"
         description="Manage per-store menu categories used by products."
-        actions={
+        actions={canCreate ? (
           <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
             Add Store Category
           </button>
-        }
+        ) : null}
       />
 
       <MasterFilterBar
@@ -396,6 +414,16 @@ export function StoreCategoriesPage() {
           </section>
         </div>
       ) : null}
+      <ConfirmDialog
+        options={confirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) {
+            deleteCategory.mutate(confirmDelete.category)
+          }
+          setConfirmDelete(null)
+        }}
+      />
     </>
   )
 }

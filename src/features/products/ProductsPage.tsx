@@ -9,8 +9,11 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
+import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
+import { getModuleActionPermission } from '../../routes/adminModules'
+import { adminStore } from '../../store/adminStore'
 import { ProductForm } from './ProductForm'
 import {
   createProduct,
@@ -41,6 +44,10 @@ export function ProductsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formStoreId, setFormStoreId] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { product: ProductRow }) | null>(null)
+  const canCreate = adminStore.can(getModuleActionPermission('products', 'create'))
+  const canUpdate = adminStore.can(getModuleActionPermission('products', 'update'))
+  const canDelete = adminStore.can(getModuleActionPermission('products', 'delete'))
 
   const products = useQuery({
     queryKey: ['admin-products', search, page],
@@ -150,31 +157,40 @@ export function ProductsPage() {
         align: 'right',
         render: (product) => (
           <span className="row-actions">
-            <button
-              type="button"
-              aria-label="Edit product"
-              data-tooltip="Edit product"
-              title="Edit product"
-              onClick={() => openEditForm(product)}
-            >
-              <Edit3 aria-hidden="true" size={16} />
-            </button>
-            <button
-              type="button"
-              aria-label="Delete product"
-              data-tooltip="Delete product"
-              title="Delete product"
-              onClick={() => {
-                if (window.confirm(`Delete ${product.title}?`)) removeProduct.mutate(product)
-              }}
-            >
-              <Trash2 aria-hidden="true" size={16} />
-            </button>
+            {canUpdate ? (
+              <button
+                type="button"
+                aria-label="Edit product"
+                data-tooltip="Edit product"
+                title="Edit product"
+                onClick={() => openEditForm(product)}
+              >
+                <Edit3 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
+            {canDelete ? (
+              <button
+                type="button"
+                aria-label="Delete product"
+                data-tooltip="Delete product"
+                title="Delete product"
+                onClick={() => {
+                  setConfirmDelete({
+                    title: 'Delete product',
+                    message: `Delete ${product.title}? This can be restored only from the backend.`,
+                    confirmLabel: 'Delete',
+                    product,
+                  })
+                }}
+              >
+                <Trash2 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
           </span>
         ),
       },
     ],
-    [removeProduct],
+    [canDelete, canUpdate],
   )
 
   function openCreateForm() {
@@ -213,12 +229,12 @@ export function ProductsPage() {
       <MasterPageHeader
         title="Products"
         description="Manage store products before adding variants and gallery images."
-        actions={
+        actions={canCreate ? (
           <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
             Add Product
           </button>
-        }
+        ) : null}
       />
 
       <MasterFilterBar
@@ -298,6 +314,16 @@ export function ProductsPage() {
           </section>
         </div>
       ) : null}
+      <ConfirmDialog
+        options={confirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) {
+            removeProduct.mutate(confirmDelete.product)
+          }
+          setConfirmDelete(null)
+        }}
+      />
     </>
   )
 }

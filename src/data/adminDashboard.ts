@@ -5,27 +5,11 @@ import {
   Bike,
   CalendarDays,
   ClipboardList,
-  Gauge,
-  LayoutDashboard,
-  ListTree,
-  MapPinned,
-  Package,
-  Shapes,
   PanelLeftClose,
   Search,
-  Settings,
-  ShoppingCart,
   Store,
   Users,
 } from 'lucide-react'
-
-export type NavigationItem = {
-  label: string
-  icon: LucideIcon
-  permission?: string
-  badge?: string
-  active?: boolean
-}
 
 export type Metric = {
   label: string
@@ -48,24 +32,6 @@ export type StoreEarning = {
   remainingAmount: string
   rating: string
 }
-
-export const navigationItems: NavigationItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard },
-  { label: 'Reports', icon: Gauge, permission: 'reports.view' },
-  { label: 'Catalog', icon: Package, permission: 'products.manage' },
-  { label: 'Categories', icon: Shapes, permission: 'products.manage' },
-  { label: 'Store Categories', icon: ListTree, permission: 'products.manage' },
-  { label: 'Products', icon: Package, permission: 'products.manage' },
-  { label: 'Product Variants', icon: Package, permission: 'products.manage' },
-  { label: 'Stores', icon: Store, permission: 'stores.manage' },
-  { label: 'Zones', icon: MapPinned, permission: 'settings.update' },
-  { label: 'Riders', icon: Bike, permission: 'riders.manage' },
-  { label: 'Customers', icon: Users, permission: 'users.manage' },
-  { label: 'Orders', icon: ShoppingCart, permission: 'orders.view', badge: '18' },
-  { label: 'Subscriptions', icon: CalendarDays, permission: 'subscriptions.manage' },
-  { label: 'Payouts', icon: Banknote, permission: 'payouts.approve', badge: '12' },
-  { label: 'Settings', icon: Settings, permission: 'settings.update' },
-]
 
 export const dashboardMetrics: Metric[] = [
   { label: 'Total Stores', value: '124', trend: '+4%', icon: Store },

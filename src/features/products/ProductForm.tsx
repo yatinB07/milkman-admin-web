@@ -1,7 +1,8 @@
-import { type FormEvent, type ReactNode, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
 import { AdminTextarea } from '../../components/forms/AdminTextarea'
+import { FieldLabel, FormErrorSummary, FormSection } from '../../components/forms/FormLayout'
 import type { ProductFormValues, ProductRow } from './productTypes'
 
 type ProductFormProps = {
@@ -111,8 +112,7 @@ export function ProductForm({
         </label>
       </FormSection>
 
-      {formError ? <div className="form-error">{formError}</div> : null}
-      {optionError ? <div className="form-error">Store or category options could not be loaded.</div> : null}
+      <FormErrorSummary errors={[formError, optionError && 'Store or category options could not be loaded.']} />
 
       <div className="modal-actions">
         <button className="secondary-button" type="button" onClick={onCancel}>
@@ -123,24 +123,5 @@ export function ProductForm({
         </button>
       </div>
     </form>
-  )
-}
-
-function FieldLabel({ label, required = false }: { label: string; required?: boolean }) {
-  return (
-    <span>
-      {label} {required ? <span className="required-mark" aria-hidden="true">*</span> : null}
-    </span>
-  )
-}
-
-function FormSection({ title, columns = 2, children }: { title: string; columns?: 1 | 2 | 3; children: ReactNode }) {
-  return (
-    <section className="store-form-section">
-      <h4>{title}</h4>
-      <div className="form-grid" data-columns={columns}>
-        {children}
-      </div>
-    </section>
   )
 }

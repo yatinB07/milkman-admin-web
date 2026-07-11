@@ -9,6 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../components/master'
+import { ConfirmDialog, type ConfirmDialogOptions } from '../components/common/ConfirmDialog'
 import { AdminFilePicker } from '../components/forms/AdminFilePicker'
 import { AdminMultiSelect, AdminSelect, type AdminSelectOption } from '../components/forms/AdminSelect'
 import { AdminTextarea } from '../components/forms/AdminTextarea'
@@ -21,6 +22,8 @@ import {
   type PaginatedResponse,
   type PaginationMeta,
 } from '../lib/apiTypes'
+import { getModuleActionPermission } from '../routes/adminModules'
+import { adminStore } from '../store/adminStore'
 
 type StoreRow = {
   id: number
@@ -247,6 +250,10 @@ export function StoresPage() {
   const [contentDescription, setContentDescription] = useState('')
   const [cancelPolicy, setCancelPolicy] = useState('')
   const [activeStoreTab, setActiveStoreTab] = useState<StoreFormTabId>('basic')
+  const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { store: StoreRow }) | null>(null)
+  const canCreate = adminStore.can(getModuleActionPermission('stores', 'create'))
+  const canUpdate = adminStore.can(getModuleActionPermission('stores', 'update'))
+  const canDelete = adminStore.can(getModuleActionPermission('stores', 'delete'))
 
   const stores = useQuery<PaginatedResponse<StoreRow>>({
     queryKey: ['admin-stores', search, page],
@@ -395,15 +402,17 @@ export function StoresPage() {
         align: 'right',
         render: (store) => (
           <span className="row-actions">
-            <button
-              type="button"
-              aria-label="Edit store"
-              data-tooltip="Edit store"
-              title="Edit store"
-              onClick={() => openEditForm(store)}
-            >
-              <Edit3 aria-hidden="true" size={16} />
-            </button>
+            {canUpdate ? (
+              <button
+                type="button"
+                aria-label="Edit store"
+                data-tooltip="Edit store"
+                title="Edit store"
+                onClick={() => openEditForm(store)}
+              >
+                <Edit3 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
             <button
               type="button"
               aria-label="Add received cash"
@@ -426,24 +435,29 @@ export function StoresPage() {
             >
               <History aria-hidden="true" size={16} />
             </button>
-            <button
-              type="button"
-              aria-label="Delete store"
-              data-tooltip="Delete store"
-              title="Delete store"
-              onClick={() => {
-                if (window.confirm(`Delete ${store.title}?`)) {
-                  deleteStore.mutate(store)
-                }
-              }}
-            >
-              <Trash2 aria-hidden="true" size={16} />
-            </button>
+            {canDelete ? (
+              <button
+                type="button"
+                aria-label="Delete store"
+                data-tooltip="Delete store"
+                title="Delete store"
+                onClick={() => {
+                  setConfirmDelete({
+                    title: 'Delete store',
+                    message: `Delete ${store.title}? This can be restored only from the backend.`,
+                    confirmLabel: 'Delete',
+                    store,
+                  })
+                }}
+              >
+                <Trash2 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
           </span>
         ),
       },
     ],
-    [deleteStore],
+    [canDelete, canUpdate],
   )
 
   function openCreateForm() {
@@ -1055,12 +1069,12 @@ export function StoresPage() {
       <MasterPageHeader
         title="Stores"
         description="Manage store onboarding, addresses, service fees, payout details, and status."
-        actions={
+        actions={canCreate ? (
           <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
             Add Store
           </button>
-        }
+        ) : null}
       />
 
       <MasterFilterBar
@@ -1119,6 +1133,16 @@ export function StoresPage() {
 
         <MasterPagination meta={meta} onPageChange={setPage} />
       </section>
+      <ConfirmDialog
+        options={confirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) {
+            deleteStore.mutate(confirmDelete.store)
+          }
+          setConfirmDelete(null)
+        }}
+      />
     </>
   )
 }

@@ -9,6 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../components/master'
+import { ConfirmDialog, type ConfirmDialogOptions } from '../components/common/ConfirmDialog'
 import { AdminFilePicker } from '../components/forms/AdminFilePicker'
 import { AdminSelect, type AdminSelectOption } from '../components/forms/AdminSelect'
 import { StatusPill } from '../components/StatusPill'
@@ -19,6 +20,8 @@ import {
   type PaginatedResponse,
   type PaginationMeta,
 } from '../lib/apiTypes'
+import { getModuleActionPermission } from '../routes/adminModules'
+import { adminStore } from '../store/adminStore'
 
 type CategoryRow = {
   id: number
@@ -71,6 +74,10 @@ export function CategoriesPage() {
   const [imagePath, setImagePath] = useState('')
   const [coverPath, setCoverPath] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { category: CategoryRow }) | null>(null)
+  const canCreate = adminStore.can(getModuleActionPermission('categories', 'create'))
+  const canUpdate = adminStore.can(getModuleActionPermission('categories', 'update'))
+  const canDelete = adminStore.can(getModuleActionPermission('categories', 'delete'))
 
   const categories = useQuery<PaginatedResponse<CategoryRow>>({
     queryKey: ['admin-categories', search, page],
@@ -204,33 +211,40 @@ export function CategoriesPage() {
         align: 'right',
         render: (category) => (
           <span className="row-actions">
-            <button
-              type="button"
-              aria-label="Edit category"
-              data-tooltip="Edit category"
-              title="Edit category"
-              onClick={() => openEditForm(category)}
-            >
-              <Edit3 aria-hidden="true" size={16} />
-            </button>
-            <button
-              type="button"
-              aria-label="Delete category"
-              data-tooltip="Delete category"
-              title="Delete category"
-              onClick={() => {
-                if (window.confirm(`Delete ${category.title}?`)) {
-                  deleteCategory.mutate(category)
-                }
-              }}
-            >
-              <Trash2 aria-hidden="true" size={16} />
-            </button>
+            {canUpdate ? (
+              <button
+                type="button"
+                aria-label="Edit category"
+                data-tooltip="Edit category"
+                title="Edit category"
+                onClick={() => openEditForm(category)}
+              >
+                <Edit3 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
+            {canDelete ? (
+              <button
+                type="button"
+                aria-label="Delete category"
+                data-tooltip="Delete category"
+                title="Delete category"
+                onClick={() => {
+                  setConfirmDelete({
+                    title: 'Delete category',
+                    message: `Delete ${category.title}? This can be restored only from the backend.`,
+                    confirmLabel: 'Delete',
+                    category,
+                  })
+                }}
+              >
+                <Trash2 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
           </span>
         ),
       },
     ],
-    [deleteCategory],
+    [canDelete, canUpdate],
   )
 
   function openCreateForm() {
@@ -285,12 +299,12 @@ export function CategoriesPage() {
       <MasterPageHeader
         title="Categories"
         description="Manage global product categories used during store onboarding."
-        actions={
+        actions={canCreate ? (
           <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
             Add Category
           </button>
-        }
+        ) : null}
       />
 
       <MasterFilterBar
@@ -414,6 +428,16 @@ export function CategoriesPage() {
           </section>
         </div>
       ) : null}
+      <ConfirmDialog
+        options={confirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) {
+            deleteCategory.mutate(confirmDelete.category)
+          }
+          setConfirmDelete(null)
+        }}
+      />
     </>
   )
 }

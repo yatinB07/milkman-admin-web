@@ -11,23 +11,23 @@ import {
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { AdminUser } from '../store/adminStore'
-import type { NavigationItem } from '../data/adminDashboard'
+import type { AdminModule } from '../routes/adminModules'
 
 type AdminShellProps = {
   children: ReactNode
   onLogout: () => void
-  activePage: string
-  onNavigate: (page: string) => void
+  activeModuleId: string
+  onNavigate: (module: AdminModule) => void
   theme: 'light' | 'dark'
   onToggleTheme: () => void
   user: AdminUser | null
-  navigationItems: NavigationItem[]
+  navigationItems: AdminModule[]
 }
 
 export function AdminShell({
   children,
   onLogout,
-  activePage,
+  activeModuleId,
   onNavigate,
   theme,
   onToggleTheme,
@@ -52,9 +52,9 @@ export function AdminShell({
         <nav className="sidebar-nav">
           {navigationItems.map((item) => (
             <button
-              className={`sidebar-link ${activePage === item.label ? 'is-active' : ''}`}
-              key={item.label}
-              onClick={() => onNavigate(item.label)}
+              className={`sidebar-link ${activeModuleId === item.id ? 'is-active' : ''}`}
+              key={item.id}
+              onClick={() => onNavigate(item)}
               type="button"
             >
               <item.icon aria-hidden="true" size={21} />

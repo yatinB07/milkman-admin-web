@@ -9,8 +9,11 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
+import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
+import { getModuleActionPermission } from '../../routes/adminModules'
+import { adminStore } from '../../store/adminStore'
 import { ProductVariantForm } from './ProductVariantForm'
 import {
   createProductVariant,
@@ -52,6 +55,12 @@ export function ProductVariantsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formStoreId, setFormStoreId] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<
+    (ConfirmDialogOptions & { variant: ProductVariantRow }) | null
+  >(null)
+  const canCreate = adminStore.can(getModuleActionPermission('product-variants', 'create'))
+  const canUpdate = adminStore.can(getModuleActionPermission('product-variants', 'update'))
+  const canDelete = adminStore.can(getModuleActionPermission('product-variants', 'delete'))
 
   const variants = useQuery({
     queryKey: ['admin-product-variants', search, page],
@@ -157,31 +166,40 @@ export function ProductVariantsPage() {
         align: 'right',
         render: (variant) => (
           <span className="row-actions">
-            <button
-              type="button"
-              aria-label="Edit product variant"
-              data-tooltip="Edit product variant"
-              title="Edit product variant"
-              onClick={() => openEditForm(variant)}
-            >
-              <Edit3 aria-hidden="true" size={16} />
-            </button>
-            <button
-              type="button"
-              aria-label="Delete product variant"
-              data-tooltip="Delete product variant"
-              title="Delete product variant"
-              onClick={() => {
-                if (window.confirm(`Delete ${variant.title}?`)) removeVariant.mutate(variant)
-              }}
-            >
-              <Trash2 aria-hidden="true" size={16} />
-            </button>
+            {canUpdate ? (
+              <button
+                type="button"
+                aria-label="Edit product variant"
+                data-tooltip="Edit product variant"
+                title="Edit product variant"
+                onClick={() => openEditForm(variant)}
+              >
+                <Edit3 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
+            {canDelete ? (
+              <button
+                type="button"
+                aria-label="Delete product variant"
+                data-tooltip="Delete product variant"
+                title="Delete product variant"
+                onClick={() => {
+                  setConfirmDelete({
+                    title: 'Delete product variant',
+                    message: `Delete ${variant.title}? This can be restored only from the backend.`,
+                    confirmLabel: 'Delete',
+                    variant,
+                  })
+                }}
+              >
+                <Trash2 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
           </span>
         ),
       },
     ],
-    [removeVariant],
+    [canDelete, canUpdate],
   )
 
   function openCreateForm() {
@@ -220,12 +238,12 @@ export function ProductVariantsPage() {
       <MasterPageHeader
         title="Product Variants"
         description="Manage product prices, discounts, stock, and subscription availability."
-        actions={
+        actions={canCreate ? (
           <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
             Add Variant
           </button>
-        }
+        ) : null}
       />
 
       <MasterFilterBar
@@ -301,6 +319,16 @@ export function ProductVariantsPage() {
           </section>
         </div>
       ) : null}
+      <ConfirmDialog
+        options={confirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) {
+            removeVariant.mutate(confirmDelete.variant)
+          }
+          setConfirmDelete(null)
+        }}
+      />
     </>
   )
 }

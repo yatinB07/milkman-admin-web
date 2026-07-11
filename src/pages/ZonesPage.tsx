@@ -8,6 +8,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../components/master'
+import { ConfirmDialog, type ConfirmDialogOptions } from '../components/common/ConfirmDialog'
 import { ZonePolygonMap } from '../components/maps/ZonePolygonMap'
 import { StatusPill } from '../components/StatusPill'
 import { api } from '../lib/api'
@@ -17,6 +18,8 @@ import {
   type PaginatedResponse,
   type PaginationMeta,
 } from '../lib/apiTypes'
+import { getModuleActionPermission } from '../routes/adminModules'
+import { adminStore } from '../store/adminStore'
 
 type ZoneRow = {
   id: number
@@ -61,6 +64,10 @@ export function ZonesPage() {
   const [coordinatesValue, setCoordinatesValue] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
   const [formErrors, setFormErrors] = useState<ZoneFormErrors>({})
+  const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { zone: ZoneRow }) | null>(null)
+  const canCreate = adminStore.can(getModuleActionPermission('zones', 'create'))
+  const canUpdate = adminStore.can(getModuleActionPermission('zones', 'update'))
+  const canDelete = adminStore.can(getModuleActionPermission('zones', 'delete'))
 
   const zones = useQuery<PaginatedResponse<ZoneRow>>({
     queryKey: ['admin-zones', search, page],
@@ -181,25 +188,32 @@ export function ZonesPage() {
         align: 'right',
         render: (zone) => (
           <span className="row-actions">
-            <button type="button" aria-label="Edit zone" onClick={() => openEditForm(zone)}>
-              <Edit3 aria-hidden="true" size={16} />
-            </button>
-            <button
-              type="button"
-              aria-label="Delete zone"
-              onClick={() => {
-                if (window.confirm(`Delete ${zone.title}?`)) {
-                  deleteZone.mutate(zone)
-                }
-              }}
-            >
-              <Trash2 aria-hidden="true" size={16} />
-            </button>
+            {canUpdate ? (
+              <button type="button" aria-label="Edit zone" onClick={() => openEditForm(zone)}>
+                <Edit3 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
+            {canDelete ? (
+              <button
+                type="button"
+                aria-label="Delete zone"
+                onClick={() => {
+                  setConfirmDelete({
+                    title: 'Delete zone',
+                    message: `Delete ${zone.title}? This can be restored only from the backend.`,
+                    confirmLabel: 'Delete',
+                    zone,
+                  })
+                }}
+              >
+                <Trash2 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
           </span>
         ),
       },
     ],
-    [deleteZone],
+    [canDelete, canUpdate],
   )
 
   const apiRows = zones.data?.data ?? []
@@ -260,12 +274,12 @@ export function ZonesPage() {
       <MasterPageHeader
         title="Zones"
         description="Manage delivery zones and service boundaries from the live Laravel admin API."
-        actions={
+        actions={canCreate ? (
           <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
             Add Zone
           </button>
-        }
+        ) : null}
       />
 
       <MasterFilterBar
@@ -433,6 +447,16 @@ export function ZonesPage() {
           </section>
         </div>
       ) : null}
+      <ConfirmDialog
+        options={confirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) {
+            deleteZone.mutate(confirmDelete.zone)
+          }
+          setConfirmDelete(null)
+        }}
+      />
     </>
   )
 }

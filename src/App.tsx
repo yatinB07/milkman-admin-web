@@ -1,23 +1,12 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
+import { useSyncExternalStore } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AdminShell } from './components/AdminShell'
 import { LoginPage } from './components/LoginPage'
-import { navigationItems } from './data/adminDashboard'
-import { api } from './lib/api'
+import { api, setUnauthorizedHandler } from './lib/api'
+import { adminModules } from './routes/adminModules'
 import { adminStore, canAccess, type AdminUser, useAdminStore } from './store/adminStore'
 import './App.css'
-
-const CategoriesPage = lazy(() => import('./pages/CategoriesPage').then((module) => ({ default: module.CategoriesPage })))
-const DashboardPage = lazy(() => import('./pages/DashboardPage').then((module) => ({ default: module.DashboardPage })))
-const ProductVariantsPage = lazy(() =>
-  import('./pages/ProductVariantsPage').then((module) => ({ default: module.ProductVariantsPage })),
-)
-const ProductsPage = lazy(() => import('./pages/ProductsPage').then((module) => ({ default: module.ProductsPage })))
-const StoreCategoriesPage = lazy(() =>
-  import('./pages/StoreCategoriesPage').then((module) => ({ default: module.StoreCategoriesPage })),
-)
-const StoresPage = lazy(() => import('./pages/StoresPage').then((module) => ({ default: module.StoresPage })))
-const ZonesPage = lazy(() => import('./pages/ZonesPage').then((module) => ({ default: module.ZonesPage })))
 
 type LoginResponse = {
   data: {
@@ -33,8 +22,11 @@ type CurrentUserResponse = {
 }
 
 function App() {
-  const { activePage, theme, token, user } = useAdminStore()
-  const visibleNavigationItems = navigationItems.filter((item) => canAccess(user, item.permission))
+  const { theme, token, user } = useAdminStore()
+  const activePath = useHashPath()
+  const visibleModules = adminModules.filter((module) => canAccess(user, module.permission))
+  const activeModule = visibleModules.find((module) => module.path === activePath) ?? visibleModules[0]
+  const ActivePage = activeModule.component
 
   const currentUser = useQuery({
     queryKey: ['admin-auth-me'],
@@ -56,6 +48,7 @@ function App() {
     },
     onSuccess: (result) => {
       adminStore.login(result.token, result.user)
+      navigateToPath('/')
     },
   })
 
@@ -72,12 +65,18 @@ function App() {
   }, [currentUser.isError])
 
   useEffect(() => {
-    const activeItem = navigationItems.find((item) => item.label === activePage)
+    setUnauthorizedHandler(adminStore.logout)
+
+    return () => setUnauthorizedHandler(null)
+  }, [])
+
+  useEffect(() => {
+    const activeItem = adminModules.find((item) => item.path === activePath)
 
     if (activeItem && !canAccess(user, activeItem.permission)) {
-      adminStore.setActivePage('Dashboard')
+      navigateToPath('/')
     }
-  }, [activePage, user])
+  }, [activePath, user])
 
   if (!token) {
     return (
@@ -93,35 +92,55 @@ function App() {
     return <div className="module-loading">Loading admin session...</div>
   }
 
+  if (!user) {
+    return <div className="module-loading">Preparing admin session...</div>
+  }
+
   return (
     <AdminShell
-      activePage={activePage}
-      onNavigate={adminStore.setActivePage}
+      activeModuleId={activeModule.id}
+      onNavigate={(module) => navigateToPath(module.path)}
       theme={theme}
       onToggleTheme={adminStore.toggleTheme}
       onLogout={adminStore.logout}
       user={user}
-      navigationItems={visibleNavigationItems}
+      navigationItems={visibleModules}
     >
       <Suspense fallback={<div className="module-loading">Loading module...</div>}>
-        {activePage === 'Stores' ? (
-          <StoresPage />
-        ) : activePage === 'Products' ? (
-          <ProductsPage />
-        ) : activePage === 'Product Variants' ? (
-          <ProductVariantsPage />
-        ) : activePage === 'Store Categories' ? (
-          <StoreCategoriesPage />
-        ) : activePage === 'Categories' ? (
-          <CategoriesPage />
-        ) : activePage === 'Zones' ? (
-          <ZonesPage />
-        ) : (
-          <DashboardPage />
-        )}
+        <ActivePage />
       </Suspense>
     </AdminShell>
   )
 }
 
 export default App
+
+function useHashPath() {
+  return useSyncExternalStore(subscribeToHash, getHashPath, getHashPath)
+}
+
+function subscribeToHash(listener: () => void) {
+  window.addEventListener('hashchange', listener)
+
+  return () => window.removeEventListener('hashchange', listener)
+}
+
+function getHashPath() {
+  const path = window.location.hash.replace(/^#/, '')
+
+  return normalizePath(path)
+}
+
+function navigateToPath(path: string) {
+  const nextPath = normalizePath(path)
+
+  if (getHashPath() === nextPath) return
+
+  window.location.hash = nextPath
+}
+
+function normalizePath(path: string) {
+  if (!path || path === '#') return '/'
+
+  return path.startsWith('/') ? path : `/${path}`
+}

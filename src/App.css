@@ -243,6 +243,7 @@
 .icon-action,
 .profile-menu,
 .secondary-button,
+.danger-button,
 .primary-button,
 .pagination-controls button {
   border: 1px solid var(--color-border);
@@ -262,6 +263,7 @@
 
 .icon-action:hover,
 .secondary-button:hover,
+.danger-button:hover,
 .pagination-controls button:hover,
 .profile-menu:hover {
   background: var(--color-surface-muted);
@@ -339,6 +341,7 @@
 }
 
 .secondary-button,
+.danger-button,
 .primary-button {
   display: inline-flex;
   align-items: center;
@@ -357,6 +360,12 @@
 .secondary-button {
   background: var(--color-surface);
   color: var(--color-text);
+}
+
+.danger-button {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: #ffffff;
 }
 
 .primary-button {
@@ -1251,6 +1260,27 @@
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-popover);
+}
+
+.confirm-dialog {
+  display: grid;
+  width: min(420px, 100%);
+  gap: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-popover);
+  padding: 22px;
+}
+
+.confirm-dialog h3,
+.confirm-dialog p {
+  margin: 0;
+}
+
+.confirm-dialog p {
+  color: var(--color-text-muted);
+  font-size: 14px;
 }
 
 .store-form-modal.is-large {
