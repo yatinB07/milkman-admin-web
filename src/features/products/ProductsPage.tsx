@@ -1,7 +1,7 @@
 import { Edit3, ImageIcon, PackageOpen, Plus, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import {
   MasterDataTable,
   MasterFilterBar,
@@ -20,6 +20,7 @@ import { ProductForm } from './ProductForm'
 import {
   createProduct,
   deleteProduct,
+  getProduct,
   listProducts,
   listProductStoreCategories,
   listProductStores,
@@ -42,11 +43,12 @@ const defaultMeta: PaginationMeta = {
 export function ProductsPage() {
   const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
+  const activePath = useHashPath()
+  const formRoute = parseProductFormRoute(activePath)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
   const [editingProduct, setEditingProduct] = useState<ProductRow | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
   const [formStoreId, setFormStoreId] = useState('')
   const [formErrors, setFormErrors] = useState<ProductFormErrors>({})
   const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { product: ProductRow }) | null>(null)
@@ -72,21 +74,31 @@ export function ProductsPage() {
     retry: false,
   })
 
+  const routeProduct = useQuery({
+    queryKey: ['admin-product', formRoute?.mode === 'edit' ? formRoute.productId : null],
+    queryFn: () => getProduct(formRoute?.mode === 'edit' ? formRoute.productId : 0),
+    enabled: formRoute?.mode === 'edit',
+    retry: false,
+  })
+
+  const currentEditingProduct = formRoute?.mode === 'edit' ? routeProduct.data ?? editingProduct : editingProduct
+  const selectedFormStoreId = formStoreId || (currentEditingProduct ? String(currentEditingProduct.store_id) : '')
+
   const storeOptions = useMemo(() => toStoreSelectOptions(stores.data), [stores.data])
   const categoryOptions = useMemo(
-    () => toStoreCategorySelectOptions(storeCategories.data, formStoreId),
-    [formStoreId, storeCategories.data],
+    () => toStoreCategorySelectOptions(storeCategories.data, selectedFormStoreId),
+    [selectedFormStoreId, storeCategories.data],
   )
 
   const saveProduct = useMutation({
     mutationFn: async (values: ProductFormValues) => {
       const payload = toProductPayload(values)
 
-      return editingProduct ? updateProduct(editingProduct.id, payload) : createProduct(payload)
+      return currentEditingProduct ? updateProduct(currentEditingProduct.id, payload) : createProduct(payload)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-products'] })
-      toast.success(editingProduct ? 'Product updated successfully.' : 'Product created successfully.')
+      toast.success(currentEditingProduct ? 'Product updated successfully.' : 'Product created successfully.')
       closeForm(true)
     },
     onError: (error) => {
@@ -196,7 +208,7 @@ export function ProductsPage() {
     setEditingProduct(null)
     setFormStoreId('')
     setFormErrors({})
-    setIsFormOpen(true)
+    navigateToHash('/products/create')
   }
 
   function openEditForm(product: ProductRow) {
@@ -204,7 +216,7 @@ export function ProductsPage() {
     setEditingProduct(product)
     setFormStoreId(String(product.store_id))
     setFormErrors({})
-    setIsFormOpen(true)
+    navigateToHash(`/products/edit/${product.id}`)
   }
 
   function closeForm(force = false) {
@@ -214,7 +226,7 @@ export function ProductsPage() {
     setEditingProduct(null)
     setFormStoreId('')
     setFormErrors({})
-    setIsFormOpen(false)
+    navigateToHash('/products')
   }
 
   function handleSubmit(values: ProductFormValues) {
@@ -231,6 +243,56 @@ export function ProductsPage() {
 
     setFormErrors({})
     saveProduct.mutate(values)
+  }
+
+  if (formRoute) {
+    if (formRoute.mode === 'edit' && !currentEditingProduct && routeProduct.isLoading) {
+      return <MasterPageHeader title="Edit Product" description="Loading product..." />
+    }
+
+    if (formRoute.mode === 'edit' && !currentEditingProduct) {
+      return (
+        <>
+          <MasterPageHeader
+            title="Edit Product"
+            description="The requested product could not be loaded."
+            actions={
+              <Button variant="secondary" size="compact" onClick={() => closeForm(true)}>
+                Back to Products
+              </Button>
+            }
+          />
+          <div className="master-error">Product could not be loaded. Check the record or try again.</div>
+        </>
+      )
+    }
+
+    return (
+      <>
+        <MasterPageHeader
+          title={currentEditingProduct ? 'Edit Product' : 'Add Product'}
+          description="Manage product title, category, image, status, and description."
+          actions={
+            <Button variant="secondary" size="compact" onClick={() => closeForm()}>
+              Back to Products
+            </Button>
+          }
+        />
+        <section className="data-panel">
+          <ProductForm
+            product={currentEditingProduct}
+            storeOptions={storeOptions}
+            categoryOptions={categoryOptions}
+            formErrors={formErrors}
+            optionError={stores.isError || storeCategories.isError}
+            isSaving={saveProduct.isPending}
+            onStoreChange={setFormStoreId}
+            onCancel={closeForm}
+            onSubmit={handleSubmit}
+          />
+        </section>
+      </>
+    )
   }
 
   return (
@@ -305,32 +367,6 @@ export function ProductsPage() {
         />
       </section>
 
-      {isFormOpen ? (
-        <div className="modal-backdrop" role="presentation">
-          <section className="store-form-modal" role="dialog" aria-modal="true" aria-labelledby="product-form-title">
-            <div className="modal-header">
-              <div>
-                <h3 id="product-form-title">{editingProduct ? 'Edit Product' : 'Add Product'}</h3>
-              </div>
-              <Button variant="secondary" onClick={() => closeForm()}>
-                Close
-              </Button>
-            </div>
-
-            <ProductForm
-              product={editingProduct}
-              storeOptions={storeOptions}
-              categoryOptions={categoryOptions}
-              formErrors={formErrors}
-              optionError={stores.isError || storeCategories.isError}
-              isSaving={saveProduct.isPending}
-              onStoreChange={setFormStoreId}
-              onCancel={closeForm}
-              onSubmit={handleSubmit}
-            />
-          </section>
-        </div>
-      ) : null}
       <ConfirmDialog
         options={confirmDelete}
         onCancel={() => setConfirmDelete(null)}
@@ -367,4 +403,38 @@ function formatDate(value?: string | null) {
   return value
     ? new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value))
     : 'Never'
+}
+
+function parseProductFormRoute(path: string) {
+  if (path === '/products/create') return { mode: 'create' as const }
+
+  const editMatch = path.match(/^\/products\/edit\/(\d+)$/)
+
+  if (editMatch) return { mode: 'edit' as const, productId: Number(editMatch[1]) }
+
+  return null
+}
+
+function useHashPath() {
+  return useSyncExternalStore(subscribeToHash, getHashPath, getHashPath)
+}
+
+function subscribeToHash(listener: () => void) {
+  window.addEventListener('hashchange', listener)
+
+  return () => window.removeEventListener('hashchange', listener)
+}
+
+function getHashPath() {
+  const path = window.location.hash.replace(/^#/, '')
+
+  if (!path || path === '#') return '/'
+
+  return path.startsWith('/') ? path : `/${path}`
+}
+
+function navigateToHash(path: string) {
+  if (getHashPath() === path) return
+
+  window.location.hash = path
 }

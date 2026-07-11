@@ -49,5 +49,10 @@ function getChildLabel(activeModule: AdminModule, activePath: string) {
     if (activePath.startsWith('/product-variants/edit/')) return 'Edit Product Variant'
   }
 
+  if (activeModule.id === 'products') {
+    if (activePath === '/products/create') return 'Add Product'
+    if (activePath.startsWith('/products/edit/')) return 'Edit Product'
+  }
+
   return null
 }
