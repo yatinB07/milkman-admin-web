@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react'
-import { type FormEvent, type InputHTMLAttributes, type ReactNode, useState } from 'react'
+import { type FormEvent, type InputHTMLAttributes, type MouseEvent, type ReactNode, useState } from 'react'
 import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminMultiSelect, AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
@@ -9,6 +9,7 @@ import { StoreLocationMap } from '../../components/maps/StoreLocationMap'
 import {
   splitCategoryReference,
   storeFormTabs,
+  storeValidationFields,
   stringifyValue,
   toTimeInput,
   validateStoreFieldErrors,
@@ -70,6 +71,13 @@ export function StoreForm({
   const [coverPath, setCoverPath] = useState(store?.cover_image_path ?? '')
   const [contentDescription, setContentDescription] = useState(store?.content_description ?? '')
   const [cancelPolicy, setCancelPolicy] = useState(store?.cancel_policy ?? '')
+  const activeStepIndex = Math.max(
+    0,
+    storeFormTabs.findIndex((step) => step.id === activeTab),
+  )
+  const isFirstStep = activeStepIndex === 0
+  const isLastStep = activeStepIndex === storeFormTabs.length - 1
+  const activeStep = storeFormTabs[activeStepIndex]
 
   function buildValues(form: FormData): StoreFormValues {
     return {
@@ -129,6 +137,30 @@ export function StoreForm({
     onSubmit(values)
   }
 
+  function handlePreviousStep() {
+    if (isFirstStep) return
+
+    onActiveTabChange(storeFormTabs[activeStepIndex - 1].id)
+  }
+
+  function handleNextStep(event: MouseEvent<HTMLButtonElement>) {
+    const form = event.currentTarget.form
+
+    if (!form || isLastStep) return
+
+    const values = buildValues(new FormData(form))
+    const validation = validateStoreFieldErrors(values, Boolean(store))
+    const hasCurrentStepErrors = storeValidationFields.some(
+      (field) => field.tab === activeTab && validation.errors[field.name],
+    )
+
+    onFormErrorsChange(validation.errors)
+
+    if (hasCurrentStepErrors) return
+
+    onActiveTabChange(storeFormTabs[activeStepIndex + 1].id)
+  }
+
   return (
     <section className="store-form-page" aria-labelledby="store-form-title">
       <div className="store-form-page-header">
@@ -143,32 +175,27 @@ export function StoreForm({
           <Button variant="secondary" onClick={onCancel}>
             Cancel
           </Button>
-          <Button variant="primary" size="compact" type="submit" form="store-admin-form" disabled={isSaving}>
-            {isSaving ? 'Saving...' : store ? 'Save Store' : 'Create Store'}
-          </Button>
         </div>
       </div>
 
       <form id="store-admin-form" className="store-form" noValidate onSubmit={handleSubmit}>
-        <div className="store-form-tabs" role="tablist" aria-label="Store form sections">
-          {storeFormTabs.map((tab) => (
+        <div className="store-form-steps" aria-label="Store form steps">
+          {storeFormTabs.map((tab, index) => (
             <button
               key={tab.id}
               type="button"
-              role="tab"
-              className={activeTab === tab.id ? 'store-form-tab is-active' : 'store-form-tab'}
-              aria-selected={activeTab === tab.id}
-              aria-controls={`store-panel-${tab.id}`}
-              id={`store-tab-${tab.id}`}
+              className={activeTab === tab.id ? 'store-form-step is-active' : 'store-form-step'}
+              aria-current={activeTab === tab.id ? 'step' : undefined}
               onClick={() => onActiveTabChange(tab.id)}
             >
-              {tab.label}
+              <span>{index + 1}</span>
+              <strong>{tab.label}</strong>
             </button>
           ))}
         </div>
 
-        <div className="store-tab-panels">
-          <TabPanel id="basic" activeTab={activeTab}>
+        <div className="store-step-panels">
+          <StepPanel id="basic" activeTab={activeTab}>
             <StoreFormSection title="Store Information">
               <StoreInputField
                 name="title"
@@ -291,9 +318,9 @@ export function StoreForm({
                 <FieldError message={formErrors.cancel_policy} />
               </label>
             </StoreFormSection>
-          </TabPanel>
+          </StepPanel>
 
-          <TabPanel id="media" activeTab={activeTab}>
+          <StepPanel id="media" activeTab={activeTab}>
             <StoreFormSection title="Store Media" columns={2}>
               <label className="form-field">
                 <FieldLabel label="Store Logo" required />
@@ -313,9 +340,9 @@ export function StoreForm({
                 <FieldError message={formErrors.cover_image_path} />
               </label>
             </StoreFormSection>
-          </TabPanel>
+          </StepPanel>
 
-          <TabPanel id="login" activeTab={activeTab}>
+          <StepPanel id="login" activeTab={activeTab}>
             <StoreFormSection title="Store Login Information" columns={2}>
               <StoreInputField
                 name="email"
@@ -337,9 +364,9 @@ export function StoreForm({
                 error={formErrors.password}
               />
             </StoreFormSection>
-          </TabPanel>
+          </StepPanel>
 
-          <TabPanel id="categories" activeTab={activeTab}>
+          <StepPanel id="categories" activeTab={activeTab}>
             <StoreFormSection title="Store Category Information" columns={1}>
               <label className="form-field">
                 <FieldLabel label="Store Category" required />
@@ -353,9 +380,9 @@ export function StoreForm({
                 <FieldError message={formErrors.category_reference ?? (optionError ? 'Zone or category options could not be loaded.' : undefined)} />
               </label>
             </StoreFormSection>
-          </TabPanel>
+          </StepPanel>
 
-          <TabPanel id="address" activeTab={activeTab}>
+          <StepPanel id="address" activeTab={activeTab}>
             <StoreFormSection title="Store Address Information" columns={2}>
               <StoreInputField
                 name="full_address"
@@ -440,9 +467,9 @@ export function StoreForm({
                 />
               </div>
             </StoreFormSection>
-          </TabPanel>
+          </StepPanel>
 
-          <TabPanel id="service" activeTab={activeTab}>
+          <StepPanel id="service" activeTab={activeTab}>
             <StoreFormSection title="Select Service Charge Type">
               <label className="form-field is-wide">
                 <FieldLabel label="Service Charge Type" required />
@@ -536,9 +563,9 @@ export function StoreForm({
                 error={formErrors.commission_percent}
               />
             </StoreFormSection>
-          </TabPanel>
+          </StepPanel>
 
-          <TabPanel id="payout" activeTab={activeTab}>
+          <StepPanel id="payout" activeTab={activeTab}>
             <StoreFormSection title="Store Payout Information" columns={2}>
               <StoreInputField
                 name="bank_name"
@@ -594,16 +621,25 @@ export function StoreForm({
                 error={formErrors.upi_id}
               />
             </StoreFormSection>
-          </TabPanel>
+          </StepPanel>
         </div>
 
         <div className="store-form-sticky-actions">
-          <Button variant="secondary" onClick={onCancel}>
-            Cancel
+          <span className="store-step-status">
+            Step {activeStepIndex + 1} of {storeFormTabs.length}: {activeStep.label}
+          </span>
+          <Button variant="secondary" onClick={isFirstStep ? onCancel : handlePreviousStep}>
+            {isFirstStep ? 'Cancel' : 'Previous'}
           </Button>
-          <Button variant="primary" size="compact" type="submit" disabled={isSaving}>
-            {isSaving ? 'Saving...' : store ? 'Save Store' : 'Create Store'}
-          </Button>
+          {isLastStep ? (
+            <Button variant="primary" size="compact" type="submit" disabled={isSaving}>
+              {isSaving ? 'Saving...' : store ? 'Save Store' : 'Create Store'}
+            </Button>
+          ) : (
+            <Button variant="primary" size="compact" onClick={handleNextStep}>
+              Next
+            </Button>
+          )}
         </div>
       </form>
     </section>
@@ -651,7 +687,7 @@ function FieldError({ message }: { message?: string }) {
   return message ? <small className="field-error">{message}</small> : null
 }
 
-function TabPanel({
+function StepPanel({
   id,
   activeTab,
   children,
@@ -665,9 +701,7 @@ function TabPanel({
   return (
     <div
       id={`store-panel-${id}`}
-      role="tabpanel"
-      aria-labelledby={`store-tab-${id}`}
-      className={isActive ? 'store-tab-panel is-active' : 'store-tab-panel'}
+      className={isActive ? 'store-step-panel is-active' : 'store-step-panel'}
     >
       {children}
     </div>
