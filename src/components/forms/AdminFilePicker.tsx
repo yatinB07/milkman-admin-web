@@ -1,5 +1,6 @@
 import { ImageIcon, Upload, X } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { uploadAdminFile } from './adminUploadRepository'
 
 type AdminFilePickerProps = {
@@ -53,6 +54,7 @@ export function AdminFilePicker({
 
     try {
       const upload = await uploadAdminFile(file, directory)
+      dirtyFormStore.markDirty()
       onChange(upload.path)
     } catch {
       setUploadError('Upload failed. Please choose the image again.')
@@ -68,6 +70,7 @@ export function AdminFilePicker({
 
     setPreviewUrl('')
     setUploadError('')
+    dirtyFormStore.markDirty()
     onChange('')
   }
 

@@ -1,5 +1,6 @@
 import { Crosshair, LocateFixed, RotateCcw, Search } from 'lucide-react'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 
 type CoordinatePoint = {
   lat: number
@@ -130,6 +131,7 @@ export function ZonePolygonMap({ value, onChange, hasError = false, errorId }: Z
     (points: CoordinatePoint[]) => {
       const serialized = serializePath(points)
       lastGeneratedValueRef.current = serialized
+      dirtyFormStore.markDirty()
       onChange(serialized)
     },
     [onChange],
@@ -300,10 +302,11 @@ export function ZonePolygonMap({ value, onChange, hasError = false, errorId }: Z
     fitToPoints(google, map, points)
   }, [clearPolygon, loadState, setActivePolygon, value])
 
-function handleClear() {
+  function handleClear() {
     const google = window.google
     clearPolygon()
     lastGeneratedValueRef.current = ''
+    dirtyFormStore.markDirty()
     onChange('')
     if (google) {
       drawingManagerRef.current?.setDrawingMode(google.maps.drawing.OverlayType.POLYGON)

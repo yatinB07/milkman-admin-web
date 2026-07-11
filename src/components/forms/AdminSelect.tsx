@@ -1,4 +1,5 @@
 import Select, { type MultiValue, type SingleValue, type StylesConfig } from 'react-select'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 
 export type AdminSelectOption = {
   label: string
@@ -49,7 +50,10 @@ export function AdminSelect({
       placeholder={placeholder}
       styles={selectStyles(hasError)}
       value={selected}
-      onChange={(option: SingleValue<AdminSelectOption>) => onChange(option?.value ?? '')}
+      onChange={(option: SingleValue<AdminSelectOption>) => {
+        dirtyFormStore.markDirty()
+        onChange(option?.value ?? '')
+      }}
     />
   )
 }
@@ -77,6 +81,7 @@ export function AdminMultiSelect({
       styles={selectStyles(hasError)}
       value={selected}
       onChange={(nextValues: MultiValue<AdminSelectOption>) => {
+        dirtyFormStore.markDirty()
         onChange(nextValues.map((option) => option.value))
       }}
     />
