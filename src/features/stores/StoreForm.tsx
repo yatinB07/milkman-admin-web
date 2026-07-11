@@ -6,6 +6,7 @@ import { AdminMultiSelect, AdminSelect, type AdminSelectOption } from '../../com
 import { AdminTextarea } from '../../components/forms/AdminTextarea'
 import { FieldLabel } from '../../components/forms/FormLayout'
 import { StoreLocationMap } from '../../components/maps/StoreLocationMap'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 import {
   splitCategoryReference,
   storeFormTabs,
@@ -185,7 +186,14 @@ export function StoreForm({
         </div>
       </div>
 
-      <form id="store-admin-form" className="store-form" noValidate onSubmit={handleSubmit}>
+      <form
+        id="store-admin-form"
+        className="store-form"
+        noValidate
+        onInputCapture={dirtyFormStore.markDirty}
+        onChangeCapture={dirtyFormStore.markDirty}
+        onSubmit={handleSubmit}
+      >
         <div className="store-form-steps" aria-label="Store form steps">
           {storeFormTabs.map((tab, index) => (
             <button

@@ -15,6 +15,7 @@ import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { adminStore, useAdminStore } from '../../store/adminStore'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { ProductForm } from './ProductForm'
 import {
   createProduct,
@@ -86,7 +87,7 @@ export function ProductsPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-products'] })
       toast.success(editingProduct ? 'Product updated successfully.' : 'Product created successfully.')
-      closeForm()
+      closeForm(true)
     },
     onError: (error) => {
       if (isAxiosError(error) && error.response?.status === 422) {
@@ -202,6 +203,7 @@ export function ProductsPage() {
   )
 
   function openCreateForm() {
+    dirtyFormStore.reset()
     setEditingProduct(null)
     setFormStoreId('')
     setFormErrors({})
@@ -209,13 +211,17 @@ export function ProductsPage() {
   }
 
   function openEditForm(product: ProductRow) {
+    dirtyFormStore.reset()
     setEditingProduct(product)
     setFormStoreId(String(product.store_id))
     setFormErrors({})
     setIsFormOpen(true)
   }
 
-  function closeForm() {
+  function closeForm(force = false) {
+    if (force !== true && !dirtyFormStore.confirmDiscard()) return
+
+    dirtyFormStore.reset()
     setEditingProduct(null)
     setFormStoreId('')
     setFormErrors({})
@@ -317,7 +323,7 @@ export function ProductsPage() {
               <div>
                 <h3 id="product-form-title">{editingProduct ? 'Edit Product' : 'Add Product'}</h3>
               </div>
-              <Button variant="secondary" onClick={closeForm}>
+              <Button variant="secondary" onClick={() => closeForm()}>
                 Close
               </Button>
             </div>

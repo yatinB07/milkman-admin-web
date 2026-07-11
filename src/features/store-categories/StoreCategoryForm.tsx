@@ -3,6 +3,7 @@ import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 import type { StoreCategoryFormValues, StoreCategoryRow } from './storeCategoryTypes'
 
 type StoreCategoryFormProps = {
@@ -46,7 +47,7 @@ export function StoreCategoryForm({
   }
 
   return (
-    <form className="store-form" onSubmit={handleSubmit}>
+    <form className="store-form" onInputCapture={dirtyFormStore.markDirty} onChangeCapture={dirtyFormStore.markDirty} onSubmit={handleSubmit}>
       <FormSection title="Store Category Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Store" required />

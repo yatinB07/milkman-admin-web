@@ -15,6 +15,7 @@ import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { adminStore, useAdminStore } from '../../store/adminStore'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { CategoryForm } from './CategoryForm'
 import {
   createCategory,
@@ -68,7 +69,7 @@ export function CategoriesPage() {
         queryClient.invalidateQueries({ queryKey: ['admin-store-category-options'] }),
       ])
       toast.success(editingCategory ? 'Category updated successfully.' : 'Category created successfully.')
-      closeForm()
+      closeForm(true)
     },
     onError: (error) => {
       if (isAxiosError(error) && error.response?.status === 422) {
@@ -198,18 +199,23 @@ export function CategoriesPage() {
   )
 
   function openCreateForm() {
+    dirtyFormStore.reset()
     setEditingCategory(null)
     setFormErrors({})
     setIsFormOpen(true)
   }
 
   function openEditForm(category: CategoryRow) {
+    dirtyFormStore.reset()
     setEditingCategory(category)
     setFormErrors({})
     setIsFormOpen(true)
   }
 
-  function closeForm() {
+  function closeForm(force = false) {
+    if (force !== true && !dirtyFormStore.confirmDiscard()) return
+
+    dirtyFormStore.reset()
     setEditingCategory(null)
     setFormErrors({})
     setIsFormOpen(false)
@@ -310,7 +316,7 @@ export function CategoriesPage() {
               <div>
                 <h3 id="category-form-title">{editingCategory ? 'Edit Category' : 'Add Category'}</h3>
               </div>
-              <Button variant="secondary" onClick={closeForm}>
+              <Button variant="secondary" onClick={() => closeForm()}>
                 Close
               </Button>
             </div>

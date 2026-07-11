@@ -7,6 +7,7 @@ import { LoginPage } from './components/LoginPage'
 import { api, setUnauthorizedHandler } from './lib/api'
 import { adminModules } from './routes/adminModules'
 import { adminStore, canAccess, type AdminUser, useAdminStore } from './store/adminStore'
+import { dirtyFormStore } from './store/dirtyFormStore'
 import './App.css'
 
 type LoginResponse = {
@@ -74,6 +75,19 @@ function App() {
   }, [])
 
   useEffect(() => {
+    function handleBeforeUnload(event: BeforeUnloadEvent) {
+      if (!dirtyFormStore.isDirty()) return
+
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [])
+
+  useEffect(() => {
     const activeItem = adminModules.find((item) => item.path === activePath)
 
     if (activeItem && !canAccess(user, activeItem.permission)) {
@@ -122,12 +136,20 @@ function App() {
     <>
       <AdminShell
         activeModuleId={activeModule.id}
-        onNavigate={(module) => navigateToPath(module.path)}
+        onNavigate={(module) => {
+          if (dirtyFormStore.confirmDiscard()) {
+            navigateToPath(module.path)
+          }
+        }}
         theme={theme}
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={adminStore.toggleSidebar}
         onToggleTheme={adminStore.toggleTheme}
-        onLogout={adminStore.logout}
+        onLogout={() => {
+          if (dirtyFormStore.confirmDiscard()) {
+            adminStore.logout()
+          }
+        }}
         user={user}
         navigationItems={sidebarModules}
         profileModule={profileModule}

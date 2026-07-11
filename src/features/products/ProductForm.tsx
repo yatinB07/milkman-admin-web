@@ -4,6 +4,7 @@ import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
 import { AdminTextarea } from '../../components/forms/AdminTextarea'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 import type { ProductFormValues, ProductRow } from './productTypes'
 
 type ProductFormProps = {
@@ -61,7 +62,7 @@ export function ProductForm({
   }
 
   return (
-    <form className="store-form" onSubmit={handleSubmit}>
+    <form className="store-form" onInputCapture={dirtyFormStore.markDirty} onChangeCapture={dirtyFormStore.markDirty} onSubmit={handleSubmit}>
       <FormSection title="Product Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Store" required />

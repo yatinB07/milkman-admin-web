@@ -15,6 +15,7 @@ import { StatusPill } from '../../components/StatusPill'
 import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { adminStore, useAdminStore } from '../../store/adminStore'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { StoreForm } from './StoreForm'
 import {
   createStore,
@@ -83,7 +84,7 @@ export function StoresPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-stores'] })
       toast.success(editingStore ? 'Store updated successfully.' : 'Store created successfully.')
-      closeForm()
+      closeForm(true)
     },
     onError: (error) => {
       const validationError = extractStoreApiValidationError(error)
@@ -207,6 +208,7 @@ export function StoresPage() {
   )
 
   function openCreateForm() {
+    dirtyFormStore.reset()
     setEditingStore(null)
     setFormErrors({})
     setActiveStoreTab('basic')
@@ -214,13 +216,17 @@ export function StoresPage() {
   }
 
   function openEditForm(store: StoreRow) {
+    dirtyFormStore.reset()
     setEditingStore(store)
     setFormErrors({})
     setActiveStoreTab('basic')
     setIsFormOpen(true)
   }
 
-  function closeForm() {
+  function closeForm(force = false) {
+    if (force !== true && !dirtyFormStore.confirmDiscard()) return
+
+    dirtyFormStore.reset()
     setEditingStore(null)
     setFormErrors({})
     setIsFormOpen(false)

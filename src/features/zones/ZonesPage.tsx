@@ -14,6 +14,7 @@ import { StatusPill } from '../../components/StatusPill'
 import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { adminStore, useAdminStore } from '../../store/adminStore'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { ZoneForm } from './ZoneForm'
 import { createZone, deleteZone as removeZone, listZones, updateZone } from './zoneRepository'
 import { toZonePayload } from './zoneService'
@@ -70,7 +71,7 @@ export function ZonesPage() {
       )
       await queryClient.invalidateQueries({ queryKey: ['admin-zones'] })
       toast.success(editingZone ? 'Zone updated successfully.' : 'Zone created successfully.')
-      closeForm()
+      closeForm(true)
     },
     onError: () => {
       toast.error('Zone could not be saved. Check the highlighted fields and try again.')
@@ -174,18 +175,23 @@ export function ZonesPage() {
   const meta = zones.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
 
   function openCreateForm() {
+    dirtyFormStore.reset()
     setEditingZone(null)
     setFormErrors({})
     setIsFormOpen(true)
   }
 
   function openEditForm(zone: ZoneRow) {
+    dirtyFormStore.reset()
     setEditingZone(zone)
     setFormErrors({})
     setIsFormOpen(true)
   }
 
-  function closeForm() {
+  function closeForm(force = false) {
+    if (force !== true && !dirtyFormStore.confirmDiscard()) return
+
+    dirtyFormStore.reset()
     setEditingZone(null)
     setFormErrors({})
     setIsFormOpen(false)
@@ -285,7 +291,7 @@ export function ZonesPage() {
               <div>
                 <h3 id="zone-form-title">{editingZone ? 'Edit Zone' : 'Add Zone'}</h3>
               </div>
-              <Button variant="secondary" onClick={closeForm}>
+              <Button variant="secondary" onClick={() => closeForm()}>
                 Close
               </Button>
             </div>

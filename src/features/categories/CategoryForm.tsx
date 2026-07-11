@@ -3,6 +3,7 @@ import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 import type { CategoryFormValues, CategoryRow } from './categoryTypes'
 
 type CategoryFormProps = {
@@ -36,7 +37,7 @@ export function CategoryForm({ category, formErrors, isSaving, onCancel, onSubmi
   }
 
   return (
-    <form className="store-form" onSubmit={handleSubmit}>
+    <form className="store-form" onInputCapture={dirtyFormStore.markDirty} onChangeCapture={dirtyFormStore.markDirty} onSubmit={handleSubmit}>
       <FormSection title="Category Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Category Name" required />

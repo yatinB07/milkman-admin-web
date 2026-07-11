@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 import type { ProductVariantFormValues, ProductVariantRow } from './productVariantTypes'
 
 type ProductVariantFormProps = {
@@ -62,7 +63,7 @@ export function ProductVariantForm({
   }
 
   return (
-    <form className="store-form" onSubmit={handleSubmit}>
+    <form className="store-form" onInputCapture={dirtyFormStore.markDirty} onChangeCapture={dirtyFormStore.markDirty} onSubmit={handleSubmit}>
       <FormSection title="Variant Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Store" required />

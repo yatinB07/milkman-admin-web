@@ -15,6 +15,7 @@ import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { adminStore, useAdminStore } from '../../store/adminStore'
+import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { ProductVariantForm } from './ProductVariantForm'
 import {
   createProductVariant,
@@ -101,7 +102,7 @@ export function ProductVariantsPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-product-variants'] })
       toast.success(editingVariant ? 'Product variant updated successfully.' : 'Product variant created successfully.')
-      closeForm()
+      closeForm(true)
     },
     onError: (error) => {
       if (isAxiosError(error) && error.response?.status === 422) {
@@ -214,6 +215,7 @@ export function ProductVariantsPage() {
   )
 
   function openCreateForm() {
+    dirtyFormStore.reset()
     setEditingVariant(null)
     setFormStoreId('')
     setFormErrors({})
@@ -221,13 +223,17 @@ export function ProductVariantsPage() {
   }
 
   function openEditForm(variant: ProductVariantRow) {
+    dirtyFormStore.reset()
     setEditingVariant(variant)
     setFormStoreId(String(variant.store_id))
     setFormErrors({})
     setIsFormOpen(true)
   }
 
-  function closeForm() {
+  function closeForm(force = false) {
+    if (force !== true && !dirtyFormStore.confirmDiscard()) return
+
+    dirtyFormStore.reset()
     setEditingVariant(null)
     setFormStoreId('')
     setFormErrors({})
@@ -328,7 +334,7 @@ export function ProductVariantsPage() {
               <div>
                 <h3 id="variant-form-title">{editingVariant ? 'Edit Product Variant' : 'Add Product Variant'}</h3>
               </div>
-              <Button variant="secondary" onClick={closeForm}>
+              <Button variant="secondary" onClick={() => closeForm()}>
                 Close
               </Button>
             </div>
