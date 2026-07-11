@@ -8,6 +8,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
+import { Button, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
@@ -35,7 +36,6 @@ export function ZonesPage() {
   const [page, setPage] = useState(1)
   const [editingZone, setEditingZone] = useState<ZoneRow | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [formError, setFormError] = useState<string | null>(null)
   const [formErrors, setFormErrors] = useState<ZoneFormErrors>({})
   const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { zone: ZoneRow }) | null>(null)
   const canCreate = adminStore.can(getModuleActionPermission('zones', 'create'))
@@ -69,10 +69,11 @@ export function ZonesPage() {
         },
       )
       await queryClient.invalidateQueries({ queryKey: ['admin-zones'] })
+      toast.success(editingZone ? 'Zone updated successfully.' : 'Zone created successfully.')
       closeForm()
     },
     onError: () => {
-      setFormError('Zone could not be saved. Check the documented required fields and try again.')
+      toast.error('Zone could not be saved. Check the highlighted fields and try again.')
     },
   })
 
@@ -80,6 +81,10 @@ export function ZonesPage() {
     mutationFn: async (zone: ZoneRow) => removeZone(zone.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-zones'] })
+      toast.success('Zone deleted successfully.')
+    },
+    onError: () => {
+      toast.error('Zone could not be deleted. Try again.')
     },
   })
 
@@ -170,27 +175,23 @@ export function ZonesPage() {
 
   function openCreateForm() {
     setEditingZone(null)
-    setFormError(null)
     setFormErrors({})
     setIsFormOpen(true)
   }
 
   function openEditForm(zone: ZoneRow) {
     setEditingZone(zone)
-    setFormError(null)
     setFormErrors({})
     setIsFormOpen(true)
   }
 
   function closeForm() {
     setEditingZone(null)
-    setFormError(null)
     setFormErrors({})
     setIsFormOpen(false)
   }
 
   function handleSubmit(values: ZoneFormValues) {
-    setFormError(null)
     saveZone.mutate(values)
   }
 
@@ -200,10 +201,10 @@ export function ZonesPage() {
         title="Zones"
         description="Manage delivery zones and service boundaries from the live Laravel admin API."
         actions={canCreate ? (
-          <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
+          <Button variant="primary" size="compact" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
             Add Zone
-          </button>
+          </Button>
         ) : null}
       />
 
@@ -283,22 +284,17 @@ export function ZonesPage() {
             <div className="modal-header">
               <div>
                 <h3 id="zone-form-title">{editingZone ? 'Edit Zone' : 'Add Zone'}</h3>
-                <p>Uses the documented ZoneRequest and UpdateZoneRequest contract.</p>
               </div>
-              <button type="button" className="secondary-button" onClick={closeForm}>
+              <Button variant="secondary" onClick={closeForm}>
                 Close
-              </button>
+              </Button>
             </div>
 
             <ZoneForm
               zone={editingZone}
-              formError={formError}
               formErrors={formErrors}
               isSaving={saveZone.isPending}
-              onErrorsChange={(errors) => {
-                setFormErrors(errors)
-                setFormError(Object.keys(errors).length > 0 ? 'Check the highlighted fields and try again.' : null)
-              }}
+              onErrorsChange={setFormErrors}
               onCancel={closeForm}
               onSubmit={handleSubmit}
             />

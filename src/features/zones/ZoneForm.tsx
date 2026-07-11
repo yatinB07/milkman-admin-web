@@ -1,13 +1,13 @@
 import { type FormEvent, useState } from 'react'
+import { Button, Input } from '../../components/common'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
-import { FieldLabel, FormErrorSummary } from '../../components/forms/FormLayout'
+import { FieldLabel } from '../../components/forms/FormLayout'
 import { ZonePolygonMap } from '../../components/maps/ZonePolygonMap'
 import { resolveZoneAlias, validateZoneForm } from './zoneService'
 import type { ZoneFormErrors, ZoneFormValues, ZoneRow } from './zoneTypes'
 
 type ZoneFormProps = {
   zone: ZoneRow | null
-  formError: string | null
   formErrors: ZoneFormErrors
   isSaving: boolean
   onErrorsChange: (errors: ZoneFormErrors) => void
@@ -22,7 +22,6 @@ const statusOptions: AdminSelectOption[] = [
 
 export function ZoneForm({
   zone,
-  formError,
   formErrors,
   isSaving,
   onErrorsChange,
@@ -58,7 +57,7 @@ export function ZoneForm({
       <div className="form-grid">
         <label className="form-field">
           <FieldLabel label="Zone Title" required />
-          <input
+          <Input
             name="title"
             required
             maxLength={255}
@@ -75,7 +74,7 @@ export function ZoneForm({
 
         <label className="form-field">
           <FieldLabel label="Alias" />
-          <input
+          <Input
             name="alias"
             maxLength={255}
             aria-invalid={Boolean(formErrors.alias)}
@@ -111,6 +110,7 @@ export function ZoneForm({
             options={statusOptions}
             value={status}
             onChange={setStatus}
+            hasError={Boolean(formErrors.is_active)}
           />
           {formErrors.is_active ? (
             <small className="field-error" id="zone-status-error">
@@ -120,15 +120,13 @@ export function ZoneForm({
         </label>
       </div>
 
-      <FormErrorSummary errors={[formError]} />
-
       <div className="modal-actions">
-        <button className="secondary-button" type="button" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           Cancel
-        </button>
-        <button className="primary-button is-compact" type="submit" disabled={isSaving}>
+        </Button>
+        <Button variant="primary" size="compact" type="submit" disabled={isSaving}>
           {isSaving ? 'Saving...' : zone ? 'Update Zone' : 'Create Zone'}
-        </button>
+        </Button>
       </div>
     </form>
   )
