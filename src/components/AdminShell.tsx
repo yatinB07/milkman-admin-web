@@ -15,6 +15,7 @@ type AdminShellProps = {
   onLogout: () => void
   activeModule: AdminModule
   activeModuleId: string
+  activePath: string
   onNavigate: (module: AdminModule) => void
   theme: 'light' | 'dark'
   sidebarCollapsed: boolean
@@ -30,6 +31,7 @@ export function AdminShell({
   onLogout,
   activeModule,
   activeModuleId,
+  activePath,
   onNavigate,
   theme,
   sidebarCollapsed,
@@ -102,7 +104,12 @@ export function AdminShell({
 
       <section className="admin-workspace">
         <header className="admin-topbar">
-          <AdminBreadcrumb activeModule={activeModule} dashboardModule={dashboardModule} onNavigate={onNavigate} />
+          <AdminBreadcrumb
+            activeModule={activeModule}
+            activePath={activePath}
+            dashboardModule={dashboardModule}
+            onNavigate={onNavigate}
+          />
           <div className="topbar-actions">
             <button
               className="icon-action"

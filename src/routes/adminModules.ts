@@ -116,6 +116,10 @@ export function getModuleActionPermission(moduleId: string, action: keyof NonNul
   return module?.permissions?.[action] ?? module?.permission
 }
 
+export function getActiveAdminModule(modules: AdminModule[], path: string) {
+  return modules.find((module) => module.path === path || path.startsWith(`${module.path}/`))
+}
+
 function crudPermissions(permission: string) {
   return {
     view: permission,

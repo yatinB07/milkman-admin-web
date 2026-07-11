@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { adminModules, getActiveAdminModule } from './routes/adminModules'
 import { shouldRedirectUnauthorizedRoute } from './routes/routeGuards'
 import type { AdminUser } from './store/adminStore'
 
@@ -22,5 +23,11 @@ describe('shouldRedirectUnauthorizedRoute', () => {
 
   it('redirects unauthorized routes after the user is loaded', () => {
     expect(shouldRedirectUnauthorizedRoute('/stores', adminUser)).toBe(true)
+  })
+})
+
+describe('getActiveAdminModule', () => {
+  it('keeps nested store routes inside the stores module', () => {
+    expect(getActiveAdminModule(adminModules, '/stores/edit/12')?.id).toBe('stores')
   })
 })

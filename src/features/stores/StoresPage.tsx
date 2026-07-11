@@ -1,7 +1,7 @@
 import { Edit3, ImageIcon, Plus, Store, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import {
   MasterDataTable,
   MasterFilterBar,
@@ -9,7 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, RowActionMenu, toast } from '../../components/common'
+import { Button, PageSkeleton, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
@@ -20,6 +20,7 @@ import { StoreForm } from './StoreForm'
 import {
   createStore,
   deleteStore as removeStore,
+  getStore,
   listStoreCategories,
   listStores,
   listStoreZones,
@@ -44,12 +45,13 @@ const defaultMeta: PaginationMeta = {
 
 export function StoresPage() {
   const { listPerPage } = useAdminStore()
+  const activePath = useHashPath()
+  const formRoute = parseStoreFormRoute(activePath)
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
   const [editingStore, setEditingStore] = useState<StoreRow | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
   const [formErrors, setFormErrors] = useState<StoreFormErrors>({})
   const [activeStoreTab, setActiveStoreTab] = useState<StoreFormTabId>('basic')
   const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { store: StoreRow }) | null>(null)
@@ -72,6 +74,13 @@ export function StoresPage() {
   const categories = useQuery({
     queryKey: ['admin-store-category-options'],
     queryFn: listStoreCategories,
+    retry: false,
+  })
+
+  const routeStore = useQuery({
+    queryKey: ['admin-stores-show', formRoute?.storeId],
+    queryFn: () => getStore(formRoute?.storeId ?? 0),
+    enabled: formRoute?.mode === 'edit',
     retry: false,
   })
 
@@ -203,7 +212,7 @@ export function StoresPage() {
     setEditingStore(null)
     setFormErrors({})
     setActiveStoreTab('basic')
-    setIsFormOpen(true)
+    navigateToHash('/stores/create')
   }
 
   function openEditForm(store: StoreRow) {
@@ -211,7 +220,7 @@ export function StoresPage() {
     setEditingStore(store)
     setFormErrors({})
     setActiveStoreTab('basic')
-    setIsFormOpen(true)
+    navigateToHash(`/stores/edit/${store.id}`)
   }
 
   function closeForm(force = false) {
@@ -220,13 +229,36 @@ export function StoresPage() {
     dirtyFormStore.reset()
     setEditingStore(null)
     setFormErrors({})
-    setIsFormOpen(false)
+    navigateToHash('/stores')
   }
 
-  if (isFormOpen) {
+  if (formRoute) {
+    const store = formRoute.mode === 'edit' ? routeStore.data ?? editingStore : null
+
+    if (formRoute.mode === 'edit' && !store && routeStore.isLoading) {
+      return <PageSkeleton label="Loading store" />
+    }
+
+    if (formRoute.mode === 'edit' && !store) {
+      return (
+        <>
+          <MasterPageHeader
+            title="Edit Store"
+            description="The requested store could not be loaded."
+            actions={
+              <Button variant="secondary" size="compact" onClick={() => closeForm(true)}>
+                Back to Stores
+              </Button>
+            }
+          />
+          <div className="master-error">Store could not be loaded. Check the record or try again.</div>
+        </>
+      )
+    }
+
     return (
       <StoreForm
-        store={editingStore}
+        store={store}
         categoryOptions={categoryOptions}
         zoneOptions={zoneOptions}
         formErrors={formErrors}
@@ -394,4 +426,38 @@ function assetUrl(path: string) {
   }
 
   return `/${path.replace(/^\/+/, '')}`
+}
+
+function parseStoreFormRoute(path: string) {
+  if (path === '/stores/create') return { mode: 'create' as const }
+
+  const editMatch = path.match(/^\/stores\/edit\/(\d+)$/)
+
+  if (editMatch) return { mode: 'edit' as const, storeId: Number(editMatch[1]) }
+
+  return null
+}
+
+function useHashPath() {
+  return useSyncExternalStore(subscribeToHash, getHashPath, getHashPath)
+}
+
+function subscribeToHash(listener: () => void) {
+  window.addEventListener('hashchange', listener)
+
+  return () => window.removeEventListener('hashchange', listener)
+}
+
+function getHashPath() {
+  const path = window.location.hash.replace(/^#/, '')
+
+  if (!path || path === '#') return '/'
+
+  return path.startsWith('/') ? path : `/${path}`
+}
+
+function navigateToHash(path: string) {
+  if (getHashPath() === path) return
+
+  window.location.hash = path
 }

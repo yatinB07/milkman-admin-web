@@ -14,6 +14,12 @@ export async function listStores(query: {
   return { data: response.data.data, meta: normalizePaginationMeta(response.data.meta) }
 }
 
+export async function getStore(storeId: number): Promise<StoreRow> {
+  const response = await api.get<{ data: StoreRow }>(`/api/v1/admin/stores/${storeId}`)
+
+  return response.data.data
+}
+
 export async function listStoreZones(): Promise<SelectOption[]> {
   const response = await api.get<OptionsApiResponse>('/api/v1/admin/zones', {
     params: toApiListParams({ perPage: 100 }),

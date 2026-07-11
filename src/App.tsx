@@ -5,7 +5,7 @@ import { AdminShell } from './components/AdminShell'
 import { ErrorBoundary, PageSkeleton, ToastHost } from './components/common'
 import { LoginPage } from './components/LoginPage'
 import { api, setUnauthorizedHandler } from './lib/api'
-import { adminModules } from './routes/adminModules'
+import { adminModules, getActiveAdminModule } from './routes/adminModules'
 import { shouldRedirectUnauthorizedRoute } from './routes/routeGuards'
 import { adminStore, canAccess, type AdminUser, useAdminStore } from './store/adminStore'
 import { dirtyFormStore } from './store/dirtyFormStore'
@@ -30,7 +30,7 @@ function App() {
   const visibleModules = adminModules.filter((module) => canAccess(user, module.permission))
   const sidebarModules = visibleModules.filter((module) => module.showInSidebar !== false)
   const profileModule = visibleModules.find((module) => module.id === 'profile')
-  const activeModule = visibleModules.find((module) => module.path === activePath) ?? visibleModules[0]
+  const activeModule = getActiveAdminModule(visibleModules, activePath) ?? visibleModules[0]
   const ActivePage = activeModule.component
 
   const currentUser = useQuery({
@@ -136,6 +136,7 @@ function App() {
       <AdminShell
         activeModule={activeModule}
         activeModuleId={activeModule.id}
+        activePath={activePath}
         onNavigate={(module) => {
           if (dirtyFormStore.confirmDiscard()) {
             navigateToPath(module.path)
