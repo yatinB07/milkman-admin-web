@@ -1,0 +1,363 @@
+import { Edit3, ImageIcon, Package, Plus, Trash2 } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
+import { useMemo, useState } from 'react'
+import {
+  MasterDataTable,
+  MasterFilterBar,
+  MasterPageHeader,
+  MasterPagination,
+  type MasterTableColumn,
+} from '../../components/master'
+import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
+import { StatusPill } from '../../components/StatusPill'
+import type { PaginationMeta } from '../../lib/apiTypes'
+import { getModuleActionPermission } from '../../routes/adminModules'
+import { adminStore, useAdminStore } from '../../store/adminStore'
+import { CategoryForm } from './CategoryForm'
+import {
+  createCategory,
+  deleteCategory as removeCategory,
+  listCategories,
+  updateCategory,
+} from './categoryRepository'
+import { toCategoryPayload } from './categoryService'
+import type { CategoryFormValues, CategoryListRow, CategoryRow } from './categoryTypes'
+
+const defaultMeta: PaginationMeta = {
+  currentPage: 1,
+  from: 0,
+  lastPage: 1,
+  perPage: 10,
+  to: 0,
+  total: 0,
+}
+
+export function CategoriesPage() {
+  const { listPerPage } = useAdminStore()
+  const queryClient = useQueryClient()
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('all')
+  const [page, setPage] = useState(1)
+  const [editingCategory, setEditingCategory] = useState<CategoryRow | null>(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { category: CategoryRow }) | null>(null)
+  const canCreate = adminStore.can(getModuleActionPermission('categories', 'create'))
+  const canUpdate = adminStore.can(getModuleActionPermission('categories', 'update'))
+  const canDelete = adminStore.can(getModuleActionPermission('categories', 'delete'))
+
+  const categories = useQuery({
+    queryKey: ['admin-categories', search, page, listPerPage],
+    queryFn: () => listCategories({ page, perPage: listPerPage, search }),
+    retry: false,
+  })
+
+  const saveCategory = useMutation({
+    mutationFn: async (values: CategoryFormValues) => {
+      const payload = toCategoryPayload(values)
+
+      return editingCategory ? updateCategory(editingCategory.id, payload) : createCategory(payload)
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-categories'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-store-category-options'] }),
+      ])
+      closeForm()
+    },
+    onError: (error) => {
+      if (isAxiosError(error) && error.response?.status === 422) {
+        const errors = error.response.data as { errors?: Record<string, string[]> }
+        setFormError(errors.errors?.title?.[0] ?? 'Check the highlighted fields and try again.')
+        return
+      }
+
+      setFormError('Category could not be saved. Check the required fields and try again.')
+    },
+  })
+
+  const deleteCategory = useMutation({
+    mutationFn: async (category: CategoryRow) => removeCategory(category.id),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-categories'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-store-category-options'] }),
+      ])
+    },
+  })
+
+  const apiRows = categories.data?.data ?? []
+  const filteredRows =
+    status === 'all'
+      ? apiRows
+      : apiRows.filter((category) => category.is_active === (status === 'active'))
+  const meta = categories.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
+  const rows: CategoryListRow[] = filteredRows.map((category, index) => ({
+    ...category,
+    serialNumber: (meta.from || 1) + index,
+  }))
+
+  const columns = useMemo<MasterTableColumn<CategoryListRow>[]>(
+    () => [
+      {
+        key: 'serial',
+        header: 'Sr No.',
+        render: (category) => category.serialNumber,
+        width: '90px',
+      },
+      {
+        key: 'title',
+        header: 'Category',
+        render: (category) => (
+          <span className="stacked-cell">
+            <strong>{category.title}</strong>
+            <small>#{category.id}</small>
+          </span>
+        ),
+      },
+      {
+        key: 'image',
+        header: 'Image',
+        align: 'center',
+        render: (category) => (
+          <CategoryImagePreview src={category.image_path} alt={`${category.title} image`} />
+        ),
+      },
+      {
+        key: 'cover',
+        header: 'Cover',
+        align: 'center',
+        render: (category) => (
+          <CategoryImagePreview src={category.cover_path} alt={`${category.title} cover`} />
+        ),
+      },
+      {
+        key: 'status',
+        header: 'Status',
+        align: 'center',
+        render: (category) => (
+          <StatusPill tone={category.is_active ? 'success' : 'danger'}>
+            {category.is_active ? 'Publish' : 'Unpublish'}
+          </StatusPill>
+        ),
+      },
+      {
+        key: 'updated',
+        header: 'Updated',
+        render: (category) => formatDate(category.updated_at),
+      },
+      {
+        key: 'actions',
+        header: 'Action',
+        align: 'right',
+        render: (category) => (
+          <span className="row-actions">
+            {canUpdate ? (
+              <button
+                type="button"
+                aria-label="Edit category"
+                data-tooltip="Edit category"
+                title="Edit category"
+                onClick={() => openEditForm(category)}
+              >
+                <Edit3 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
+            {canDelete ? (
+              <button
+                type="button"
+                aria-label="Delete category"
+                data-tooltip="Delete category"
+                title="Delete category"
+                onClick={() => {
+                  setConfirmDelete({
+                    title: 'Delete category',
+                    message: `Delete ${category.title}? This can be restored only from the backend.`,
+                    confirmLabel: 'Delete',
+                    category,
+                  })
+                }}
+              >
+                <Trash2 aria-hidden="true" size={16} />
+              </button>
+            ) : null}
+          </span>
+        ),
+      },
+    ],
+    [canDelete, canUpdate],
+  )
+
+  function openCreateForm() {
+    setEditingCategory(null)
+    setFormError(null)
+    setIsFormOpen(true)
+  }
+
+  function openEditForm(category: CategoryRow) {
+    setEditingCategory(category)
+    setFormError(null)
+    setIsFormOpen(true)
+  }
+
+  function closeForm() {
+    setEditingCategory(null)
+    setFormError(null)
+    setIsFormOpen(false)
+  }
+
+  function handleSubmit(values: CategoryFormValues) {
+    if (!values.title) {
+      setFormError('Category Name is required.')
+      return
+    }
+
+    setFormError(null)
+    saveCategory.mutate(values)
+  }
+
+  return (
+    <>
+      <MasterPageHeader
+        title="Categories"
+        description="Manage global product categories used during store onboarding."
+        actions={canCreate ? (
+          <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
+            <Plus aria-hidden="true" size={17} />
+            Add Category
+          </button>
+        ) : null}
+      />
+
+      <MasterFilterBar
+        searchLabel="Search categories"
+        searchPlaceholder="Search categories..."
+        searchValue={search}
+        onSearchChange={(value) => {
+          setSearch(value)
+          setPage(1)
+        }}
+        filters={[
+          {
+            label: 'Status',
+            value: status,
+            onChange: (value) => {
+              setStatus(value)
+              setPage(1)
+            },
+            options: [
+              { label: 'All categories', value: 'all' },
+              { label: 'Publish', value: 'active' },
+              { label: 'Unpublish', value: 'inactive' },
+            ],
+          },
+        ]}
+      />
+
+      <section className="data-panel">
+        <div className="data-panel-header">
+          <div>
+            <h3>Category Directory</h3>
+            <p>Showing paginated category records from the backend API.</p>
+          </div>
+        </div>
+
+        <MasterDataTable
+          columns={columns}
+          rows={rows}
+          getRowKey={(category) => category.id}
+          emptyState={
+            <span className="master-empty-state">
+              <Package aria-hidden="true" size={30} />
+              No categories found
+            </span>
+          }
+          isLoading={categories.isLoading}
+          minWidth={980}
+        />
+
+        {categories.isError ? (
+          <div className="master-error">
+            Categories could not be loaded. Confirm the backend is running and your admin session is
+            valid.
+          </div>
+        ) : null}
+
+        <MasterPagination
+          meta={meta}
+          perPage={listPerPage}
+          onPageChange={setPage}
+          onPerPageChange={(perPage) => {
+            adminStore.setListPerPage(perPage)
+            setPage(1)
+          }}
+        />
+      </section>
+
+      {isFormOpen ? (
+        <div className="modal-backdrop" role="presentation">
+          <section className="store-form-modal" role="dialog" aria-modal="true" aria-labelledby="category-form-title">
+            <div className="modal-header">
+              <div>
+                <h3 id="category-form-title">{editingCategory ? 'Edit Category' : 'Add Category'}</h3>
+              </div>
+              <button type="button" className="secondary-button" onClick={closeForm}>
+                Close
+              </button>
+            </div>
+
+            <CategoryForm
+              category={editingCategory}
+              formError={formError}
+              isSaving={saveCategory.isPending}
+              onCancel={closeForm}
+              onSubmit={handleSubmit}
+            />
+          </section>
+        </div>
+      ) : null}
+      <ConfirmDialog
+        options={confirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) {
+            deleteCategory.mutate(confirmDelete.category)
+          }
+          setConfirmDelete(null)
+        }}
+      />
+    </>
+  )
+}
+
+function CategoryImagePreview({ src, alt }: { src: string | null; alt: string }) {
+  if (!src) {
+    return (
+      <span className="store-image-placeholder">
+        <ImageIcon aria-hidden="true" size={22} />
+        No image
+      </span>
+    )
+  }
+
+  return <img className="store-table-image" src={assetUrl(src)} alt={alt} />
+}
+
+function assetUrl(path: string) {
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  return `/${path.replace(/^\/+/, '')}`
+}
+
+function formatDate(value?: string | null) {
+  return value
+    ? new Intl.DateTimeFormat('en', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(new Date(value))
+    : 'Never'
+}
