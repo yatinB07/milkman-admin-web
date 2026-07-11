@@ -6,12 +6,14 @@ import {
   UserRound,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { AdminBreadcrumb } from './common'
 import type { AdminUser } from '../store/adminStore'
 import type { AdminModule } from '../routes/adminModules'
 
 type AdminShellProps = {
   children: ReactNode
   onLogout: () => void
+  activeModule: AdminModule
   activeModuleId: string
   onNavigate: (module: AdminModule) => void
   theme: 'light' | 'dark'
@@ -26,6 +28,7 @@ type AdminShellProps = {
 export function AdminShell({
   children,
   onLogout,
+  activeModule,
   activeModuleId,
   onNavigate,
   theme,
@@ -38,6 +41,7 @@ export function AdminShell({
 }: AdminShellProps) {
   const displayName = user?.name ?? 'Admin Profile'
   const displayRole = user?.roles[0]?.replace('-', ' ') ?? 'Admin'
+  const dashboardModule = navigationItems.find((item) => item.id === 'dashboard')
 
   return (
     <main className={`admin-layout ${sidebarCollapsed ? 'is-sidebar-collapsed' : ''}`} data-theme={theme}>
@@ -98,6 +102,7 @@ export function AdminShell({
 
       <section className="admin-workspace">
         <header className="admin-topbar">
+          <AdminBreadcrumb activeModule={activeModule} dashboardModule={dashboardModule} onNavigate={onNavigate} />
           <div className="topbar-actions">
             <button
               className="icon-action"

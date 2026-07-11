@@ -134,6 +134,7 @@ function App() {
   return (
     <>
       <AdminShell
+        activeModule={activeModule}
         activeModuleId={activeModule.id}
         onNavigate={(module) => {
           if (dirtyFormStore.confirmDiscard()) {

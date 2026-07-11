@@ -1,3 +1,4 @@
+export { AdminBreadcrumb } from './AdminBreadcrumb'
 export { Button } from './Button'
 export { ErrorBoundary } from './ErrorBoundary'
 export { Input } from './Input'
