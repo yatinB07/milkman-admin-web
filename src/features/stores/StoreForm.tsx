@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react'
-import { type FormEvent, type InputHTMLAttributes, type MouseEvent, type ReactNode, useState } from 'react'
+import { type InputHTMLAttributes, type ReactNode, useState } from 'react'
+import { useForm, useWatch, type UseFormRegister } from 'react-hook-form'
 import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminMultiSelect, AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
@@ -11,8 +12,7 @@ import {
   splitCategoryReference,
   storeFormTabs,
   storeValidationFields,
-  stringifyValue,
-  toTimeInput,
+  toStoreFormDefaults,
   validateStoreFieldErrors,
 } from './storeService'
 import type { StoreFormErrors, StoreFormTabId, StoreFormValues, StoreRow } from './storeTypes'
@@ -59,20 +59,24 @@ export function StoreForm({
   onCancel,
   onSubmit,
 }: StoreFormProps) {
-  const [location, setLocation] = useState({
-    latitude: stringifyValue(store?.latitude ?? null),
-    longitude: stringifyValue(store?.longitude ?? null),
+  const { control, getValues, handleSubmit: submitForm, register, setValue } = useForm<StoreFormValues>({
+    defaultValues: toStoreFormDefaults(store),
   })
-  const [formIsActive, setFormIsActive] = useState(store?.is_active === false ? '0' : '1')
-  const [formPickupStatus, setFormPickupStatus] = useState(store?.is_pickup_enabled === false ? '0' : '1')
-  const [formCategoryIds, setFormCategoryIds] = useState<string[]>(splitCategoryReference(store?.category_reference))
-  const [formZoneId, setFormZoneId] = useState(stringifyValue(store?.zone_id ?? null))
-  const [formChargeType, setFormChargeType] = useState(String(store?.charge_type ?? '1'))
-  const [logoPath, setLogoPath] = useState(store?.image_path ?? '')
-  const [coverPath, setCoverPath] = useState(store?.cover_image_path ?? '')
-  const [contentDescription, setContentDescription] = useState(store?.content_description ?? '')
-  const [cancelPolicy, setCancelPolicy] = useState(store?.cancel_policy ?? '')
   const [maxStepIndex, setMaxStepIndex] = useState(0)
+  const watchedValues = useWatch({ control })
+  const formIsActive = watchedValues.is_active ? '1' : '0'
+  const formPickupStatus = watchedValues.is_pickup_enabled ? '1' : '0'
+  const formCategoryIds = splitCategoryReference(watchedValues.category_reference)
+  const formZoneId = watchedValues.zone_id ?? ''
+  const formChargeType = watchedValues.charge_type ?? '1'
+  const logoPath = watchedValues.image_path ?? ''
+  const coverPath = watchedValues.cover_image_path ?? ''
+  const contentDescription = watchedValues.content_description ?? ''
+  const cancelPolicy = watchedValues.cancel_policy ?? ''
+  const location = {
+    latitude: watchedValues.latitude ?? '',
+    longitude: watchedValues.longitude ?? '',
+  }
   const activeStepIndex = Math.max(
     0,
     storeFormTabs.findIndex((step) => step.id === activeTab),
@@ -81,52 +85,12 @@ export function StoreForm({
   const isLastStep = activeStepIndex === storeFormTabs.length - 1
   const activeStep = storeFormTabs[activeStepIndex]
 
-  function buildValues(form: FormData): StoreFormValues {
-    return {
-      title: String(form.get('title') ?? ''),
-      image_path: logoPath,
-      cover_image_path: coverPath,
-      rating: String(form.get('rating') ?? ''),
-      language_code: String(form.get('language_code') ?? ''),
-      mobile: String(form.get('mobile') ?? ''),
-      slogan: String(form.get('slogan') ?? ''),
-      slogan_title: String(form.get('slogan_title') ?? ''),
-      opens_at: String(form.get('opens_at') ?? ''),
-      closes_at: String(form.get('closes_at') ?? ''),
-      is_pickup_enabled: formPickupStatus === '1',
-      is_active: formIsActive === '1',
-      short_description: String(form.get('short_description') ?? ''),
-      content_description: contentDescription,
-      cancel_policy: cancelPolicy,
-      email: String(form.get('email') ?? ''),
-      password: String(form.get('password') ?? ''),
-      category_reference: formCategoryIds.join(','),
-      full_address: String(form.get('full_address') ?? ''),
-      pincode: String(form.get('pincode') ?? ''),
-      landmark: String(form.get('landmark') ?? ''),
-      zone_id: formZoneId,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      charge_type: formChargeType,
-      delivery_charge: String(form.get('delivery_charge') ?? ''),
-      unit_kilometers: String(form.get('unit_kilometers') ?? ''),
-      unit_price: String(form.get('unit_price') ?? ''),
-      additional_price: String(form.get('additional_price') ?? ''),
-      store_charge: String(form.get('store_charge') ?? ''),
-      minimum_order_amount: String(form.get('minimum_order_amount') ?? ''),
-      commission_percent: String(form.get('commission_percent') ?? ''),
-      bank_name: String(form.get('bank_name') ?? ''),
-      ifsc_code: String(form.get('ifsc_code') ?? ''),
-      receipt_name: String(form.get('receipt_name') ?? ''),
-      account_number: String(form.get('account_number') ?? ''),
-      paypal_id: String(form.get('paypal_id') ?? ''),
-      upi_id: String(form.get('upi_id') ?? ''),
-    }
+  function setFormValue(name: keyof StoreFormValues, value: string | boolean) {
+    setValue(name, value as never, { shouldDirty: true })
+    dirtyFormStore.markDirty()
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const values = buildValues(new FormData(event.currentTarget))
+  function handleValidSubmit(values: StoreFormValues) {
     const validation = validateStoreFieldErrors(values, Boolean(store))
 
     onFormErrorsChange(validation.errors)
@@ -145,12 +109,10 @@ export function StoreForm({
     onActiveTabChange(storeFormTabs[activeStepIndex - 1].id)
   }
 
-  function handleNextStep(event: MouseEvent<HTMLButtonElement>) {
-    const form = event.currentTarget.form
+  function handleNextStep() {
+    if (isLastStep) return
 
-    if (!form || isLastStep) return
-
-    const values = buildValues(new FormData(form))
+    const values = getValues()
     const validation = validateStoreFieldErrors(values, Boolean(store))
     const currentErrors = stepErrors(validation.errors, activeTab)
 
@@ -192,7 +154,7 @@ export function StoreForm({
         noValidate
         onInputCapture={dirtyFormStore.markDirty}
         onChangeCapture={dirtyFormStore.markDirty}
-        onSubmit={handleSubmit}
+        onSubmit={submitForm(handleValidSubmit)}
       >
         <div className="store-form-steps" aria-label="Store form steps">
           {storeFormTabs.map((tab, index) => (
@@ -218,13 +180,18 @@ export function StoreForm({
                 label="Store Name"
                 required
                 maxLength={255}
-                defaultValue={store?.title ?? ''}
                 error={formErrors.title}
+                register={register}
               />
 
               <label className="form-field">
                 <FieldLabel label="Store Status" required />
-                <AdminSelect isSearchable={false} options={publishOptions} value={formIsActive} onChange={setFormIsActive} />
+                <AdminSelect
+                  isSearchable={false}
+                  options={publishOptions}
+                  value={formIsActive}
+                  onChange={(value) => setFormValue('is_active', value === '1')}
+                />
               </label>
 
               <StoreInputField
@@ -234,15 +201,15 @@ export function StoreForm({
                 type="number"
                 min="0"
                 step="0.01"
-                defaultValue={store?.rating ?? ''}
                 error={formErrors.rating}
+                register={register}
               />
 
               <StoreInputField
                 name="language_code"
                 label="Certificate/License Code"
                 maxLength={12}
-                defaultValue={store?.language_code ?? ''}
+                register={register}
               />
 
               <StoreInputField
@@ -250,8 +217,8 @@ export function StoreForm({
                 label="Mobile number"
                 required
                 maxLength={32}
-                defaultValue={store?.mobile ?? ''}
                 error={formErrors.mobile}
+                register={register}
               />
 
               <StoreInputField
@@ -259,8 +226,8 @@ export function StoreForm({
                 label="Slogan Title"
                 required
                 maxLength={255}
-                defaultValue={store?.slogan ?? ''}
                 error={formErrors.slogan}
+                register={register}
               />
 
               <StoreInputField
@@ -268,8 +235,8 @@ export function StoreForm({
                 label="Slogan Subtitle"
                 required
                 maxLength={255}
-                defaultValue={store?.slogan_title ?? ''}
                 error={formErrors.slogan_title}
+                register={register}
               />
 
               <StoreInputField
@@ -277,8 +244,8 @@ export function StoreForm({
                 label="Store Open Time"
                 required
                 type="time"
-                defaultValue={toTimeInput(store?.opens_at)}
                 error={formErrors.opens_at}
+                register={register}
               />
 
               <StoreInputField
@@ -286,8 +253,8 @@ export function StoreForm({
                 label="Store Close Time"
                 required
                 type="time"
-                defaultValue={toTimeInput(store?.closes_at)}
                 error={formErrors.closes_at}
+                register={register}
               />
 
               <label className="form-field">
@@ -296,17 +263,13 @@ export function StoreForm({
                   isSearchable={false}
                   options={pickupOptions}
                   value={formPickupStatus}
-                  onChange={setFormPickupStatus}
+                  onChange={(value) => setFormValue('is_pickup_enabled', value === '1')}
                 />
               </label>
 
               <label className="form-field is-wide">
                 <FieldLabel label="Tags" required />
-                <Input
-                  name="short_description"
-                  aria-invalid={Boolean(formErrors.short_description)}
-                  defaultValue={store?.short_description ?? ''}
-                />
+                <Input aria-invalid={Boolean(formErrors.short_description)} {...register('short_description')} />
                 <FieldError message={formErrors.short_description} />
               </label>
 
@@ -316,7 +279,7 @@ export function StoreForm({
                   name="content_description"
                   placeholder="Write the store description shown to customers"
                   value={contentDescription}
-                  onChange={setContentDescription}
+                  onChange={(value) => setFormValue('content_description', value)}
                   helpText="Plain text shown on the customer-facing store details."
                 />
                 <FieldError message={formErrors.content_description} />
@@ -328,7 +291,7 @@ export function StoreForm({
                   name="cancel_policy"
                   placeholder="Write the cancellation policy for this store"
                   value={cancelPolicy}
-                  onChange={setCancelPolicy}
+                  onChange={(value) => setFormValue('cancel_policy', value)}
                   helpText="Plain text policy customers can read before ordering."
                 />
                 <FieldError message={formErrors.cancel_policy} />
@@ -340,7 +303,13 @@ export function StoreForm({
             <StoreFormSection title="Store Media" columns={2}>
               <label className="form-field">
                 <FieldLabel label="Store Logo" required />
-                <AdminFilePicker name="image_path" required label="Store logo" value={logoPath} onChange={setLogoPath} />
+                <AdminFilePicker
+                  name="image_path"
+                  required
+                  label="Store logo"
+                  value={logoPath}
+                  onChange={(value) => setFormValue('image_path', value)}
+                />
                 <FieldError message={formErrors.image_path} />
               </label>
 
@@ -351,7 +320,7 @@ export function StoreForm({
                   required
                   label="Store cover image"
                   value={coverPath}
-                  onChange={setCoverPath}
+                  onChange={(value) => setFormValue('cover_image_path', value)}
                 />
                 <FieldError message={formErrors.cover_image_path} />
               </label>
@@ -366,8 +335,8 @@ export function StoreForm({
                 required
                 type="email"
                 maxLength={255}
-                defaultValue={store?.email ?? ''}
                 error={formErrors.email}
+                register={register}
               />
 
               <StoreInputField
@@ -378,6 +347,7 @@ export function StoreForm({
                 minLength={8}
                 placeholder={store ? 'Leave blank to keep current' : 'Minimum 8 chars'}
                 error={formErrors.password}
+                register={register}
               />
             </StoreFormSection>
           </StepPanel>
@@ -390,7 +360,7 @@ export function StoreForm({
                   options={categoryOptions}
                   placeholder="Search and select store categories"
                   values={formCategoryIds}
-                  onChange={setFormCategoryIds}
+                  onChange={(values) => setFormValue('category_reference', values.join(','))}
                   hasError={Boolean(formErrors.category_reference || optionError)}
                 />
                 <FieldError message={formErrors.category_reference ?? (optionError ? 'Zone or category options could not be loaded.' : undefined)} />
@@ -405,8 +375,8 @@ export function StoreForm({
                 label="Full Address"
                 required
                 wide
-                defaultValue={store?.full_address ?? ''}
                 error={formErrors.full_address}
+                register={register}
               />
 
               <StoreInputField
@@ -414,8 +384,8 @@ export function StoreForm({
                 label="Pincode"
                 required
                 maxLength={32}
-                defaultValue={store?.pincode ?? ''}
                 error={formErrors.pincode}
+                register={register}
               />
 
               <StoreInputField
@@ -423,8 +393,8 @@ export function StoreForm({
                 label="Landmark"
                 required
                 maxLength={255}
-                defaultValue={store?.landmark ?? ''}
                 error={formErrors.landmark}
+                register={register}
               />
 
               <label className="form-field">
@@ -433,7 +403,7 @@ export function StoreForm({
                   options={zoneOptions}
                   placeholder="Search and select zone"
                   value={formZoneId}
-                  onChange={setFormZoneId}
+                  onChange={(value) => setFormValue('zone_id', value)}
                   hasError={Boolean(formErrors.zone_id || optionError)}
                 />
                 <FieldError message={formErrors.zone_id ?? (optionError ? 'Zone or category options could not be loaded.' : undefined)} />
@@ -448,7 +418,7 @@ export function StoreForm({
                   aria-invalid={Boolean(formErrors.latitude)}
                   value={location.latitude}
                   onChange={(event) => {
-                    setLocation((current) => ({ ...current, latitude: event.target.value }))
+                    setFormValue('latitude', event.target.value)
                   }}
                 />
                 <FieldError message={formErrors.latitude} />
@@ -463,7 +433,7 @@ export function StoreForm({
                   aria-invalid={Boolean(formErrors.longitude)}
                   value={location.longitude}
                   onChange={(event) => {
-                    setLocation((current) => ({ ...current, longitude: event.target.value }))
+                    setFormValue('longitude', event.target.value)
                   }}
                 />
                 <FieldError message={formErrors.longitude} />
@@ -475,10 +445,8 @@ export function StoreForm({
                   latitude={location.latitude}
                   longitude={location.longitude}
                   onChange={(point) => {
-                    setLocation({
-                      latitude: point.lat.toFixed(7),
-                      longitude: point.lng.toFixed(7),
-                    })
+                    setFormValue('latitude', point.lat.toFixed(7))
+                    setFormValue('longitude', point.lng.toFixed(7))
                   }}
                 />
               </div>
@@ -493,7 +461,7 @@ export function StoreForm({
                   isSearchable={false}
                   options={chargeTypeOptions}
                   value={formChargeType}
-                  onChange={setFormChargeType}
+                  onChange={(value) => setFormValue('charge_type', value)}
                   hasError={Boolean(formErrors.charge_type)}
                 />
                 <FieldError message={formErrors.charge_type} />
@@ -506,8 +474,8 @@ export function StoreForm({
                 type="number"
                 min="0"
                 step="0.01"
-                defaultValue={store?.delivery_charge ?? ''}
                 error={formErrors.delivery_charge}
+                register={register}
               />
 
               <StoreInputField
@@ -516,8 +484,8 @@ export function StoreForm({
                 required
                 type="number"
                 min="0"
-                defaultValue={store?.unit_kilometers ?? ''}
                 error={formErrors.unit_kilometers}
+                register={register}
               />
 
               <StoreInputField
@@ -527,8 +495,8 @@ export function StoreForm({
                 type="number"
                 min="0"
                 step="0.01"
-                defaultValue={store?.unit_price ?? ''}
                 error={formErrors.unit_price}
+                register={register}
               />
 
               <StoreInputField
@@ -538,8 +506,8 @@ export function StoreForm({
                 type="number"
                 min="0"
                 step="0.01"
-                defaultValue={store?.additional_price ?? ''}
                 error={formErrors.additional_price}
+                register={register}
               />
             </StoreFormSection>
 
@@ -551,8 +519,8 @@ export function StoreForm({
                 type="number"
                 min="0"
                 step="0.01"
-                defaultValue={store?.store_charge ?? ''}
                 error={formErrors.store_charge}
+                register={register}
               />
 
               <StoreInputField
@@ -562,8 +530,8 @@ export function StoreForm({
                 type="number"
                 min="0"
                 step="0.01"
-                defaultValue={store?.minimum_order_amount ?? ''}
                 error={formErrors.minimum_order_amount}
+                register={register}
               />
             </StoreFormSection>
 
@@ -575,8 +543,8 @@ export function StoreForm({
                 type="number"
                 min="0"
                 step="0.01"
-                defaultValue={store?.commission_percent ?? ''}
                 error={formErrors.commission_percent}
+                register={register}
               />
             </StoreFormSection>
           </StepPanel>
@@ -588,8 +556,8 @@ export function StoreForm({
                 label="Bank Name"
                 required
                 maxLength={255}
-                defaultValue={store?.bank_name ?? ''}
                 error={formErrors.bank_name}
+                register={register}
               />
 
               <StoreInputField
@@ -597,8 +565,8 @@ export function StoreForm({
                 label="Bank Code/IFSC"
                 required
                 maxLength={64}
-                defaultValue={store?.ifsc_code ?? ''}
                 error={formErrors.ifsc_code}
+                register={register}
               />
 
               <StoreInputField
@@ -606,8 +574,8 @@ export function StoreForm({
                 label="Recipient Name"
                 required
                 maxLength={255}
-                defaultValue={store?.receipt_name ?? ''}
                 error={formErrors.receipt_name}
+                register={register}
               />
 
               <StoreInputField
@@ -615,8 +583,8 @@ export function StoreForm({
                 label="Account Number"
                 required
                 maxLength={64}
-                defaultValue={store?.account_number ?? ''}
                 error={formErrors.account_number}
+                register={register}
               />
 
               <StoreInputField
@@ -624,8 +592,8 @@ export function StoreForm({
                 label="Paypal ID"
                 required
                 maxLength={255}
-                defaultValue={store?.paypal_id ?? ''}
                 error={formErrors.paypal_id}
+                register={register}
               />
 
               <StoreInputField
@@ -633,8 +601,8 @@ export function StoreForm({
                 label="UPI ID"
                 required
                 maxLength={255}
-                defaultValue={store?.upi_id ?? ''}
                 error={formErrors.upi_id}
+                register={register}
               />
             </StoreFormSection>
           </StepPanel>
@@ -685,15 +653,16 @@ type StoreInputFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'name'> 
   error?: string
   label: string
   name: keyof StoreFormValues
+  register: UseFormRegister<StoreFormValues>
   required?: boolean
   wide?: boolean
 }
 
-function StoreInputField({ error, label, name, required = false, wide = false, ...props }: StoreInputFieldProps) {
+function StoreInputField({ error, label, name, register, required = false, wide = false, ...props }: StoreInputFieldProps) {
   return (
     <label className={wide ? 'form-field is-wide' : 'form-field'}>
       {required ? <FieldLabel label={label} required /> : <span>{label}</span>}
-      <Input name={name} aria-invalid={Boolean(error)} {...props} />
+      <Input aria-invalid={Boolean(error)} {...props} {...register(name)} />
       <FieldError message={error} />
     </label>
   )
