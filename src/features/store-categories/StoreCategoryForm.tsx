@@ -78,7 +78,13 @@ export function StoreCategoryForm({
 
         <label className="form-field">
           <FieldLabel label="Category Image" />
-          <AdminFilePicker name="image_path" label="Category image" value={imagePath} onChange={setImagePath} />
+          <AdminFilePicker
+            name="image_path"
+            directory="store-categories"
+            label="Category image"
+            value={imagePath}
+            onChange={setImagePath}
+          />
         </label>
 
         <label className="form-field">

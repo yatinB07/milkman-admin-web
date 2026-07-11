@@ -114,7 +114,13 @@ export function ProductForm({
       <FormSection title="Media And Description" columns={2}>
         <label className="form-field">
           <FieldLabel label="Product Image" />
-          <AdminFilePicker name="image_path" label="Product image" value={imagePath} onChange={setImagePath} />
+          <AdminFilePicker
+            name="image_path"
+            directory="products"
+            label="Product image"
+            value={imagePath}
+            onChange={setImagePath}
+          />
         </label>
 
         <label className="form-field">

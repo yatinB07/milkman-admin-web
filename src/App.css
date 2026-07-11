@@ -2171,6 +2171,11 @@
   white-space: nowrap;
 }
 
+.admin-file-button.is-disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
 .admin-file-link {
   border: 0;
   background: transparent;
@@ -2215,6 +2220,10 @@
   color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 700;
+}
+
+.admin-file-body .field-error {
+  color: var(--color-danger);
 }
 
 .admin-file-clear {

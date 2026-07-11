@@ -57,12 +57,24 @@ export function CategoryForm({ category, formErrors, isSaving, onCancel, onSubmi
 
         <label className="form-field">
           <FieldLabel label="Category Image" />
-          <AdminFilePicker name="image_path" label="Category image" value={imagePath} onChange={setImagePath} />
+          <AdminFilePicker
+            name="image_path"
+            directory="categories"
+            label="Category image"
+            value={imagePath}
+            onChange={setImagePath}
+          />
         </label>
 
         <label className="form-field">
           <FieldLabel label="Category Cover" />
-          <AdminFilePicker name="cover_path" label="Category cover" value={coverPath} onChange={setCoverPath} />
+          <AdminFilePicker
+            name="cover_path"
+            directory="categories"
+            label="Category cover"
+            value={coverPath}
+            onChange={setCoverPath}
+          />
         </label>
       </FormSection>
 

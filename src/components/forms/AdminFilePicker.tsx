@@ -1,10 +1,12 @@
 import { ImageIcon, Upload, X } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
+import { uploadAdminFile } from './adminUploadRepository'
 
 type AdminFilePickerProps = {
   name: string
   value: string
   label: string
+  directory?: string
   required?: boolean
   accept?: string
   placeholder?: string
@@ -15,6 +17,7 @@ export function AdminFilePicker({
   name,
   value,
   label,
+  directory = 'uploads',
   required = false,
   accept = 'image/*',
   placeholder = 'images/store/example.png',
@@ -22,6 +25,8 @@ export function AdminFilePicker({
 }: AdminFilePickerProps) {
   const inputId = useId()
   const [previewUrl, setPreviewUrl] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
   const hasPreview = Boolean(previewUrl || value)
   const fileName = displayFileName(value)
 
@@ -33,7 +38,7 @@ export function AdminFilePicker({
     }
   }, [previewUrl])
 
-  function handleFileChange(file?: File) {
+  async function handleFileChange(file?: File) {
     if (!file) {
       return
     }
@@ -43,7 +48,17 @@ export function AdminFilePicker({
     }
 
     setPreviewUrl(URL.createObjectURL(file))
-    onChange(toTemporaryUploadPath(file.name))
+    setUploadError('')
+    setIsUploading(true)
+
+    try {
+      const upload = await uploadAdminFile(file, directory)
+      onChange(upload.path)
+    } catch {
+      setUploadError('Upload failed. Please choose the image again.')
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   function clearFile() {
@@ -52,6 +67,7 @@ export function AdminFilePicker({
     }
 
     setPreviewUrl('')
+    setUploadError('')
     onChange('')
   }
 
@@ -72,12 +88,12 @@ export function AdminFilePicker({
 
       <div className="admin-file-body">
         <div className="admin-file-actions">
-          <label className="admin-file-button" htmlFor={inputId}>
+          <label className={`admin-file-button${isUploading ? ' is-disabled' : ''}`} htmlFor={inputId}>
             <Upload aria-hidden="true" size={16} />
-            <span>{value ? 'Replace file' : 'Choose file'}</span>
+            <span>{isUploading ? 'Uploading...' : value ? 'Replace file' : 'Choose file'}</span>
           </label>
           {value ? (
-            <button className="admin-file-link" type="button" onClick={clearFile}>
+            <button className="admin-file-link" type="button" disabled={isUploading} onClick={clearFile}>
               Remove
             </button>
           ) : null}
@@ -86,6 +102,7 @@ export function AdminFilePicker({
           id={inputId}
           accept={accept}
           className="sr-only"
+          disabled={isUploading}
           type="file"
           onChange={(event) => handleFileChange(event.target.files?.[0])}
         />
@@ -95,9 +112,8 @@ export function AdminFilePicker({
           <span title={value || placeholder}>{value || placeholder}</span>
         </div>
 
-        <small>
-          Preview is immediate. Upload storage will be connected through the backend upload endpoint.
-        </small>
+        <small>Uploads immediately and stores the returned path with the form.</small>
+        {uploadError ? <small className="field-error">{uploadError}</small> : null}
       </div>
 
       {value ? (
@@ -120,12 +136,6 @@ function displayFileName(path: string) {
   } catch {
     return path.split('/').filter(Boolean).at(-1) ?? path
   }
-}
-
-function toTemporaryUploadPath(fileName: string) {
-  const safeName = fileName.trim().replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '')
-
-  return `images/store/${safeName || 'store-image.png'}`
 }
 
 function assetUrl(path: string) {

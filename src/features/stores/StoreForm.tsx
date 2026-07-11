@@ -306,6 +306,7 @@ export function StoreForm({
                 <AdminFilePicker
                   name="image_path"
                   required
+                  directory="stores"
                   label="Store logo"
                   value={logoPath}
                   onChange={(value) => setFormValue('image_path', value)}
@@ -318,6 +319,7 @@ export function StoreForm({
                 <AdminFilePicker
                   name="cover_image_path"
                   required
+                  directory="stores"
                   label="Store cover image"
                   value={coverPath}
                   onChange={(value) => setFormValue('cover_image_path', value)}
