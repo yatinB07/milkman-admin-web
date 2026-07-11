@@ -14,7 +14,7 @@ import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/commo
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
-import { navigateToHash, useHashPath } from '../../routes/hashRouting'
+import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { ProductVariantForm } from './ProductVariantForm'
@@ -58,7 +58,7 @@ export function ProductVariantsPage() {
   const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
   const activePath = useHashPath()
-  const formRoute = parseProductVariantFormRoute(activePath)
+  const formRoute = parseCrudFormRoute(activePath, '/product-variants')
   const [search, setSearch] = useState('')
   const [stockStatus, setStockStatus] = useState('all')
   const [page, setPage] = useState(1)
@@ -91,8 +91,8 @@ export function ProductVariantsPage() {
   })
 
   const routeVariant = useQuery({
-    queryKey: ['admin-product-variant', formRoute?.mode === 'edit' ? formRoute.variantId : null],
-    queryFn: () => getProductVariant(formRoute?.mode === 'edit' ? formRoute.variantId : 0),
+    queryKey: ['admin-product-variant', formRoute?.mode === 'edit' ? formRoute.id : null],
+    queryFn: () => getProductVariant(formRoute?.mode === 'edit' ? formRoute.id : 0),
     enabled: formRoute?.mode === 'edit',
     retry: false,
   })
@@ -386,14 +386,4 @@ export function ProductVariantsPage() {
       />
     </>
   )
-}
-
-function parseProductVariantFormRoute(path: string) {
-  if (path === '/product-variants/create') return { mode: 'create' as const }
-
-  const editMatch = path.match(/^\/product-variants\/edit\/(\d+)$/)
-
-  if (editMatch) return { mode: 'edit' as const, variantId: Number(editMatch[1]) }
-
-  return null
 }

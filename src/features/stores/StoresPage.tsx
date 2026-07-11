@@ -14,7 +14,7 @@ import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/commo
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
-import { navigateToHash, useHashPath } from '../../routes/hashRouting'
+import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { StoreForm } from './StoreForm'
@@ -47,7 +47,7 @@ const defaultMeta: PaginationMeta = {
 export function StoresPage() {
   const { listPerPage } = useAdminStore()
   const activePath = useHashPath()
-  const formRoute = parseStoreFormRoute(activePath)
+  const formRoute = parseCrudFormRoute(activePath, '/stores')
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
@@ -79,8 +79,8 @@ export function StoresPage() {
   })
 
   const routeStore = useQuery({
-    queryKey: ['admin-stores-show', formRoute?.storeId],
-    queryFn: () => getStore(formRoute?.storeId ?? 0),
+    queryKey: ['admin-stores-show', formRoute?.mode === 'edit' ? formRoute.id : null],
+    queryFn: () => getStore(formRoute?.mode === 'edit' ? formRoute.id : 0),
     enabled: formRoute?.mode === 'edit',
     retry: false,
   })
@@ -418,14 +418,4 @@ function assetUrl(path: string) {
   }
 
   return `/${path.replace(/^\/+/, '')}`
-}
-
-function parseStoreFormRoute(path: string) {
-  if (path === '/stores/create') return { mode: 'create' as const }
-
-  const editMatch = path.match(/^\/stores\/edit\/(\d+)$/)
-
-  if (editMatch) return { mode: 'edit' as const, storeId: Number(editMatch[1]) }
-
-  return null
 }

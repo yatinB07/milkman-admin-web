@@ -13,7 +13,7 @@ import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/commo
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
-import { navigateToHash, useHashPath } from '../../routes/hashRouting'
+import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { ZoneForm } from './ZoneForm'
@@ -34,7 +34,7 @@ export function ZonesPage() {
   const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
   const activePath = useHashPath()
-  const formRoute = parseZoneFormRoute(activePath)
+  const formRoute = parseCrudFormRoute(activePath, '/zones')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
@@ -52,8 +52,8 @@ export function ZonesPage() {
   })
 
   const routeZone = useQuery({
-    queryKey: ['admin-zone', formRoute?.mode === 'edit' ? formRoute.zoneId : null],
-    queryFn: () => getZone(formRoute?.mode === 'edit' ? formRoute.zoneId : 0),
+    queryKey: ['admin-zone', formRoute?.mode === 'edit' ? formRoute.id : null],
+    queryFn: () => getZone(formRoute?.mode === 'edit' ? formRoute.id : 0),
     enabled: formRoute?.mode === 'edit',
     retry: false,
   })
@@ -354,14 +354,4 @@ function formatDate(value: string) {
     day: 'numeric',
     year: 'numeric',
   }).format(date)
-}
-
-function parseZoneFormRoute(path: string) {
-  if (path === '/zones/create') return { mode: 'create' as const }
-
-  const editMatch = path.match(/^\/zones\/edit\/(\d+)$/)
-
-  if (editMatch) return { mode: 'edit' as const, zoneId: Number(editMatch[1]) }
-
-  return null
 }

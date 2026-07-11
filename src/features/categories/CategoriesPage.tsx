@@ -14,7 +14,7 @@ import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/commo
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
-import { navigateToHash, useHashPath } from '../../routes/hashRouting'
+import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { CategoryForm } from './CategoryForm'
@@ -43,7 +43,7 @@ export function CategoriesPage() {
   const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
   const activePath = useHashPath()
-  const formRoute = parseCategoryFormRoute(activePath)
+  const formRoute = parseCrudFormRoute(activePath, '/categories')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
@@ -61,8 +61,8 @@ export function CategoriesPage() {
   })
 
   const routeCategory = useQuery({
-    queryKey: ['admin-category', formRoute?.mode === 'edit' ? formRoute.categoryId : null],
-    queryFn: () => getCategory(formRoute?.mode === 'edit' ? formRoute.categoryId : 0),
+    queryKey: ['admin-category', formRoute?.mode === 'edit' ? formRoute.id : null],
+    queryFn: () => getCategory(formRoute?.mode === 'edit' ? formRoute.id : 0),
     enabled: formRoute?.mode === 'edit',
     retry: false,
   })
@@ -393,14 +393,4 @@ function formatDate(value?: string | null) {
         year: 'numeric',
       }).format(new Date(value))
     : 'Never'
-}
-
-function parseCategoryFormRoute(path: string) {
-  if (path === '/categories/create') return { mode: 'create' as const }
-
-  const editMatch = path.match(/^\/categories\/edit\/(\d+)$/)
-
-  if (editMatch) return { mode: 'edit' as const, categoryId: Number(editMatch[1]) }
-
-  return null
 }

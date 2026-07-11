@@ -14,7 +14,7 @@ import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/commo
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
-import { navigateToHash, useHashPath } from '../../routes/hashRouting'
+import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { ProductForm } from './ProductForm'
@@ -45,7 +45,7 @@ export function ProductsPage() {
   const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
   const activePath = useHashPath()
-  const formRoute = parseProductFormRoute(activePath)
+  const formRoute = parseCrudFormRoute(activePath, '/products')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
@@ -76,8 +76,8 @@ export function ProductsPage() {
   })
 
   const routeProduct = useQuery({
-    queryKey: ['admin-product', formRoute?.mode === 'edit' ? formRoute.productId : null],
-    queryFn: () => getProduct(formRoute?.mode === 'edit' ? formRoute.productId : 0),
+    queryKey: ['admin-product', formRoute?.mode === 'edit' ? formRoute.id : null],
+    queryFn: () => getProduct(formRoute?.mode === 'edit' ? formRoute.id : 0),
     enabled: formRoute?.mode === 'edit',
     retry: false,
   })
@@ -399,14 +399,4 @@ function formatDate(value?: string | null) {
   return value
     ? new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value))
     : 'Never'
-}
-
-function parseProductFormRoute(path: string) {
-  if (path === '/products/create') return { mode: 'create' as const }
-
-  const editMatch = path.match(/^\/products\/edit\/(\d+)$/)
-
-  if (editMatch) return { mode: 'edit' as const, productId: Number(editMatch[1]) }
-
-  return null
 }
