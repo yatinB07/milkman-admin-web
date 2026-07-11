@@ -6,6 +6,7 @@ import { ErrorBoundary, PageSkeleton, ToastHost } from './components/common'
 import { LoginPage } from './components/LoginPage'
 import { api, setUnauthorizedHandler } from './lib/api'
 import { adminModules } from './routes/adminModules'
+import { shouldRedirectUnauthorizedRoute } from './routes/routeGuards'
 import { adminStore, canAccess, type AdminUser, useAdminStore } from './store/adminStore'
 import { dirtyFormStore } from './store/dirtyFormStore'
 import './App.css'
@@ -88,11 +89,9 @@ function App() {
   }, [])
 
   useEffect(() => {
-    const activeItem = adminModules.find((item) => item.path === activePath)
+    if (!shouldRedirectUnauthorizedRoute(activePath, user)) return
 
-    if (activeItem && !canAccess(user, activeItem.permission)) {
-      navigateToPath('/')
-    }
+    navigateToPath('/')
   }, [activePath, user])
 
   if (!token) {
