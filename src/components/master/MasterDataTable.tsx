@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Skeleton } from '../common'
 
 export type MasterTableColumn<Row> = {
   key: string
@@ -43,11 +44,15 @@ export function MasterDataTable<Row>({
         </thead>
         <tbody>
           {isLoading ? (
-            <tr>
-              <td colSpan={columns.length}>
-                <div className="master-table-empty">Loading records...</div>
-              </td>
-            </tr>
+            Array.from({ length: 5 }).map((_, rowIndex) => (
+              <tr key={rowIndex}>
+                {columns.map((column) => (
+                  <td className={column.align ? `is-${column.align}` : undefined} key={column.key}>
+                    <Skeleton className="master-table-skeleton" />
+                  </td>
+                ))}
+              </tr>
+            ))
           ) : null}
 
           {!isLoading && rows.length === 0 ? (

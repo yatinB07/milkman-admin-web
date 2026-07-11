@@ -9,6 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
+import { Button, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -64,6 +65,7 @@ export function CategoriesPage() {
         queryClient.invalidateQueries({ queryKey: ['admin-categories'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-store-category-options'] }),
       ])
+      toast.success(editingCategory ? 'Category updated successfully.' : 'Category created successfully.')
       closeForm()
     },
     onError: (error) => {
@@ -73,7 +75,7 @@ export function CategoriesPage() {
         return
       }
 
-      setFormError('Category could not be saved. Check the required fields and try again.')
+      toast.error('Category could not be saved. Check the required fields and try again.')
     },
   })
 
@@ -84,6 +86,10 @@ export function CategoriesPage() {
         queryClient.invalidateQueries({ queryKey: ['admin-categories'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-store-category-options'] }),
       ])
+      toast.success('Category deleted successfully.')
+    },
+    onError: () => {
+      toast.error('Category could not be deleted. Try again.')
     },
   })
 
@@ -223,10 +229,10 @@ export function CategoriesPage() {
         title="Categories"
         description="Manage global product categories used during store onboarding."
         actions={canCreate ? (
-          <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
+          <Button variant="primary" size="compact" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
             Add Category
-          </button>
+          </Button>
         ) : null}
       />
 
@@ -302,9 +308,9 @@ export function CategoriesPage() {
               <div>
                 <h3 id="category-form-title">{editingCategory ? 'Edit Category' : 'Add Category'}</h3>
               </div>
-              <button type="button" className="secondary-button" onClick={closeForm}>
+              <Button variant="secondary" onClick={closeForm}>
                 Close
-              </button>
+              </Button>
             </div>
 
             <CategoryForm
