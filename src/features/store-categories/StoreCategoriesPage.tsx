@@ -1,7 +1,7 @@
 import { Edit3, ImageIcon, ListTree, Plus, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import {
   MasterDataTable,
   MasterFilterBar,
@@ -20,6 +20,7 @@ import { StoreCategoryForm } from './StoreCategoryForm'
 import {
   createStoreCategory,
   deleteStoreCategory as removeStoreCategory,
+  getStoreCategory,
   listStoreCategories,
   listStoreCategoryStores,
   updateStoreCategory,
@@ -41,11 +42,12 @@ const defaultMeta: PaginationMeta = {
 export function StoreCategoriesPage() {
   const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
+  const activePath = useHashPath()
+  const formRoute = parseStoreCategoryFormRoute(activePath)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
   const [editingCategory, setEditingCategory] = useState<StoreCategoryRow | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
   const [formErrors, setFormErrors] = useState<StoreCategoryFormErrors>({})
   const [confirmDelete, setConfirmDelete] = useState<
     (ConfirmDialogOptions & { category: StoreCategoryRow }) | null
@@ -66,19 +68,32 @@ export function StoreCategoriesPage() {
     retry: false,
   })
 
+  const routeCategory = useQuery({
+    queryKey: ['admin-store-category', formRoute?.mode === 'edit' ? formRoute.categoryId : null],
+    queryFn: () => getStoreCategory(formRoute?.mode === 'edit' ? formRoute.categoryId : 0),
+    enabled: formRoute?.mode === 'edit',
+    retry: false,
+  })
+
+  const currentEditingCategory = formRoute?.mode === 'edit'
+    ? routeCategory.data ?? editingCategory
+    : editingCategory
+
   const storeOptions = useMemo(() => toStoreOptions(stores.data), [stores.data])
 
   const saveCategory = useMutation({
     mutationFn: async (values: StoreCategoryFormValues) => {
       const payload = toStoreCategoryPayload(values)
 
-      return editingCategory
-        ? updateStoreCategory(editingCategory.id, payload)
+      return currentEditingCategory
+        ? updateStoreCategory(currentEditingCategory.id, payload)
         : createStoreCategory(payload)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-store-categories'] })
-      toast.success(editingCategory ? 'Store category updated successfully.' : 'Store category created successfully.')
+      toast.success(
+        currentEditingCategory ? 'Store category updated successfully.' : 'Store category created successfully.',
+      )
       closeForm(true)
     },
     onError: (error) => {
@@ -182,14 +197,14 @@ export function StoreCategoriesPage() {
     dirtyFormStore.reset()
     setEditingCategory(null)
     setFormErrors({})
-    setIsFormOpen(true)
+    navigateToHash('/store-categories/create')
   }
 
   function openEditForm(category: StoreCategoryRow) {
     dirtyFormStore.reset()
     setEditingCategory(category)
     setFormErrors({})
-    setIsFormOpen(true)
+    navigateToHash(`/store-categories/edit/${category.id}`)
   }
 
   function closeForm(force = false) {
@@ -198,7 +213,7 @@ export function StoreCategoriesPage() {
     dirtyFormStore.reset()
     setEditingCategory(null)
     setFormErrors({})
-    setIsFormOpen(false)
+    navigateToHash('/store-categories')
   }
 
   function handleSubmit(values: StoreCategoryFormValues) {
@@ -214,6 +229,54 @@ export function StoreCategoriesPage() {
 
     setFormErrors({})
     saveCategory.mutate(values)
+  }
+
+  if (formRoute) {
+    if (formRoute.mode === 'edit' && !currentEditingCategory && routeCategory.isLoading) {
+      return <MasterPageHeader title="Edit Store Category" description="Loading store category..." />
+    }
+
+    if (formRoute.mode === 'edit' && !currentEditingCategory) {
+      return (
+        <>
+          <MasterPageHeader
+            title="Edit Store Category"
+            description="The requested store category could not be loaded."
+            actions={
+              <Button variant="secondary" size="compact" onClick={() => closeForm(true)}>
+                Back to Store Categories
+              </Button>
+            }
+          />
+          <div className="master-error">Store category could not be loaded. Check the record or try again.</div>
+        </>
+      )
+    }
+
+    return (
+      <>
+        <MasterPageHeader
+          title={currentEditingCategory ? 'Edit Store Category' : 'Add Store Category'}
+          description="Manage per-store menu category name, image, and status."
+          actions={
+            <Button variant="secondary" size="compact" onClick={() => closeForm()}>
+              Back to Store Categories
+            </Button>
+          }
+        />
+        <section className="data-panel">
+          <StoreCategoryForm
+            category={currentEditingCategory}
+            storeOptions={storeOptions}
+            formErrors={formErrors}
+            optionError={stores.isError}
+            isSaving={saveCategory.isPending}
+            onCancel={closeForm}
+            onSubmit={handleSubmit}
+          />
+        </section>
+      </>
+    )
   }
 
   return (
@@ -290,32 +353,6 @@ export function StoreCategoriesPage() {
         />
       </section>
 
-      {isFormOpen ? (
-        <div className="modal-backdrop" role="presentation">
-          <section className="store-form-modal" role="dialog" aria-modal="true" aria-labelledby="store-category-title">
-            <div className="modal-header">
-              <div>
-                <h3 id="store-category-title">
-                  {editingCategory ? 'Edit Store Category' : 'Add Store Category'}
-                </h3>
-              </div>
-              <Button variant="secondary" onClick={() => closeForm()}>
-                Close
-              </Button>
-            </div>
-
-            <StoreCategoryForm
-              category={editingCategory}
-              storeOptions={storeOptions}
-              formErrors={formErrors}
-              optionError={stores.isError}
-              isSaving={saveCategory.isPending}
-              onCancel={closeForm}
-              onSubmit={handleSubmit}
-            />
-          </section>
-        </div>
-      ) : null}
       <ConfirmDialog
         options={confirmDelete}
         onCancel={() => setConfirmDelete(null)}
@@ -352,4 +389,38 @@ function formatDate(value?: string | null) {
   return value
     ? new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value))
     : 'Never'
+}
+
+function parseStoreCategoryFormRoute(path: string) {
+  if (path === '/store-categories/create') return { mode: 'create' as const }
+
+  const editMatch = path.match(/^\/store-categories\/edit\/(\d+)$/)
+
+  if (editMatch) return { mode: 'edit' as const, categoryId: Number(editMatch[1]) }
+
+  return null
+}
+
+function useHashPath() {
+  return useSyncExternalStore(subscribeToHash, getHashPath, getHashPath)
+}
+
+function subscribeToHash(listener: () => void) {
+  window.addEventListener('hashchange', listener)
+
+  return () => window.removeEventListener('hashchange', listener)
+}
+
+function getHashPath() {
+  const path = window.location.hash.replace(/^#/, '')
+
+  if (!path || path === '#') return '/'
+
+  return path.startsWith('/') ? path : `/${path}`
+}
+
+function navigateToHash(path: string) {
+  if (getHashPath() === path) return
+
+  window.location.hash = path
 }

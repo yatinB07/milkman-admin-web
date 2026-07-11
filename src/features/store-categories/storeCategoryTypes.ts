@@ -17,6 +17,7 @@ export type StoreCategoriesApiResponse = {
   data: StoreCategoryRow[]
   meta: Parameters<typeof normalizePaginationMeta>[0]
 }
+export type StoreCategoryApiResponse = { data: StoreCategoryRow }
 
 export type StoreCategoryFormValues = {
   store_id: string

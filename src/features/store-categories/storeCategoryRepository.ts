@@ -3,6 +3,7 @@ import { normalizePaginationMeta, toApiListParams, type PaginatedResponse } from
 import type {
   OptionsApiResponse,
   StoreCategoriesApiResponse,
+  StoreCategoryApiResponse,
   StoreCategoryPayload,
   StoreCategoryRow,
   StoreOption,
@@ -34,6 +35,12 @@ export async function listStoreCategoryStores(): Promise<StoreOption[]> {
 
 export async function createStoreCategory(values: StoreCategoryPayload): Promise<StoreCategoryRow> {
   const response = await api.post<{ data: StoreCategoryRow }>('/api/v1/admin/store-categories', values)
+
+  return response.data.data
+}
+
+export async function getStoreCategory(categoryId: number): Promise<StoreCategoryRow> {
+  const response = await api.get<StoreCategoryApiResponse>(`/api/v1/admin/store-categories/${categoryId}`)
 
   return response.data.data
 }
