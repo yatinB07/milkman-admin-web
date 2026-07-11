@@ -2,6 +2,7 @@ import { Suspense, useEffect } from 'react'
 import { useSyncExternalStore } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AdminShell } from './components/AdminShell'
+import { ErrorBoundary, PageSkeleton, ToastHost } from './components/common'
 import { LoginPage } from './components/LoginPage'
 import { api, setUnauthorizedHandler } from './lib/api'
 import { adminModules } from './routes/adminModules'
@@ -82,39 +83,65 @@ function App() {
 
   if (!token) {
     return (
-      <LoginPage
-        onLogin={(credentials) => login.mutate(credentials)}
-        isLoading={login.isPending}
-        error={login.isError ? 'Unable to sign in with those credentials.' : undefined}
-      />
+      <>
+        <LoginPage
+          onLogin={(credentials) => login.mutate(credentials)}
+          isLoading={login.isPending}
+          error={login.isError ? 'Unable to sign in with those credentials.' : undefined}
+        />
+        <div className="toast-theme-scope" data-theme={theme}>
+          <ToastHost />
+        </div>
+      </>
     )
   }
 
   if (!user && currentUser.isLoading) {
-    return <div className="module-loading">Loading admin session...</div>
+    return (
+      <>
+        <PageSkeleton label="Loading admin session" />
+        <div className="toast-theme-scope" data-theme={theme}>
+          <ToastHost />
+        </div>
+      </>
+    )
   }
 
   if (!user) {
-    return <div className="module-loading">Preparing admin session...</div>
+    return (
+      <>
+        <PageSkeleton label="Preparing admin session" />
+        <div className="toast-theme-scope" data-theme={theme}>
+          <ToastHost />
+        </div>
+      </>
+    )
   }
 
   return (
-    <AdminShell
-      activeModuleId={activeModule.id}
-      onNavigate={(module) => navigateToPath(module.path)}
-      theme={theme}
-      sidebarCollapsed={sidebarCollapsed}
-      onToggleSidebar={adminStore.toggleSidebar}
-      onToggleTheme={adminStore.toggleTheme}
-      onLogout={adminStore.logout}
-      user={user}
-      navigationItems={sidebarModules}
-      profileModule={profileModule}
-    >
-      <Suspense fallback={<div className="module-loading">Loading module...</div>}>
-        <ActivePage />
-      </Suspense>
-    </AdminShell>
+    <>
+      <AdminShell
+        activeModuleId={activeModule.id}
+        onNavigate={(module) => navigateToPath(module.path)}
+        theme={theme}
+        sidebarCollapsed={sidebarCollapsed}
+        onToggleSidebar={adminStore.toggleSidebar}
+        onToggleTheme={adminStore.toggleTheme}
+        onLogout={adminStore.logout}
+        user={user}
+        navigationItems={sidebarModules}
+        profileModule={profileModule}
+      >
+        <ErrorBoundary resetKey={activeModule.id}>
+          <Suspense fallback={<PageSkeleton label={`Loading ${activeModule.label}`} />}>
+            <ActivePage />
+          </Suspense>
+        </ErrorBoundary>
+      </AdminShell>
+      <div className="toast-theme-scope" data-theme={theme}>
+        <ToastHost />
+      </div>
+    </>
   )
 }
 

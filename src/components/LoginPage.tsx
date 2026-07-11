@@ -1,5 +1,6 @@
 import { Eye, LockKeyhole, Mail, Truck, ShieldCheck } from 'lucide-react'
 import type { FormEvent } from 'react'
+import { Button } from './common'
 
 type LoginPageProps = {
   onLogin: (credentials: { email: string; password: string }) => void
@@ -70,9 +71,9 @@ export function LoginPage({ onLogin, error, isLoading = false }: LoginPageProps)
             <span>Remember me for 30 days</span>
           </label>
 
-          <button className="primary-button" type="submit" disabled={isLoading}>
+          <Button variant="primary" type="submit" disabled={isLoading}>
             {isLoading ? 'Signing In...' : 'Sign In to Dashboard'}
-          </button>
+          </Button>
 
           <div className="login-security">
             <span>

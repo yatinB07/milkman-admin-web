@@ -1,3 +1,5 @@
+import { Button } from './Button'
+
 export type ConfirmDialogOptions = {
   title: string
   message: string
@@ -19,12 +21,12 @@ export function ConfirmDialog({ options, onCancel, onConfirm }: ConfirmDialogPro
         <h3 id="confirm-title">{options.title}</h3>
         <p>{options.message}</p>
         <div className="modal-actions">
-          <button className="secondary-button" type="button" onClick={onCancel}>
+          <Button variant="secondary" onClick={onCancel}>
             Cancel
-          </button>
-          <button className="danger-button" type="button" onClick={onConfirm}>
+          </Button>
+          <Button variant="danger" onClick={onConfirm}>
             {options.confirmLabel ?? 'Confirm'}
-          </button>
+          </Button>
         </div>
       </section>
     </div>
