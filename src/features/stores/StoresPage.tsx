@@ -283,7 +283,6 @@ export function StoresPage() {
         <div className="data-panel-header">
           <div>
             <h3>Store Management</h3>
-            <p>Showing paginated store records from the backend API.</p>
           </div>
         </div>
 

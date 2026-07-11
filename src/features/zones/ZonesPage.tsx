@@ -242,7 +242,6 @@ export function ZonesPage() {
         <div className="data-panel-header">
           <div>
             <h3>Zone Directory</h3>
-            <p>Showing paginated zone records from the backend API.</p>
           </div>
         </div>
 

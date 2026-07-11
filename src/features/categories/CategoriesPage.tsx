@@ -264,7 +264,6 @@ export function CategoriesPage() {
         <div className="data-panel-header">
           <div>
             <h3>Category Directory</h3>
-            <p>Showing paginated category records from the backend API.</p>
           </div>
         </div>
 
