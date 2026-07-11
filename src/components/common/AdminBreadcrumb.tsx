@@ -64,5 +64,10 @@ function getChildLabel(activeModule: AdminModule, activePath: string) {
     if (activePath.startsWith('/store-categories/edit/')) return 'Edit Store Category'
   }
 
+  if (activeModule.id === 'categories') {
+    if (activePath === '/categories/create') return 'Add Category'
+    if (activePath.startsWith('/categories/edit/')) return 'Edit Category'
+  }
+
   return null
 }

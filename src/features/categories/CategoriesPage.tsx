@@ -1,7 +1,7 @@
 import { Edit3, ImageIcon, Package, Plus, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import {
   MasterDataTable,
   MasterFilterBar,
@@ -20,6 +20,7 @@ import { CategoryForm } from './CategoryForm'
 import {
   createCategory,
   deleteCategory as removeCategory,
+  getCategory,
   listCategories,
   updateCategory,
 } from './categoryRepository'
@@ -40,11 +41,12 @@ const defaultMeta: PaginationMeta = {
 export function CategoriesPage() {
   const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
+  const activePath = useHashPath()
+  const formRoute = parseCategoryFormRoute(activePath)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
   const [editingCategory, setEditingCategory] = useState<CategoryRow | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
   const [formErrors, setFormErrors] = useState<CategoryFormErrors>({})
   const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { category: CategoryRow }) | null>(null)
   const canCreate = adminStore.can(getModuleActionPermission('categories', 'create'))
@@ -57,18 +59,29 @@ export function CategoriesPage() {
     retry: false,
   })
 
+  const routeCategory = useQuery({
+    queryKey: ['admin-category', formRoute?.mode === 'edit' ? formRoute.categoryId : null],
+    queryFn: () => getCategory(formRoute?.mode === 'edit' ? formRoute.categoryId : 0),
+    enabled: formRoute?.mode === 'edit',
+    retry: false,
+  })
+
+  const currentEditingCategory = formRoute?.mode === 'edit'
+    ? routeCategory.data ?? editingCategory
+    : editingCategory
+
   const saveCategory = useMutation({
     mutationFn: async (values: CategoryFormValues) => {
       const payload = toCategoryPayload(values)
 
-      return editingCategory ? updateCategory(editingCategory.id, payload) : createCategory(payload)
+      return currentEditingCategory ? updateCategory(currentEditingCategory.id, payload) : createCategory(payload)
     },
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['admin-categories'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-store-category-options'] }),
       ])
-      toast.success(editingCategory ? 'Category updated successfully.' : 'Category created successfully.')
+      toast.success(currentEditingCategory ? 'Category updated successfully.' : 'Category created successfully.')
       closeForm(true)
     },
     onError: (error) => {
@@ -189,14 +202,14 @@ export function CategoriesPage() {
     dirtyFormStore.reset()
     setEditingCategory(null)
     setFormErrors({})
-    setIsFormOpen(true)
+    navigateToHash('/categories/create')
   }
 
   function openEditForm(category: CategoryRow) {
     dirtyFormStore.reset()
     setEditingCategory(category)
     setFormErrors({})
-    setIsFormOpen(true)
+    navigateToHash(`/categories/edit/${category.id}`)
   }
 
   function closeForm(force = false) {
@@ -205,7 +218,7 @@ export function CategoriesPage() {
     dirtyFormStore.reset()
     setEditingCategory(null)
     setFormErrors({})
-    setIsFormOpen(false)
+    navigateToHash('/categories')
   }
 
   function handleSubmit(values: CategoryFormValues) {
@@ -216,6 +229,52 @@ export function CategoriesPage() {
 
     setFormErrors({})
     saveCategory.mutate(values)
+  }
+
+  if (formRoute) {
+    if (formRoute.mode === 'edit' && !currentEditingCategory && routeCategory.isLoading) {
+      return <MasterPageHeader title="Edit Category" description="Loading category..." />
+    }
+
+    if (formRoute.mode === 'edit' && !currentEditingCategory) {
+      return (
+        <>
+          <MasterPageHeader
+            title="Edit Category"
+            description="The requested category could not be loaded."
+            actions={
+              <Button variant="secondary" size="compact" onClick={() => closeForm(true)}>
+                Back to Categories
+              </Button>
+            }
+          />
+          <div className="master-error">Category could not be loaded. Check the record or try again.</div>
+        </>
+      )
+    }
+
+    return (
+      <>
+        <MasterPageHeader
+          title={currentEditingCategory ? 'Edit Category' : 'Add Category'}
+          description="Manage global category images, cover, and status."
+          actions={
+            <Button variant="secondary" size="compact" onClick={() => closeForm()}>
+              Back to Categories
+            </Button>
+          }
+        />
+        <section className="data-panel">
+          <CategoryForm
+            category={currentEditingCategory}
+            formErrors={formErrors}
+            isSaving={saveCategory.isPending}
+            onCancel={closeForm}
+            onSubmit={handleSubmit}
+          />
+        </section>
+      </>
+    )
   }
 
   return (
@@ -295,28 +354,6 @@ export function CategoriesPage() {
         />
       </section>
 
-      {isFormOpen ? (
-        <div className="modal-backdrop" role="presentation">
-          <section className="store-form-modal" role="dialog" aria-modal="true" aria-labelledby="category-form-title">
-            <div className="modal-header">
-              <div>
-                <h3 id="category-form-title">{editingCategory ? 'Edit Category' : 'Add Category'}</h3>
-              </div>
-              <Button variant="secondary" onClick={() => closeForm()}>
-                Close
-              </Button>
-            </div>
-
-            <CategoryForm
-              category={editingCategory}
-              formErrors={formErrors}
-              isSaving={saveCategory.isPending}
-              onCancel={closeForm}
-              onSubmit={handleSubmit}
-            />
-          </section>
-        </div>
-      ) : null}
       <ConfirmDialog
         options={confirmDelete}
         onCancel={() => setConfirmDelete(null)}
@@ -360,4 +397,38 @@ function formatDate(value?: string | null) {
         year: 'numeric',
       }).format(new Date(value))
     : 'Never'
+}
+
+function parseCategoryFormRoute(path: string) {
+  if (path === '/categories/create') return { mode: 'create' as const }
+
+  const editMatch = path.match(/^\/categories\/edit\/(\d+)$/)
+
+  if (editMatch) return { mode: 'edit' as const, categoryId: Number(editMatch[1]) }
+
+  return null
+}
+
+function useHashPath() {
+  return useSyncExternalStore(subscribeToHash, getHashPath, getHashPath)
+}
+
+function subscribeToHash(listener: () => void) {
+  window.addEventListener('hashchange', listener)
+
+  return () => window.removeEventListener('hashchange', listener)
+}
+
+function getHashPath() {
+  const path = window.location.hash.replace(/^#/, '')
+
+  if (!path || path === '#') return '/'
+
+  return path.startsWith('/') ? path : `/${path}`
+}
+
+function navigateToHash(path: string) {
+  if (getHashPath() === path) return
+
+  window.location.hash = path
 }

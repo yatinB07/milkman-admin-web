@@ -1,6 +1,6 @@
 import { api } from '../../lib/api'
 import { normalizePaginationMeta, toApiListParams, type PaginatedResponse } from '../../lib/apiTypes'
-import type { CategoriesApiResponse, CategoryPayload, CategoryRow } from './categoryTypes'
+import type { CategoriesApiResponse, CategoryApiResponse, CategoryPayload, CategoryRow } from './categoryTypes'
 
 export async function listCategories(query: {
   page: number
@@ -20,6 +20,12 @@ export async function listCategories(query: {
 
 export async function createCategory(values: CategoryPayload): Promise<CategoryRow> {
   const response = await api.post<{ data: CategoryRow }>('/api/v1/admin/categories', values)
+
+  return response.data.data
+}
+
+export async function getCategory(categoryId: number): Promise<CategoryRow> {
+  const response = await api.get<CategoryApiResponse>(`/api/v1/admin/categories/${categoryId}`)
 
   return response.data.data
 }

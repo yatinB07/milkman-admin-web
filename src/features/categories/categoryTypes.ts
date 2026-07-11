@@ -14,6 +14,7 @@ export type CategoriesApiResponse = {
   data: CategoryRow[]
   meta: Parameters<typeof normalizePaginationMeta>[0]
 }
+export type CategoryApiResponse = { data: CategoryRow }
 
 export type CategoryFormValues = {
   title: string
