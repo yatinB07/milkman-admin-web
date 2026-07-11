@@ -1221,15 +1221,6 @@
   font-weight: 800;
 }
 
-.master-select select {
-  min-height: 38px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-text);
-  padding: 0 34px 0 12px;
-}
-
 .master-select .admin-react-select {
   min-width: 180px;
 }
