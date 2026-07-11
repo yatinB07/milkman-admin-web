@@ -107,3 +107,12 @@ export type OptionsApiResponse = {
 }
 
 export type StorePayload = Record<string, string | number | boolean | null>
+
+export type StoreFormTabId = 'basic' | 'media' | 'login' | 'categories' | 'address' | 'service' | 'payout'
+
+export type StoreValidationField = {
+  name: keyof StoreFormValues
+  label: string
+  tab: StoreFormTabId
+  when?: (values: StoreFormValues, isEditing: boolean) => boolean
+}

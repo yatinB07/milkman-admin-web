@@ -1,5 +1,84 @@
 import type { AdminSelectOption } from '../../components/forms/AdminSelect'
-import type { SelectOption, StoreFormValues, StorePayload } from './storeTypes'
+import type { SelectOption, StoreFormTabId, StoreFormValues, StorePayload, StoreValidationField } from './storeTypes'
+
+export const storeFormTabs: Array<{ id: StoreFormTabId; label: string }> = [
+  { id: 'basic', label: 'Basic Info' },
+  { id: 'media', label: 'Media' },
+  { id: 'login', label: 'Login' },
+  { id: 'categories', label: 'Categories' },
+  { id: 'address', label: 'Address' },
+  { id: 'service', label: 'Service' },
+  { id: 'payout', label: 'Payout' },
+]
+
+export const storeValidationFields: StoreValidationField[] = [
+  { name: 'title', label: 'Store Name', tab: 'basic' },
+  { name: 'rating', label: 'Rating', tab: 'basic' },
+  { name: 'mobile', label: 'Mobile number', tab: 'basic' },
+  { name: 'slogan', label: 'Slogan Title', tab: 'basic' },
+  { name: 'slogan_title', label: 'Slogan Subtitle', tab: 'basic' },
+  { name: 'opens_at', label: 'Store Open Time', tab: 'basic' },
+  { name: 'closes_at', label: 'Store Close Time', tab: 'basic' },
+  { name: 'short_description', label: 'Tags', tab: 'basic' },
+  { name: 'content_description', label: 'Short Description', tab: 'basic' },
+  { name: 'cancel_policy', label: 'Cancel Policy', tab: 'basic' },
+  { name: 'image_path', label: 'Store Logo', tab: 'media' },
+  { name: 'cover_image_path', label: 'Store Cover Image', tab: 'media' },
+  { name: 'email', label: 'Email Address', tab: 'login' },
+  { name: 'password', label: 'Password', tab: 'login', when: (_values, isEditing) => !isEditing },
+  { name: 'category_reference', label: 'Store Category', tab: 'categories' },
+  { name: 'full_address', label: 'Full Address', tab: 'address' },
+  { name: 'pincode', label: 'Pincode', tab: 'address' },
+  { name: 'landmark', label: 'Landmark', tab: 'address' },
+  { name: 'zone_id', label: 'Select Zone', tab: 'address' },
+  { name: 'latitude', label: 'Latitude', tab: 'address' },
+  { name: 'longitude', label: 'Longitude', tab: 'address' },
+  { name: 'charge_type', label: 'Service Charge Type', tab: 'service' },
+  { name: 'delivery_charge', label: 'Service Charge', tab: 'service', when: (values) => values.charge_type === '1' },
+  {
+    name: 'unit_kilometers',
+    label: 'Base Service Distance',
+    tab: 'service',
+    when: (values) => values.charge_type === '2',
+  },
+  { name: 'unit_price', label: 'Base Service Charge', tab: 'service', when: (values) => values.charge_type === '2' },
+  {
+    name: 'additional_price',
+    label: 'Extra Service Charge',
+    tab: 'service',
+    when: (values) => values.charge_type === '2',
+  },
+  { name: 'store_charge', label: 'Store Charge', tab: 'service' },
+  { name: 'minimum_order_amount', label: 'Min.Order Price', tab: 'service' },
+  { name: 'commission_percent', label: 'Commission Rate', tab: 'service' },
+  { name: 'bank_name', label: 'Bank Name', tab: 'payout' },
+  { name: 'ifsc_code', label: 'Bank Code/IFSC', tab: 'payout' },
+  { name: 'receipt_name', label: 'Recipient Name', tab: 'payout' },
+  { name: 'account_number', label: 'Account Number', tab: 'payout' },
+  { name: 'paypal_id', label: 'Paypal ID', tab: 'payout' },
+  { name: 'upi_id', label: 'UPI ID', tab: 'payout' },
+]
+
+export function tabLabel(tab: StoreFormTabId) {
+  return storeFormTabs.find((item) => item.id === tab)?.label ?? 'current'
+}
+
+export function validateStoreValues(values: StoreFormValues, isEditing: boolean) {
+  for (const field of storeValidationFields) {
+    if (field.when && !field.when(values, isEditing)) {
+      continue
+    }
+
+    if (!String(values[field.name] ?? '').trim()) {
+      return {
+        message: `${field.label} is required. Complete the ${tabLabel(field.tab)} tab before continuing.`,
+        tab: field.tab,
+      }
+    }
+  }
+
+  return null
+}
 
 export function toStorePayload(values: StoreFormValues, isEditing: boolean): StorePayload {
   const payload: StorePayload = {
