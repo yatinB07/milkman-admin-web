@@ -9,7 +9,7 @@ import {
   Store,
   Users,
 } from 'lucide-react'
-import type { DashboardChartPoint } from '../components/dashboard'
+import type { DashboardChartPoint } from '../../components/dashboard'
 
 export type Metric = {
   label: string
