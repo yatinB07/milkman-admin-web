@@ -58,7 +58,7 @@ export function ProductForm({
   }
 
   return (
-    <form className="store-form" {...dirtyFormCaptureProps} onSubmit={handleSubmit}>
+    <form className="admin-form" {...dirtyFormCaptureProps} onSubmit={handleSubmit}>
       <FormSection title="Product Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Store" required />

@@ -18,7 +18,7 @@ export function FormSection({
   children: ReactNode
 }) {
   return (
-    <section className="store-form-section">
+    <section className="admin-form-section">
       <h4>{title}</h4>
       <div className="form-grid" data-columns={columns}>
         {children}

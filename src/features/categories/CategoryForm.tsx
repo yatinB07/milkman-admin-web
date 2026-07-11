@@ -33,7 +33,7 @@ export function CategoryForm({ category, formErrors, isSaving, onCancel, onSubmi
   }
 
   return (
-    <form className="store-form" {...dirtyFormCaptureProps} onSubmit={handleSubmit}>
+    <form className="admin-form" {...dirtyFormCaptureProps} onSubmit={handleSubmit}>
       <FormSection title="Category Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Category Name" required />

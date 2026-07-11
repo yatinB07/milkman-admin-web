@@ -54,7 +54,7 @@ export function ZoneForm({
   }
 
   return (
-    <form className="store-form" {...dirtyFormCaptureProps} onSubmit={handleSubmit}>
+    <form className="admin-form" {...dirtyFormCaptureProps} onSubmit={handleSubmit}>
       <div className="form-grid">
         <label className="form-field">
           <FieldLabel label="Zone Title" required />

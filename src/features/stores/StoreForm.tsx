@@ -141,7 +141,7 @@ export function StoreForm({
 
       <form
         id="store-admin-form"
-        className="store-form"
+        className="admin-form"
         noValidate
         {...dirtyFormCaptureProps}
         onSubmit={submitForm(handleValidSubmit)}
@@ -632,7 +632,7 @@ function StoreFormSection({
   children: ReactNode
 }) {
   return (
-    <section className="store-form-section">
+    <section className="admin-form-section">
       <h4>{title}</h4>
       <div className="form-grid" data-columns={columns}>
         {children}

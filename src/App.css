@@ -1901,12 +1901,12 @@
   font-size: 13px;
 }
 
-.store-form {
+.admin-form {
   display: grid;
   gap: 18px;
 }
 
-.store-form-modal .store-form {
+.store-form-modal .admin-form {
   padding: 24px;
 }
 
@@ -2009,12 +2009,12 @@
   font-weight: 800;
 }
 
-.store-form-section {
+.admin-form-section {
   display: grid;
   gap: 16px;
 }
 
-.store-form-section h4 {
+.admin-form-section h4 {
   margin: 0;
   border-bottom: 1px solid var(--color-border);
   padding-bottom: 10px;
