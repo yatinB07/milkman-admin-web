@@ -71,6 +71,7 @@ export function StoreForm({
   const [coverPath, setCoverPath] = useState(store?.cover_image_path ?? '')
   const [contentDescription, setContentDescription] = useState(store?.content_description ?? '')
   const [cancelPolicy, setCancelPolicy] = useState(store?.cancel_policy ?? '')
+  const [maxStepIndex, setMaxStepIndex] = useState(0)
   const activeStepIndex = Math.max(
     0,
     storeFormTabs.findIndex((step) => step.id === activeTab),
@@ -150,15 +151,21 @@ export function StoreForm({
 
     const values = buildValues(new FormData(form))
     const validation = validateStoreFieldErrors(values, Boolean(store))
-    const hasCurrentStepErrors = storeValidationFields.some(
-      (field) => field.tab === activeTab && validation.errors[field.name],
-    )
+    const currentErrors = stepErrors(validation.errors, activeTab)
 
-    onFormErrorsChange(validation.errors)
+    onFormErrorsChange({ ...clearStepErrors(formErrors, activeTab), ...currentErrors })
 
-    if (hasCurrentStepErrors) return
+    if (Object.keys(currentErrors).length > 0) return
 
-    onActiveTabChange(storeFormTabs[activeStepIndex + 1].id)
+    const nextStepIndex = activeStepIndex + 1
+    setMaxStepIndex((current) => Math.max(current, nextStepIndex))
+    onActiveTabChange(storeFormTabs[nextStepIndex].id)
+  }
+
+  function handleStepClick(index: number) {
+    if (index > maxStepIndex) return
+
+    onActiveTabChange(storeFormTabs[index].id)
   }
 
   return (
@@ -186,7 +193,8 @@ export function StoreForm({
               type="button"
               className={activeTab === tab.id ? 'store-form-step is-active' : 'store-form-step'}
               aria-current={activeTab === tab.id ? 'step' : undefined}
-              onClick={() => onActiveTabChange(tab.id)}
+              disabled={index > maxStepIndex}
+              onClick={() => handleStepClick(index)}
             >
               <span>{index + 1}</span>
               <strong>{tab.label}</strong>
@@ -685,6 +693,26 @@ function StoreInputField({ error, label, name, required = false, wide = false, .
 
 function FieldError({ message }: { message?: string }) {
   return message ? <small className="field-error">{message}</small> : null
+}
+
+function stepErrors(errors: StoreFormErrors, tab: StoreFormTabId) {
+  return Object.fromEntries(
+    storeValidationFields
+      .filter((field) => field.tab === tab && errors[field.name])
+      .map((field) => [field.name, errors[field.name]]),
+  ) as StoreFormErrors
+}
+
+function clearStepErrors(errors: StoreFormErrors, tab: StoreFormTabId) {
+  const nextErrors = { ...errors }
+
+  storeValidationFields
+    .filter((field) => field.tab === tab)
+    .forEach((field) => {
+      delete nextErrors[field.name]
+    })
+
+  return nextErrors
 }
 
 function StepPanel({
