@@ -8,7 +8,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, PageSkeleton, RecordLoadError, RowActionMenu, toast } from '../../components/common'
+import { Button, ListLoadError, PageSkeleton, RecordLoadError, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
@@ -310,12 +310,7 @@ export function ZonesPage() {
           minWidth={920}
         />
 
-        {zones.isError ? (
-          <div className="master-error">
-            Zones could not be loaded. Confirm the backend is running and your admin session is
-            valid.
-          </div>
-        ) : null}
+        {zones.isError ? <ListLoadError message="Zones could not be loaded." /> : null}
 
         <MasterPagination
           meta={meta}

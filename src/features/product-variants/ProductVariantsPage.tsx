@@ -9,7 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, PageSkeleton, RecordLoadError, RowActionMenu, toast } from '../../components/common'
+import { Button, ListLoadError, PageSkeleton, RecordLoadError, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -361,7 +361,7 @@ export function ProductVariantsPage() {
           minWidth={1120}
         />
 
-        {variants.isError ? <div className="master-error">Product variants could not be loaded.</div> : null}
+        {variants.isError ? <ListLoadError message="Product variants could not be loaded." /> : null}
 
         <MasterPagination
           meta={meta}
