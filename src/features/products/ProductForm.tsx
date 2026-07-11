@@ -1,15 +1,16 @@
 import { type FormEvent, useState } from 'react'
+import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
 import { AdminTextarea } from '../../components/forms/AdminTextarea'
-import { FieldLabel, FormErrorSummary, FormSection } from '../../components/forms/FormLayout'
+import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import type { ProductFormValues, ProductRow } from './productTypes'
 
 type ProductFormProps = {
   product: ProductRow | null
   storeOptions: AdminSelectOption[]
   categoryOptions: AdminSelectOption[]
-  formError: string | null
+  formErrors: Partial<Record<'store_id' | 'store_category_id' | 'title', string>>
   optionError: boolean
   isSaving: boolean
   onStoreChange: (storeId: string) => void
@@ -26,7 +27,7 @@ export function ProductForm({
   product,
   storeOptions,
   categoryOptions,
-  formError,
+  formErrors,
   optionError,
   isSaving,
   onStoreChange,
@@ -69,7 +70,13 @@ export function ProductForm({
             placeholder="Search and select store"
             value={storeId}
             onChange={handleStoreChange}
+            hasError={Boolean(formErrors.store_id || optionError)}
           />
+          {formErrors.store_id || optionError ? (
+            <small className="field-error">
+              {formErrors.store_id ?? 'Store or category options could not be loaded.'}
+            </small>
+          ) : null}
         </label>
 
         <label className="form-field">
@@ -79,12 +86,22 @@ export function ProductForm({
             placeholder={storeId ? 'Search and select category' : 'Select store first'}
             value={categoryId}
             onChange={setCategoryId}
+            hasError={Boolean(formErrors.store_category_id)}
           />
+          {formErrors.store_category_id ? (
+            <small className="field-error">{formErrors.store_category_id}</small>
+          ) : null}
         </label>
 
         <label className="form-field">
           <FieldLabel label="Product Title" required />
-          <input name="title" maxLength={255} defaultValue={product?.title ?? ''} />
+          <Input
+            name="title"
+            maxLength={255}
+            aria-invalid={Boolean(formErrors.title)}
+            defaultValue={product?.title ?? ''}
+          />
+          {formErrors.title ? <small className="field-error">{formErrors.title}</small> : null}
         </label>
 
         <label className="form-field">
@@ -112,15 +129,13 @@ export function ProductForm({
         </label>
       </FormSection>
 
-      <FormErrorSummary errors={[formError, optionError && 'Store or category options could not be loaded.']} />
-
       <div className="modal-actions">
-        <button className="secondary-button" type="button" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           Cancel
-        </button>
-        <button className="primary-button is-compact" type="submit" disabled={isSaving}>
+        </Button>
+        <Button variant="primary" size="compact" type="submit" disabled={isSaving}>
           {isSaving ? 'Saving...' : product ? 'Save Product' : 'Add Product'}
-        </button>
+        </Button>
       </div>
     </form>
   )

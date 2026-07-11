@@ -9,6 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
+import { Button, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -25,6 +26,8 @@ import {
 } from './productRepository'
 import { toProductPayload, toStoreCategorySelectOptions, toStoreSelectOptions } from './productService'
 import type { ProductFormValues, ProductListRow, ProductRow } from './productTypes'
+
+type ProductFormErrors = Partial<Record<'store_id' | 'store_category_id' | 'title', string>>
 
 const defaultMeta: PaginationMeta = {
   currentPage: 1,
@@ -44,7 +47,7 @@ export function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<ProductRow | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formStoreId, setFormStoreId] = useState('')
-  const [formError, setFormError] = useState<string | null>(null)
+  const [formErrors, setFormErrors] = useState<ProductFormErrors>({})
   const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { product: ProductRow }) | null>(null)
   const canCreate = adminStore.can(getModuleActionPermission('products', 'create'))
   const canUpdate = adminStore.can(getModuleActionPermission('products', 'update'))
@@ -82,21 +85,21 @@ export function ProductsPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-products'] })
+      toast.success(editingProduct ? 'Product updated successfully.' : 'Product created successfully.')
       closeForm()
     },
     onError: (error) => {
       if (isAxiosError(error) && error.response?.status === 422) {
         const data = error.response.data as { errors?: Record<string, string[]> }
-        setFormError(
-          data.errors?.store_id?.[0] ??
-            data.errors?.store_category_id?.[0] ??
-            data.errors?.title?.[0] ??
-            'Check required fields.',
-        )
+        setFormErrors({
+          store_id: data.errors?.store_id?.[0],
+          store_category_id: data.errors?.store_category_id?.[0],
+          title: data.errors?.title?.[0],
+        })
         return
       }
 
-      setFormError('Product could not be saved.')
+      toast.error('Product could not be saved.')
     },
   })
 
@@ -104,6 +107,10 @@ export function ProductsPage() {
     mutationFn: async (product: ProductRow) => deleteProduct(product.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-products'] })
+      toast.success('Product deleted successfully.')
+    },
+    onError: () => {
+      toast.error('Product could not be deleted. Try again.')
     },
   })
 
@@ -197,31 +204,37 @@ export function ProductsPage() {
   function openCreateForm() {
     setEditingProduct(null)
     setFormStoreId('')
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(true)
   }
 
   function openEditForm(product: ProductRow) {
     setEditingProduct(product)
     setFormStoreId(String(product.store_id))
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(true)
   }
 
   function closeForm() {
     setEditingProduct(null)
     setFormStoreId('')
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(false)
   }
 
   function handleSubmit(values: ProductFormValues) {
-    if (!values.store_id || !values.store_category_id || !values.title) {
-      setFormError('Store, Category, and Product Title are required.')
+    const nextErrors: ProductFormErrors = {
+      store_id: values.store_id ? undefined : 'Store is required.',
+      store_category_id: values.store_category_id ? undefined : 'Product Category is required.',
+      title: values.title ? undefined : 'Product Title is required.',
+    }
+
+    if (nextErrors.store_id || nextErrors.store_category_id || nextErrors.title) {
+      setFormErrors(nextErrors)
       return
     }
 
-    setFormError(null)
+    setFormErrors({})
     saveProduct.mutate(values)
   }
 
@@ -231,10 +244,10 @@ export function ProductsPage() {
         title="Products"
         description="Manage store products before adding variants and gallery images."
         actions={canCreate ? (
-          <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
+          <Button variant="primary" size="compact" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
             Add Product
-          </button>
+          </Button>
         ) : null}
       />
 
@@ -304,16 +317,16 @@ export function ProductsPage() {
               <div>
                 <h3 id="product-form-title">{editingProduct ? 'Edit Product' : 'Add Product'}</h3>
               </div>
-              <button type="button" className="secondary-button" onClick={closeForm}>
+              <Button variant="secondary" onClick={closeForm}>
                 Close
-              </button>
+              </Button>
             </div>
 
             <ProductForm
               product={editingProduct}
               storeOptions={storeOptions}
               categoryOptions={categoryOptions}
-              formError={formError}
+              formErrors={formErrors}
               optionError={stores.isError || storeCategories.isError}
               isSaving={saveProduct.isPending}
               onStoreChange={setFormStoreId}
