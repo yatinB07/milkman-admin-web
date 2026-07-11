@@ -1,7 +1,7 @@
 import { Edit3, PackageCheck, Plus, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import {
   MasterDataTable,
   MasterFilterBar,
@@ -20,6 +20,7 @@ import { ProductVariantForm } from './ProductVariantForm'
 import {
   createProductVariant,
   deleteProductVariant,
+  getProductVariant,
   listProductVariants,
   listVariantProducts,
   listVariantStores,
@@ -55,11 +56,12 @@ const stockFilterOptions = [
 export function ProductVariantsPage() {
   const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
+  const activePath = useHashPath()
+  const formRoute = parseProductVariantFormRoute(activePath)
   const [search, setSearch] = useState('')
   const [stockStatus, setStockStatus] = useState('all')
   const [page, setPage] = useState(1)
   const [editingVariant, setEditingVariant] = useState<ProductVariantRow | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
   const [formStoreId, setFormStoreId] = useState('')
   const [formErrors, setFormErrors] = useState<ProductVariantFormErrors>({})
   const [confirmDelete, setConfirmDelete] = useState<
@@ -87,21 +89,33 @@ export function ProductVariantsPage() {
     retry: false,
   })
 
+  const routeVariant = useQuery({
+    queryKey: ['admin-product-variant', formRoute?.mode === 'edit' ? formRoute.variantId : null],
+    queryFn: () => getProductVariant(formRoute?.mode === 'edit' ? formRoute.variantId : 0),
+    enabled: formRoute?.mode === 'edit',
+    retry: false,
+  })
+
+  const currentEditingVariant = formRoute?.mode === 'edit' ? routeVariant.data ?? editingVariant : editingVariant
+  const selectedFormStoreId = formStoreId || (currentEditingVariant ? String(currentEditingVariant.store_id) : '')
+
   const storeOptions = useMemo(() => toStoreSelectOptions(stores.data), [stores.data])
   const productOptions = useMemo(
-    () => toProductSelectOptions(products.data, formStoreId),
-    [formStoreId, products.data],
+    () => toProductSelectOptions(products.data, selectedFormStoreId),
+    [products.data, selectedFormStoreId],
   )
 
   const saveVariant = useMutation({
     mutationFn: async (values: ProductVariantFormValues) => {
       const payload = toProductVariantPayload(values)
 
-      return editingVariant ? updateProductVariant(editingVariant.id, payload) : createProductVariant(payload)
+      return currentEditingVariant
+        ? updateProductVariant(currentEditingVariant.id, payload)
+        : createProductVariant(payload)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-product-variants'] })
-      toast.success(editingVariant ? 'Product variant updated successfully.' : 'Product variant created successfully.')
+      toast.success(currentEditingVariant ? 'Product variant updated successfully.' : 'Product variant created successfully.')
       closeForm(true)
     },
     onError: (error) => {
@@ -206,7 +220,7 @@ export function ProductVariantsPage() {
     setEditingVariant(null)
     setFormStoreId('')
     setFormErrors({})
-    setIsFormOpen(true)
+    navigateToHash('/product-variants/create')
   }
 
   function openEditForm(variant: ProductVariantRow) {
@@ -214,7 +228,7 @@ export function ProductVariantsPage() {
     setEditingVariant(variant)
     setFormStoreId(String(variant.store_id))
     setFormErrors({})
-    setIsFormOpen(true)
+    navigateToHash(`/product-variants/edit/${variant.id}`)
   }
 
   function closeForm(force = false) {
@@ -224,7 +238,7 @@ export function ProductVariantsPage() {
     setEditingVariant(null)
     setFormStoreId('')
     setFormErrors({})
-    setIsFormOpen(false)
+    navigateToHash('/product-variants')
   }
 
   function handleSubmit(values: ProductVariantFormValues) {
@@ -244,6 +258,56 @@ export function ProductVariantsPage() {
 
     setFormErrors({})
     saveVariant.mutate(values)
+  }
+
+  if (formRoute) {
+    if (formRoute.mode === 'edit' && !currentEditingVariant && routeVariant.isLoading) {
+      return <MasterPageHeader title="Edit Product Variant" description="Loading product variant..." />
+    }
+
+    if (formRoute.mode === 'edit' && !currentEditingVariant) {
+      return (
+        <>
+          <MasterPageHeader
+            title="Edit Product Variant"
+            description="The requested product variant could not be loaded."
+            actions={
+              <Button variant="secondary" size="compact" onClick={() => closeForm(true)}>
+                Back to Product Variants
+              </Button>
+            }
+          />
+          <div className="master-error">Product variant could not be loaded. Check the record or try again.</div>
+        </>
+      )
+    }
+
+    return (
+      <>
+        <MasterPageHeader
+          title={currentEditingVariant ? 'Edit Product Variant' : 'Add Product Variant'}
+          description="Manage product price, subscription price, discount, and stock status."
+          actions={
+            <Button variant="secondary" size="compact" onClick={() => closeForm()}>
+              Back to Product Variants
+            </Button>
+          }
+        />
+        <section className="data-panel">
+          <ProductVariantForm
+            variant={currentEditingVariant}
+            storeOptions={storeOptions}
+            productOptions={productOptions}
+            formErrors={formErrors}
+            optionError={stores.isError || products.isError}
+            isSaving={saveVariant.isPending}
+            onStoreChange={setFormStoreId}
+            onCancel={closeForm}
+            onSubmit={handleSubmit}
+          />
+        </section>
+      </>
+    )
   }
 
   return (
@@ -314,32 +378,6 @@ export function ProductVariantsPage() {
         />
       </section>
 
-      {isFormOpen ? (
-        <div className="modal-backdrop" role="presentation">
-          <section className="store-form-modal" role="dialog" aria-modal="true" aria-labelledby="variant-form-title">
-            <div className="modal-header">
-              <div>
-                <h3 id="variant-form-title">{editingVariant ? 'Edit Product Variant' : 'Add Product Variant'}</h3>
-              </div>
-              <Button variant="secondary" onClick={() => closeForm()}>
-                Close
-              </Button>
-            </div>
-
-            <ProductVariantForm
-              variant={editingVariant}
-              storeOptions={storeOptions}
-              productOptions={productOptions}
-              formErrors={formErrors}
-              optionError={stores.isError || products.isError}
-              isSaving={saveVariant.isPending}
-              onStoreChange={setFormStoreId}
-              onCancel={closeForm}
-              onSubmit={handleSubmit}
-            />
-          </section>
-        </div>
-      ) : null}
       <ConfirmDialog
         options={confirmDelete}
         onCancel={() => setConfirmDelete(null)}
@@ -352,4 +390,38 @@ export function ProductVariantsPage() {
       />
     </>
   )
+}
+
+function parseProductVariantFormRoute(path: string) {
+  if (path === '/product-variants/create') return { mode: 'create' as const }
+
+  const editMatch = path.match(/^\/product-variants\/edit\/(\d+)$/)
+
+  if (editMatch) return { mode: 'edit' as const, variantId: Number(editMatch[1]) }
+
+  return null
+}
+
+function useHashPath() {
+  return useSyncExternalStore(subscribeToHash, getHashPath, getHashPath)
+}
+
+function subscribeToHash(listener: () => void) {
+  window.addEventListener('hashchange', listener)
+
+  return () => window.removeEventListener('hashchange', listener)
+}
+
+function getHashPath() {
+  const path = window.location.hash.replace(/^#/, '')
+
+  if (!path || path === '#') return '/'
+
+  return path.startsWith('/') ? path : `/${path}`
+}
+
+function navigateToHash(path: string) {
+  if (getHashPath() === path) return
+
+  window.location.hash = path
 }

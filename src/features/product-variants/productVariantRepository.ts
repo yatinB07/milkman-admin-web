@@ -3,6 +3,7 @@ import { normalizePaginationMeta, toApiListParams, type PaginatedResponse } from
 import type {
   OptionsApiResponse,
   ProductOption,
+  ProductVariantApiResponse,
   ProductVariantPayload,
   ProductVariantRow,
   ProductVariantsApiResponse,
@@ -45,6 +46,12 @@ export async function listVariantProducts(): Promise<ProductOption[]> {
 
 export async function createProductVariant(values: ProductVariantPayload): Promise<ProductVariantRow> {
   const response = await api.post<{ data: ProductVariantRow }>('/api/v1/admin/product-variants', values)
+
+  return response.data.data
+}
+
+export async function getProductVariant(variantId: number): Promise<ProductVariantRow> {
+  const response = await api.get<ProductVariantApiResponse>(`/api/v1/admin/product-variants/${variantId}`)
 
   return response.data.data
 }

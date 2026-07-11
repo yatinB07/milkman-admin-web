@@ -23,6 +23,7 @@ export type ProductVariantsApiResponse = {
   data: ProductVariantRow[]
   meta: Parameters<typeof normalizePaginationMeta>[0]
 }
+export type ProductVariantApiResponse = { data: ProductVariantRow }
 
 export type ProductVariantFormValues = {
   store_id: string
