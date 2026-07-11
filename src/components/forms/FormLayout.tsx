@@ -26,19 +26,3 @@ export function FormSection({
     </section>
   )
 }
-
-export function FormErrorSummary({ errors }: { errors: Array<string | false | null | undefined> }) {
-  const visibleErrors = errors.filter((error): error is string => Boolean(error))
-
-  if (visibleErrors.length === 0) return null
-
-  return (
-    <>
-      {visibleErrors.map((error) => (
-        <div className="form-error" key={error}>
-          {error}
-        </div>
-      ))}
-    </>
-  )
-}

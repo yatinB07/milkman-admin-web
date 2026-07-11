@@ -66,24 +66,6 @@ export const storeValidationFields: StoreValidationField[] = [
   { name: 'upi_id', label: 'UPI ID', tab: 'payout' },
 ]
 
-export function tabLabel(tab: StoreFormTabId) {
-  return storeFormTabs.find((item) => item.id === tab)?.label ?? 'current'
-}
-
-export function validateStoreValues(values: StoreFormValues, isEditing: boolean) {
-  const validation = validateStoreFieldErrors(values, isEditing)
-  const firstField = storeValidationFields.find((field) => validation.errors[field.name])
-
-  if (firstField) {
-    return {
-      message: `${firstField.label} is required. Complete the ${tabLabel(firstField.tab)} tab before continuing.`,
-      tab: firstField.tab,
-    }
-  }
-
-  return null
-}
-
 export function validateStoreFieldErrors(values: StoreFormValues, isEditing: boolean) {
   const errors: StoreFormErrors = {}
   let firstTab: StoreFormTabId | null = null
