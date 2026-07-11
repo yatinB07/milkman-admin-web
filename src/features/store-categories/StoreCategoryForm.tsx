@@ -1,13 +1,14 @@
 import { type FormEvent, useState } from 'react'
+import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
-import { FieldLabel, FormErrorSummary, FormSection } from '../../components/forms/FormLayout'
+import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import type { StoreCategoryFormValues, StoreCategoryRow } from './storeCategoryTypes'
 
 type StoreCategoryFormProps = {
   category: StoreCategoryRow | null
   storeOptions: AdminSelectOption[]
-  formError: string | null
+  formErrors: Partial<Record<'store_id' | 'title', string>>
   optionError: boolean
   isSaving: boolean
   onCancel: () => void
@@ -22,7 +23,7 @@ const statusOptions: AdminSelectOption[] = [
 export function StoreCategoryForm({
   category,
   storeOptions,
-  formError,
+  formErrors,
   optionError,
   isSaving,
   onCancel,
@@ -54,12 +55,24 @@ export function StoreCategoryForm({
             placeholder="Search and select store"
             value={storeId}
             onChange={setStoreId}
+            hasError={Boolean(formErrors.store_id || optionError)}
           />
+          {formErrors.store_id || optionError ? (
+            <small className="field-error">
+              {formErrors.store_id ?? 'Stores could not be loaded.'}
+            </small>
+          ) : null}
         </label>
 
         <label className="form-field">
           <FieldLabel label="Category Name" required />
-          <input name="title" maxLength={255} defaultValue={category?.title ?? ''} />
+          <Input
+            name="title"
+            maxLength={255}
+            aria-invalid={Boolean(formErrors.title)}
+            defaultValue={category?.title ?? ''}
+          />
+          {formErrors.title ? <small className="field-error">{formErrors.title}</small> : null}
         </label>
 
         <label className="form-field">
@@ -73,15 +86,13 @@ export function StoreCategoryForm({
         </label>
       </FormSection>
 
-      <FormErrorSummary errors={[formError, optionError && 'Stores could not be loaded.']} />
-
       <div className="modal-actions">
-        <button className="secondary-button" type="button" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           Cancel
-        </button>
-        <button className="primary-button is-compact" type="submit" disabled={isSaving}>
+        </Button>
+        <Button variant="primary" size="compact" type="submit" disabled={isSaving}>
           {isSaving ? 'Saving...' : category ? 'Save Category' : 'Add Category'}
-        </button>
+        </Button>
       </div>
     </form>
   )

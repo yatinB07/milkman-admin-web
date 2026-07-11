@@ -9,6 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
+import { Button, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -24,6 +25,8 @@ import {
 } from './storeCategoryRepository'
 import { toStoreCategoryPayload, toStoreOptions } from './storeCategoryService'
 import type { StoreCategoryFormValues, StoreCategoryListRow, StoreCategoryRow } from './storeCategoryTypes'
+
+type StoreCategoryFormErrors = Partial<Record<'store_id' | 'title', string>>
 
 const defaultMeta: PaginationMeta = {
   currentPage: 1,
@@ -42,7 +45,7 @@ export function StoreCategoriesPage() {
   const [page, setPage] = useState(1)
   const [editingCategory, setEditingCategory] = useState<StoreCategoryRow | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [formError, setFormError] = useState<string | null>(null)
+  const [formErrors, setFormErrors] = useState<StoreCategoryFormErrors>({})
   const [confirmDelete, setConfirmDelete] = useState<
     (ConfirmDialogOptions & { category: StoreCategoryRow }) | null
   >(null)
@@ -74,16 +77,20 @@ export function StoreCategoriesPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-store-categories'] })
+      toast.success(editingCategory ? 'Store category updated successfully.' : 'Store category created successfully.')
       closeForm()
     },
     onError: (error) => {
       if (isAxiosError(error) && error.response?.status === 422) {
         const data = error.response.data as { errors?: Record<string, string[]> }
-        setFormError(data.errors?.store_id?.[0] ?? data.errors?.title?.[0] ?? 'Check required fields.')
+        setFormErrors({
+          store_id: data.errors?.store_id?.[0],
+          title: data.errors?.title?.[0],
+        })
         return
       }
 
-      setFormError('Store category could not be saved.')
+      toast.error('Store category could not be saved.')
     },
   })
 
@@ -91,6 +98,10 @@ export function StoreCategoriesPage() {
     mutationFn: async (category: StoreCategoryRow) => removeStoreCategory(category.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-store-categories'] })
+      toast.success('Store category deleted successfully.')
+    },
+    onError: () => {
+      toast.error('Store category could not be deleted. Try again.')
     },
   })
 
@@ -181,29 +192,34 @@ export function StoreCategoriesPage() {
 
   function openCreateForm() {
     setEditingCategory(null)
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(true)
   }
 
   function openEditForm(category: StoreCategoryRow) {
     setEditingCategory(category)
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(true)
   }
 
   function closeForm() {
     setEditingCategory(null)
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(false)
   }
 
   function handleSubmit(values: StoreCategoryFormValues) {
-    if (!values.store_id || !values.title) {
-      setFormError('Store and Category Name are required.')
+    const nextErrors: StoreCategoryFormErrors = {
+      store_id: values.store_id ? undefined : 'Store is required.',
+      title: values.title ? undefined : 'Category Name is required.',
+    }
+
+    if (nextErrors.store_id || nextErrors.title) {
+      setFormErrors(nextErrors)
       return
     }
 
-    setFormError(null)
+    setFormErrors({})
     saveCategory.mutate(values)
   }
 
@@ -213,10 +229,10 @@ export function StoreCategoriesPage() {
         title="Store Categories"
         description="Manage per-store menu categories used by products."
         actions={canCreate ? (
-          <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
+          <Button variant="primary" size="compact" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
             Add Store Category
-          </button>
+          </Button>
         ) : null}
       />
 
@@ -290,15 +306,15 @@ export function StoreCategoriesPage() {
                   {editingCategory ? 'Edit Store Category' : 'Add Store Category'}
                 </h3>
               </div>
-              <button type="button" className="secondary-button" onClick={closeForm}>
+              <Button variant="secondary" onClick={closeForm}>
                 Close
-              </button>
+              </Button>
             </div>
 
             <StoreCategoryForm
               category={editingCategory}
               storeOptions={storeOptions}
-              formError={formError}
+              formErrors={formErrors}
               optionError={stores.isError}
               isSaving={saveCategory.isPending}
               onCancel={closeForm}

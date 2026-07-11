@@ -12,6 +12,7 @@ type AdminSelectProps = {
   inputId?: string
   placeholder?: string
   isSearchable?: boolean
+  hasError?: boolean
   onChange: (value: string) => void
 }
 
@@ -29,6 +30,7 @@ export function AdminSelect({
   inputId,
   placeholder = 'Select option',
   isSearchable = true,
+  hasError = false,
   onChange,
 }: AdminSelectProps) {
   const selected = options.find((option) => option.value === value) ?? null
@@ -44,7 +46,7 @@ export function AdminSelect({
       menuPosition="fixed"
       options={options}
       placeholder={placeholder}
-      styles={selectStyles}
+      styles={selectStyles(hasError)}
       value={selected}
       onChange={(option: SingleValue<AdminSelectOption>) => onChange(option?.value ?? '')}
     />
@@ -70,7 +72,7 @@ export function AdminMultiSelect({
       menuPosition="fixed"
       options={options}
       placeholder={placeholder}
-      styles={selectStyles}
+      styles={selectStyles(false)}
       value={selected}
       onChange={(nextValues: MultiValue<AdminSelectOption>) => {
         onChange(nextValues.map((option) => option.value))
@@ -79,11 +81,11 @@ export function AdminMultiSelect({
   )
 }
 
-const selectStyles: StylesConfig<AdminSelectOption, boolean> = {
+const selectStyles = (hasError: boolean): StylesConfig<AdminSelectOption, boolean> => ({
   control: (base, state) => ({
     ...base,
     minHeight: 42,
-    borderColor: state.isFocused ? 'var(--color-primary)' : 'var(--color-border)',
+    borderColor: hasError ? 'var(--color-danger)' : state.isFocused ? 'var(--color-primary)' : 'var(--color-border)',
     borderRadius: 'var(--radius-md)',
     backgroundColor: 'var(--color-surface)',
     boxShadow: state.isFocused ? '0 0 0 3px rgb(0 121 111 / 14%)' : 'none',
@@ -157,6 +159,6 @@ const selectStyles: StylesConfig<AdminSelectOption, boolean> = {
     color: 'var(--color-text)',
     fontWeight: 800,
   }),
-}
+})
 
 const menuPortalTarget = typeof document === 'undefined' ? undefined : document.body
