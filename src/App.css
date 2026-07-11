@@ -4,6 +4,10 @@
   --color-surface-muted: #eef3ff;
   --color-sidebar: #141b2b;
   --color-sidebar-hover: #404758;
+  --color-sidebar-text: #ebf1ff;
+  --color-sidebar-muted: #c0c6db;
+  --color-sidebar-accent: #89f5e7;
+  --color-sidebar-border: #2a313d;
   --color-border: #bcc9c6;
   --color-border-soft: #dce2f3;
   --color-text: #151c27;
@@ -16,6 +20,7 @@
   --color-warning-soft: #ffdbce;
   --color-danger: #ba1a1a;
   --color-danger-soft: #ffdad6;
+  --color-on-danger: #ffffff;
   --sidebar-width: 240px;
   --topbar-height: 64px;
   --radius-sm: 4px;
@@ -43,6 +48,7 @@
   --color-warning-soft: #4b261c;
   --color-danger: #ffb4ab;
   --color-danger-soft: #4d1f20;
+  --color-on-danger: #ffffff;
   --shadow-popover: 0 12px 32px rgb(0 0 0 / 34%);
 }
 
@@ -70,8 +76,8 @@
   height: 100vh;
   overflow-y: auto;
   background: var(--color-sidebar);
-  color: #ebf1ff;
-  border-right: 1px solid #2a313d;
+  color: var(--color-sidebar-text);
+  border-right: 1px solid var(--color-sidebar-border);
 }
 
 .sidebar-brand {
@@ -94,14 +100,14 @@
 }
 
 .sidebar-brand h1 {
-  color: #89f5e7;
+  color: var(--color-sidebar-accent);
   font-size: 27px;
   line-height: 1.1;
 }
 
 .sidebar-brand p {
   margin-top: 7px;
-  color: #c0c6db;
+  color: var(--color-sidebar-muted);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -116,10 +122,10 @@
   width: 40px;
   height: 40px;
   place-items: center;
-  border: 1px solid #404758;
+  border: 1px solid var(--color-sidebar-hover);
   border-radius: var(--radius-md);
   background: transparent;
-  color: #ebf1ff;
+  color: var(--color-sidebar-text);
   cursor: pointer;
 }
 
@@ -141,7 +147,7 @@
   border: 0;
   border-left: 4px solid transparent;
   background: transparent;
-  color: #dce2f7;
+  color: var(--color-sidebar-text);
   cursor: pointer;
   gap: 12px;
   padding: 0 18px 0 24px;
@@ -151,11 +157,11 @@
 .sidebar-link:hover,
 .sidebar-link.is-active {
   background: var(--color-sidebar-hover);
-  color: #89f5e7;
+  color: var(--color-sidebar-accent);
 }
 
 .sidebar-link.is-active {
-  border-left-color: #6bd8cb;
+  border-left-color: var(--color-primary-strong);
 }
 
 .sidebar-link span {
@@ -169,8 +175,8 @@
 .sidebar-link strong {
   min-width: 24px;
   border-radius: 999px;
-  background: #ffdad6;
-  color: #93000a;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
   font-size: 11px;
   line-height: 20px;
   text-align: center;
@@ -218,7 +224,7 @@
   border: 0;
   border-radius: var(--radius-md);
   background: transparent;
-  color: #dce2f7;
+  color: var(--color-sidebar-text);
   cursor: pointer;
   gap: 10px;
   padding: 6px 10px;
@@ -229,7 +235,7 @@
 .sidebar-profile.is-active,
 .sidebar-logout:hover {
   background: var(--color-sidebar-hover);
-  color: #89f5e7;
+  color: var(--color-sidebar-accent);
 }
 
 .sidebar-profile > span:last-child {
@@ -238,7 +244,7 @@
 }
 
 .sidebar-profile small {
-  color: #c0c6db;
+  color: var(--color-sidebar-muted);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -266,7 +272,7 @@
   place-items: center;
   border-radius: 999px;
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-on-primary);
   font-size: 14px;
   font-weight: 800;
 }
@@ -274,7 +280,7 @@
 .avatar.is-small {
   width: 36px;
   height: 36px;
-  border: 2px solid #89f5e7;
+  border: 2px solid var(--color-sidebar-accent);
 }
 
 .avatar.is-large {
@@ -655,7 +661,7 @@
 .danger-button {
   border-color: var(--color-danger);
   background: var(--color-danger);
-  color: #ffffff;
+  color: var(--color-on-danger);
 }
 
 .danger-button:hover {
@@ -666,7 +672,7 @@
 .admin-layout[data-theme='dark'] .danger-button {
   border-color: #ef635c;
   background: #8f2b2b;
-  color: #ffffff;
+  color: var(--color-on-danger);
 }
 
 .admin-layout[data-theme='dark'] .danger-button:hover {
@@ -677,7 +683,7 @@
 .primary-button {
   border-color: var(--color-primary);
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-on-primary);
 }
 
 .primary-button:hover {
@@ -895,7 +901,7 @@
 
 .admin-layout[data-theme='dark'] .admin-table tr:hover td,
 .admin-layout[data-theme='dark'] .master-table tr:hover td {
-  background: #202b3a;
+  background: var(--color-surface-muted);
 }
 
 .data-panel-header {
@@ -964,7 +970,7 @@
 }
 
 .admin-table tr:hover td {
-  background: #f7f9ff;
+  background: var(--color-surface-muted);
 }
 
 .store-cell {
@@ -1006,7 +1012,7 @@
 }
 
 .rating-cell svg {
-  color: #d29b00;
+  color: var(--color-warning);
   fill: currentColor;
 }
 
@@ -1039,7 +1045,7 @@
 .pagination-controls button.is-active {
   border-color: var(--color-primary);
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-on-primary);
 }
 
 .dashboard-support-grid {
@@ -1293,7 +1299,7 @@
 }
 
 .master-table th {
-  background: #f9fafb;
+  background: var(--color-surface-muted);
   color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 900;
@@ -1315,7 +1321,7 @@
 }
 
 .master-table tr:hover td {
-  background: #f7f9ff;
+  background: var(--color-surface-muted);
 }
 
 .master-table .is-right {
@@ -1398,7 +1404,7 @@
 }
 
 .master-pagination-controls button:hover:not(:disabled) {
-  background: #f0f3ff;
+  background: var(--color-surface-muted);
 }
 
 .master-pagination-controls button:disabled {
@@ -1409,7 +1415,7 @@
 .master-pagination-controls button.is-active {
   border-color: var(--color-primary);
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-on-primary);
 }
 
 .login-page {
@@ -1431,7 +1437,7 @@
   margin: 0 auto 22px;
   border-radius: var(--radius-lg);
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-on-primary);
 }
 
 .login-heading h1 {
@@ -1517,7 +1523,7 @@
 .login-security {
   justify-content: center;
   border-top: 1px solid var(--color-border-soft);
-  color: #6d7a77;
+  color: var(--color-text-muted);
   gap: 22px;
   padding-top: 24px;
 }
@@ -2440,10 +2446,10 @@
     width: 40px;
     height: 40px;
     place-items: center;
-    border: 1px solid #404758;
+    border: 1px solid var(--color-sidebar-hover);
     border-radius: var(--radius-md);
     background: transparent;
-    color: #ebf1ff;
+    color: var(--color-sidebar-text);
   }
 
   .sidebar-nav {
