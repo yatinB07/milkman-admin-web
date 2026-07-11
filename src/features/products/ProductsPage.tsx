@@ -1,4 +1,4 @@
-import { Edit3, ImageIcon, PackageOpen, Plus, Trash2 } from 'lucide-react'
+import { Edit3, PackageOpen, Plus, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { useMemo, useState } from 'react'
@@ -9,7 +9,15 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, ListLoadError, PageSkeleton, RecordLoadError, RowActionMenu, toast } from '../../components/common'
+import {
+  Button,
+  ListLoadError,
+  PageSkeleton,
+  RecordLoadError,
+  RowActionMenu,
+  TableImagePreview,
+  toast,
+} from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -142,7 +150,7 @@ export function ProductsPage() {
         key: 'image',
         header: 'Image',
         align: 'center',
-        render: (product) => <ProductImagePreview src={product.image_path} alt={`${product.title} image`} />,
+        render: (product) => <TableImagePreview src={product.image_path} alt={`${product.title} image`} />,
       },
       {
         key: 'title',
@@ -375,24 +383,6 @@ export function ProductsPage() {
       />
     </>
   )
-}
-
-function ProductImagePreview({ src, alt }: { src: string | null; alt: string }) {
-  if (!src) {
-    return (
-      <span className="store-image-placeholder">
-        <ImageIcon aria-hidden="true" size={22} />
-        No image
-      </span>
-    )
-  }
-
-  return <img className="store-table-image" src={assetUrl(src)} alt={alt} />
-}
-
-function assetUrl(path: string) {
-  if (/^https?:\/\//i.test(path)) return path
-  return `/${path.replace(/^\/+/, '')}`
 }
 
 function formatDate(value?: string | null) {

@@ -1,4 +1,4 @@
-import { Edit3, ImageIcon, Plus, Store, Trash2 } from 'lucide-react'
+import { Edit3, Plus, Store, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { useMemo, useState } from 'react'
@@ -9,7 +9,15 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, ListLoadError, PageSkeleton, RecordLoadError, RowActionMenu, toast } from '../../components/common'
+import {
+  Button,
+  ListLoadError,
+  PageSkeleton,
+  RecordLoadError,
+  RowActionMenu,
+  TableImagePreview,
+  toast,
+} from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
@@ -151,14 +159,14 @@ export function StoresPage() {
         key: 'store_image',
         header: 'Store Image',
         align: 'center',
-        render: (store) => <StoreImagePreview src={store.image_path} alt={`${store.title} logo`} />,
+        render: (store) => <TableImagePreview src={store.image_path} alt={`${store.title} logo`} />,
       },
       {
         key: 'cover_image',
         header: 'Store Cover Image',
         align: 'center',
         render: (store) => (
-          <StoreImagePreview src={store.cover_image_path} alt={`${store.title} cover`} />
+          <TableImagePreview src={store.cover_image_path} alt={`${store.title} cover`} />
         ),
       },
       {
@@ -392,25 +400,4 @@ function extractStoreApiValidationError(error: unknown) {
     errors: { title: firstMessage },
     tab: 'basic' as StoreFormTabId,
   }
-}
-
-function StoreImagePreview({ src, alt }: { src: string | null; alt: string }) {
-  if (!src) {
-    return (
-      <span className="store-image-placeholder">
-        <ImageIcon aria-hidden="true" size={22} />
-        No image
-      </span>
-    )
-  }
-
-  return <img className="store-table-image" src={assetUrl(src)} alt={alt} />
-}
-
-function assetUrl(path: string) {
-  if (/^https?:\/\//i.test(path)) {
-    return path
-  }
-
-  return `/${path.replace(/^\/+/, '')}`
 }
