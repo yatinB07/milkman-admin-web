@@ -9,7 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, PageSkeleton, RowActionMenu, toast } from '../../components/common'
+import { Button, PageSkeleton, RecordLoadError, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -268,18 +268,13 @@ export function ProductVariantsPage() {
 
     if (formRoute.mode === 'edit' && !currentEditingVariant) {
       return (
-        <>
-          <MasterPageHeader
-            title="Edit Product Variant"
-            description="The requested product variant could not be loaded."
-            actions={
-              <Button variant="secondary" size="compact" onClick={() => closeForm(true)}>
-                Back to Product Variants
-              </Button>
-            }
-          />
-          <div className="master-error">Product variant could not be loaded. Check the record or try again.</div>
-        </>
+        <RecordLoadError
+          title="Edit Product Variant"
+          description="The requested product variant could not be loaded."
+          message="Product variant could not be loaded. Check the record or try again."
+          backLabel="Back to Product Variants"
+          onBack={() => closeForm(true)}
+        />
       )
     }
 

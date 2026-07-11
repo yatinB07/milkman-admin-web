@@ -9,7 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, PageSkeleton, RowActionMenu, toast } from '../../components/common'
+import { Button, PageSkeleton, RecordLoadError, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
@@ -238,18 +238,13 @@ export function StoresPage() {
 
     if (formRoute.mode === 'edit' && !store) {
       return (
-        <>
-          <MasterPageHeader
-            title="Edit Store"
-            description="The requested store could not be loaded."
-            actions={
-              <Button variant="secondary" size="compact" onClick={() => closeForm(true)}>
-                Back to Stores
-              </Button>
-            }
-          />
-          <div className="master-error">Store could not be loaded. Check the record or try again.</div>
-        </>
+        <RecordLoadError
+          title="Edit Store"
+          description="The requested store could not be loaded."
+          message="Store could not be loaded. Check the record or try again."
+          backLabel="Back to Stores"
+          onBack={() => closeForm(true)}
+        />
       )
     }
 
