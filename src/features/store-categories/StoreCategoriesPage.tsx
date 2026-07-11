@@ -9,7 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, toast } from '../../components/common'
+import { Button, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -154,37 +154,28 @@ export function StoreCategoriesPage() {
         header: 'Action',
         align: 'right',
         render: (category) => (
-          <span className="row-actions">
-            {canUpdate ? (
-              <button
-                type="button"
-                aria-label="Edit store category"
-                data-tooltip="Edit store category"
-                title="Edit store category"
-                onClick={() => openEditForm(category)}
-              >
-                <Edit3 aria-hidden="true" size={16} />
-              </button>
-            ) : null}
-            {canDelete ? (
-              <button
-                type="button"
-                aria-label="Delete store category"
-                data-tooltip="Delete store category"
-                title="Delete store category"
-                onClick={() => {
+          <RowActionMenu
+            actions={[
+              canUpdate && {
+                label: 'Edit store category',
+                icon: <Edit3 aria-hidden="true" size={16} />,
+                onSelect: () => openEditForm(category),
+              },
+              canDelete && {
+                label: 'Delete store category',
+                icon: <Trash2 aria-hidden="true" size={16} />,
+                tone: 'danger',
+                onSelect: () => {
                   setConfirmDelete({
                     title: 'Delete store category',
                     message: `Delete ${category.title}? This can be restored only from the backend.`,
                     confirmLabel: 'Delete',
                     category,
                   })
-                }}
-              >
-                <Trash2 aria-hidden="true" size={16} />
-              </button>
-            ) : null}
-          </span>
+                },
+              },
+            ]}
+          />
         ),
       },
     ],

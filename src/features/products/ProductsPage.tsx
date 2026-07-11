@@ -9,7 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, toast } from '../../components/common'
+import { Button, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -165,37 +165,28 @@ export function ProductsPage() {
         header: 'Action',
         align: 'right',
         render: (product) => (
-          <span className="row-actions">
-            {canUpdate ? (
-              <button
-                type="button"
-                aria-label="Edit product"
-                data-tooltip="Edit product"
-                title="Edit product"
-                onClick={() => openEditForm(product)}
-              >
-                <Edit3 aria-hidden="true" size={16} />
-              </button>
-            ) : null}
-            {canDelete ? (
-              <button
-                type="button"
-                aria-label="Delete product"
-                data-tooltip="Delete product"
-                title="Delete product"
-                onClick={() => {
+          <RowActionMenu
+            actions={[
+              canUpdate && {
+                label: 'Edit product',
+                icon: <Edit3 aria-hidden="true" size={16} />,
+                onSelect: () => openEditForm(product),
+              },
+              canDelete && {
+                label: 'Delete product',
+                icon: <Trash2 aria-hidden="true" size={16} />,
+                tone: 'danger',
+                onSelect: () => {
                   setConfirmDelete({
                     title: 'Delete product',
                     message: `Delete ${product.title}? This can be restored only from the backend.`,
                     confirmLabel: 'Delete',
                     product,
                   })
-                }}
-              >
-                <Trash2 aria-hidden="true" size={16} />
-              </button>
-            ) : null}
-          </span>
+                },
+              },
+            ]}
+          />
         ),
       },
     ],

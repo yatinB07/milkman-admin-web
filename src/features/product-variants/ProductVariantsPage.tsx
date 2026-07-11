@@ -9,7 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, toast } from '../../components/common'
+import { Button, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -177,37 +177,28 @@ export function ProductVariantsPage() {
         header: 'Action',
         align: 'right',
         render: (variant) => (
-          <span className="row-actions">
-            {canUpdate ? (
-              <button
-                type="button"
-                aria-label="Edit product variant"
-                data-tooltip="Edit product variant"
-                title="Edit product variant"
-                onClick={() => openEditForm(variant)}
-              >
-                <Edit3 aria-hidden="true" size={16} />
-              </button>
-            ) : null}
-            {canDelete ? (
-              <button
-                type="button"
-                aria-label="Delete product variant"
-                data-tooltip="Delete product variant"
-                title="Delete product variant"
-                onClick={() => {
+          <RowActionMenu
+            actions={[
+              canUpdate && {
+                label: 'Edit product variant',
+                icon: <Edit3 aria-hidden="true" size={16} />,
+                onSelect: () => openEditForm(variant),
+              },
+              canDelete && {
+                label: 'Delete product variant',
+                icon: <Trash2 aria-hidden="true" size={16} />,
+                tone: 'danger',
+                onSelect: () => {
                   setConfirmDelete({
                     title: 'Delete product variant',
                     message: `Delete ${variant.title}? This can be restored only from the backend.`,
                     confirmLabel: 'Delete',
                     variant,
                   })
-                }}
-              >
-                <Trash2 aria-hidden="true" size={16} />
-              </button>
-            ) : null}
-          </span>
+                },
+              },
+            ]}
+          />
         ),
       },
     ],
