@@ -13,7 +13,7 @@ import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/commo
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
-import { adminStore } from '../../store/adminStore'
+import { adminStore, useAdminStore } from '../../store/adminStore'
 import { ProductVariantForm } from './ProductVariantForm'
 import {
   createProductVariant,
@@ -47,6 +47,7 @@ const stockFilterOptions = [
 ]
 
 export function ProductVariantsPage() {
+  const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [stockStatus, setStockStatus] = useState('all')
@@ -63,8 +64,8 @@ export function ProductVariantsPage() {
   const canDelete = adminStore.can(getModuleActionPermission('product-variants', 'delete'))
 
   const variants = useQuery({
-    queryKey: ['admin-product-variants', search, page],
-    queryFn: () => listProductVariants({ page, perPage: 10, search }),
+    queryKey: ['admin-product-variants', search, page, listPerPage],
+    queryFn: () => listProductVariants({ page, perPage: listPerPage, search }),
     retry: false,
   })
 
@@ -126,7 +127,7 @@ export function ProductVariantsPage() {
     stockStatus === 'all'
       ? apiRows
       : apiRows.filter((variant) => variant.is_out_of_stock === (stockStatus === 'out-of-stock'))
-  const meta = variants.data?.meta ?? defaultMeta
+  const meta = variants.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
   const rows: ProductVariantListRow[] = filteredRows.map((variant, index) => ({
     ...variant,
     serialNumber: (meta.from || 1) + index,
@@ -290,7 +291,15 @@ export function ProductVariantsPage() {
 
         {variants.isError ? <div className="master-error">Product variants could not be loaded.</div> : null}
 
-        <MasterPagination meta={meta} onPageChange={setPage} />
+        <MasterPagination
+          meta={meta}
+          perPage={listPerPage}
+          onPageChange={setPage}
+          onPerPageChange={(perPage) => {
+            adminStore.setListPerPage(perPage)
+            setPage(1)
+          }}
+        />
       </section>
 
       {isFormOpen ? (

@@ -576,6 +576,7 @@
 .admin-layout[data-theme='dark'] .master-table th,
 .admin-layout[data-theme='dark'] .master-search,
 .admin-layout[data-theme='dark'] .master-select select,
+.admin-layout[data-theme='dark'] .master-per-page select,
 .admin-layout[data-theme='dark'] .table-search input {
   background: var(--color-surface-muted);
   color: var(--color-text);
@@ -957,6 +958,26 @@
 .master-pagination > span {
   color: var(--color-text-muted);
   font-size: 13px;
+}
+
+.master-per-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.master-per-page select {
+  height: 34px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0 30px 0 10px;
 }
 
 .master-pagination-controls {

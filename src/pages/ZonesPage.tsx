@@ -19,7 +19,7 @@ import {
   type PaginationMeta,
 } from '../lib/apiTypes'
 import { getModuleActionPermission } from '../routes/adminModules'
-import { adminStore } from '../store/adminStore'
+import { adminStore, useAdminStore } from '../store/adminStore'
 
 type ZoneRow = {
   id: number
@@ -55,6 +55,7 @@ const defaultMeta: PaginationMeta = {
 }
 
 export function ZonesPage() {
+  const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
@@ -70,12 +71,12 @@ export function ZonesPage() {
   const canDelete = adminStore.can(getModuleActionPermission('zones', 'delete'))
 
   const zones = useQuery<PaginatedResponse<ZoneRow>>({
-    queryKey: ['admin-zones', search, page],
+    queryKey: ['admin-zones', search, page, listPerPage],
     queryFn: async () => {
       const response = await api.get<ZonesApiResponse>('/api/v1/admin/zones', {
         params: toApiListParams({
           page,
-          perPage: 10,
+          perPage: listPerPage,
           search,
         }),
       })
@@ -219,7 +220,7 @@ export function ZonesPage() {
   const apiRows = zones.data?.data ?? []
   const rows =
     status === 'all' ? apiRows : apiRows.filter((zone) => zone.is_active === (status === 'active'))
-  const meta = zones.data?.meta ?? defaultMeta
+  const meta = zones.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
 
   function openCreateForm() {
     setEditingZone(null)
@@ -336,7 +337,15 @@ export function ZonesPage() {
           </div>
         ) : null}
 
-        <MasterPagination meta={meta} onPageChange={setPage} />
+        <MasterPagination
+          meta={meta}
+          perPage={listPerPage}
+          onPageChange={setPage}
+          onPerPageChange={(perPage) => {
+            adminStore.setListPerPage(perPage)
+            setPage(1)
+          }}
+        />
       </section>
 
       {isFormOpen ? (

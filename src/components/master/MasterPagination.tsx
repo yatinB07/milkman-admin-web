@@ -4,9 +4,13 @@ import type { PaginationMeta } from '../../lib/apiTypes'
 type MasterPaginationProps = {
   meta: PaginationMeta
   onPageChange: (page: number) => void
+  onPerPageChange?: (perPage: number) => void
+  perPage?: number
 }
 
-export function MasterPagination({ meta, onPageChange }: MasterPaginationProps) {
+const perPageOptions = [10, 15, 25, 50, 100]
+
+export function MasterPagination({ meta, onPageChange, onPerPageChange, perPage }: MasterPaginationProps) {
   const canGoBack = meta.currentPage > 1
   const canGoForward = meta.currentPage < meta.lastPage
   const pages = getVisiblePages(meta.currentPage, meta.lastPage)
@@ -16,6 +20,22 @@ export function MasterPagination({ meta, onPageChange }: MasterPaginationProps) 
       <span>
         Showing {meta.from ?? 0} to {meta.to ?? 0} of {meta.total} records
       </span>
+
+      {onPerPageChange ? (
+        <label className="master-per-page">
+          <span>Rows per page</span>
+          <select
+            value={perPage ?? meta.perPage}
+            onChange={(event) => onPerPageChange(Number(event.target.value))}
+          >
+            {perPageOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
 
       <div className="master-pagination-controls">
         <button

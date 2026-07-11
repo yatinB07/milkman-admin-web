@@ -21,7 +21,7 @@ import {
   type PaginationMeta,
 } from '../lib/apiTypes'
 import { getModuleActionPermission } from '../routes/adminModules'
-import { adminStore } from '../store/adminStore'
+import { adminStore, useAdminStore } from '../store/adminStore'
 
 type CategoryRow = {
   id: number
@@ -64,6 +64,7 @@ const statusOptions: AdminSelectOption[] = [
 ]
 
 export function CategoriesPage() {
+  const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
@@ -80,12 +81,12 @@ export function CategoriesPage() {
   const canDelete = adminStore.can(getModuleActionPermission('categories', 'delete'))
 
   const categories = useQuery<PaginatedResponse<CategoryRow>>({
-    queryKey: ['admin-categories', search, page],
+    queryKey: ['admin-categories', search, page, listPerPage],
     queryFn: async () => {
       const response = await api.get<CategoriesApiResponse>('/api/v1/admin/categories', {
         params: toApiListParams({
           page,
-          perPage: 10,
+          perPage: listPerPage,
           search,
         }),
       })
@@ -150,7 +151,7 @@ export function CategoriesPage() {
     status === 'all'
       ? apiRows
       : apiRows.filter((category) => category.is_active === (status === 'active'))
-  const meta = categories.data?.meta ?? defaultMeta
+  const meta = categories.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
   const rows: CategoryListRow[] = filteredRows.map((category, index) => ({
     ...category,
     serialNumber: (meta.from || 1) + index,
@@ -361,7 +362,15 @@ export function CategoriesPage() {
           </div>
         ) : null}
 
-        <MasterPagination meta={meta} onPageChange={setPage} />
+        <MasterPagination
+          meta={meta}
+          perPage={listPerPage}
+          onPageChange={setPage}
+          onPerPageChange={(perPage) => {
+            adminStore.setListPerPage(perPage)
+            setPage(1)
+          }}
+        />
       </section>
 
       {isFormOpen ? (

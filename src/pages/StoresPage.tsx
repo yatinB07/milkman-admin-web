@@ -23,7 +23,7 @@ import {
   type PaginationMeta,
 } from '../lib/apiTypes'
 import { getModuleActionPermission } from '../routes/adminModules'
-import { adminStore } from '../store/adminStore'
+import { adminStore, useAdminStore } from '../store/adminStore'
 
 type StoreRow = {
   id: number
@@ -232,6 +232,7 @@ const storeValidationFields: StoreValidationField[] = [
 ]
 
 export function StoresPage() {
+  const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
@@ -256,12 +257,12 @@ export function StoresPage() {
   const canDelete = adminStore.can(getModuleActionPermission('stores', 'delete'))
 
   const stores = useQuery<PaginatedResponse<StoreRow>>({
-    queryKey: ['admin-stores', search, page],
+    queryKey: ['admin-stores', search, page, listPerPage],
     queryFn: async () => {
       const response = await api.get<StoresApiResponse>('/api/v1/admin/stores', {
         params: toApiListParams({
           page,
-          perPage: 10,
+          perPage: listPerPage,
           search,
         }),
       })
@@ -346,7 +347,7 @@ export function StoresPage() {
     status === 'all'
       ? apiRows
       : apiRows.filter((store) => store.is_active === (status === 'active'))
-  const meta = stores.data?.meta ?? defaultMeta
+  const meta = stores.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
   const rows: StoreListRow[] = filteredRows.map((store, index) => ({
     ...store,
     serialNumber: serialNumber(meta, index),
@@ -1131,7 +1132,15 @@ export function StoresPage() {
           </div>
         ) : null}
 
-        <MasterPagination meta={meta} onPageChange={setPage} />
+        <MasterPagination
+          meta={meta}
+          perPage={listPerPage}
+          onPageChange={setPage}
+          onPerPageChange={(perPage) => {
+            adminStore.setListPerPage(perPage)
+            setPage(1)
+          }}
+        />
       </section>
       <ConfirmDialog
         options={confirmDelete}

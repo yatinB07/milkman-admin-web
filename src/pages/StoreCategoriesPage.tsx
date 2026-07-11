@@ -21,7 +21,7 @@ import {
   type PaginationMeta,
 } from '../lib/apiTypes'
 import { getModuleActionPermission } from '../routes/adminModules'
-import { adminStore } from '../store/adminStore'
+import { adminStore, useAdminStore } from '../store/adminStore'
 
 type StoreCategoryRow = {
   id: number
@@ -65,6 +65,7 @@ const statusOptions: AdminSelectOption[] = [
 ]
 
 export function StoreCategoriesPage() {
+  const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
@@ -83,10 +84,10 @@ export function StoreCategoriesPage() {
   const canDelete = adminStore.can(getModuleActionPermission('store-categories', 'delete'))
 
   const storeCategories = useQuery<PaginatedResponse<StoreCategoryRow>>({
-    queryKey: ['admin-store-categories', search, page],
+    queryKey: ['admin-store-categories', search, page, listPerPage],
     queryFn: async () => {
       const response = await api.get<StoreCategoriesApiResponse>('/api/v1/admin/store-categories', {
-        params: toApiListParams({ page, perPage: 10, search }),
+        params: toApiListParams({ page, perPage: listPerPage, search }),
       })
 
       return { data: response.data.data, meta: normalizePaginationMeta(response.data.meta) }
@@ -155,7 +156,7 @@ export function StoreCategoriesPage() {
     status === 'all'
       ? apiRows
       : apiRows.filter((category) => category.is_active === (status === 'active'))
-  const meta = storeCategories.data?.meta ?? defaultMeta
+  const meta = storeCategories.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
   const rows: StoreCategoryListRow[] = filteredRows.map((category, index) => ({
     ...category,
     serialNumber: (meta.from || 1) + index,
@@ -344,7 +345,15 @@ export function StoreCategoriesPage() {
           <div className="master-error">Store categories could not be loaded.</div>
         ) : null}
 
-        <MasterPagination meta={meta} onPageChange={setPage} />
+        <MasterPagination
+          meta={meta}
+          perPage={listPerPage}
+          onPageChange={setPage}
+          onPerPageChange={(perPage) => {
+            adminStore.setListPerPage(perPage)
+            setPage(1)
+          }}
+        />
       </section>
 
       {isFormOpen ? (

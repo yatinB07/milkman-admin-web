@@ -13,7 +13,7 @@ import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/commo
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
-import { adminStore } from '../../store/adminStore'
+import { adminStore, useAdminStore } from '../../store/adminStore'
 import { ProductForm } from './ProductForm'
 import {
   createProduct,
@@ -36,6 +36,7 @@ const defaultMeta: PaginationMeta = {
 }
 
 export function ProductsPage() {
+  const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
@@ -50,8 +51,8 @@ export function ProductsPage() {
   const canDelete = adminStore.can(getModuleActionPermission('products', 'delete'))
 
   const products = useQuery({
-    queryKey: ['admin-products', search, page],
-    queryFn: () => listProducts({ page, perPage: 10, search }),
+    queryKey: ['admin-products', search, page, listPerPage],
+    queryFn: () => listProducts({ page, perPage: listPerPage, search }),
     retry: false,
   })
 
@@ -109,7 +110,7 @@ export function ProductsPage() {
   const apiRows = products.data?.data ?? []
   const filteredRows =
     status === 'all' ? apiRows : apiRows.filter((product) => product.is_active === (status === 'active'))
-  const meta = products.data?.meta ?? defaultMeta
+  const meta = products.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
   const rows: ProductListRow[] = filteredRows.map((product, index) => ({
     ...product,
     serialNumber: (meta.from || 1) + index,
@@ -285,7 +286,15 @@ export function ProductsPage() {
 
         {products.isError ? <div className="master-error">Products could not be loaded.</div> : null}
 
-        <MasterPagination meta={meta} onPageChange={setPage} />
+        <MasterPagination
+          meta={meta}
+          perPage={listPerPage}
+          onPageChange={setPage}
+          onPerPageChange={(perPage) => {
+            adminStore.setListPerPage(perPage)
+            setPage(1)
+          }}
+        />
       </section>
 
       {isFormOpen ? (
