@@ -13,3 +13,8 @@ export const publishStatusSelectOptions: AdminSelectOption[] = [
   { label: 'Publish', value: '1' },
   { label: 'Unpublish', value: '0' },
 ]
+
+export const yesNoSelectOptions: AdminSelectOption[] = [
+  { label: 'Yes', value: '1' },
+  { label: 'No', value: '0' },
+]

@@ -7,7 +7,7 @@ import { AdminMultiSelect, AdminSelect, type AdminSelectOption } from '../../com
 import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
 import { FieldLabel } from '../../components/forms/FormLayout'
 import { StoreLocationMap } from '../../components/maps/StoreLocationMap'
-import { publishStatusSelectOptions } from '../../lib/filterOptions'
+import { publishStatusSelectOptions, yesNoSelectOptions } from '../../lib/filterOptions'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import {
   splitCategoryReference,
@@ -31,11 +31,6 @@ type StoreFormProps = {
   onCancel: () => void
   onSubmit: (values: StoreFormValues) => void
 }
-
-const pickupOptions: AdminSelectOption[] = [
-  { label: 'Yes', value: '1' },
-  { label: 'No', value: '0' },
-]
 
 const chargeTypeOptions: AdminSelectOption[] = [
   { label: 'Fixed Charge', value: '1' },
@@ -257,7 +252,7 @@ export function StoreForm({
                 <FieldLabel label="Store Pickup Status" required />
                 <AdminSelect
                   isSearchable={false}
-                  options={pickupOptions}
+                  options={yesNoSelectOptions}
                   value={formPickupStatus}
                   onChange={(value) => setFormValue('is_pickup_enabled', value === '1')}
                 />

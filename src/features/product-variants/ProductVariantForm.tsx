@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
+import { yesNoSelectOptions } from '../../lib/filterOptions'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import type { ProductVariantFormValues, ProductVariantRow } from './productVariantTypes'
 
@@ -18,11 +19,6 @@ type ProductVariantFormProps = {
   onCancel: () => void
   onSubmit: (values: ProductVariantFormValues) => void
 }
-
-const yesNoOptions: AdminSelectOption[] = [
-  { label: 'Yes', value: '1' },
-  { label: 'No', value: '0' },
-]
 
 export function ProductVariantForm({
   variant,
@@ -147,14 +143,14 @@ export function ProductVariantForm({
 
         <label className="form-field">
           <FieldLabel label="Out Of Stock?" required />
-          <AdminSelect isSearchable={false} options={yesNoOptions} value={stock} onChange={setStock} />
+          <AdminSelect isSearchable={false} options={yesNoSelectOptions} value={stock} onChange={setStock} />
         </label>
 
         <label className="form-field">
           <FieldLabel label="Subscription Required?" required />
           <AdminSelect
             isSearchable={false}
-            options={yesNoOptions}
+            options={yesNoSelectOptions}
             value={subscriptionRequired}
             onChange={setSubscriptionRequired}
           />
