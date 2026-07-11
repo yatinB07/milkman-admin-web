@@ -1873,7 +1873,8 @@
 }
 
 .modal-header,
-.modal-actions {
+.modal-actions,
+.form-actions {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -2384,7 +2385,8 @@
   gap: 18px;
 }
 
-.modal-actions {
+.modal-actions,
+.form-actions {
   justify-content: flex-end;
 }
 

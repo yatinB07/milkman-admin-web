@@ -161,7 +161,7 @@ export function ProductVariantForm({
         </label>
       </FormSection>
 
-      <div className="modal-actions">
+      <div className="form-actions">
         <Button variant="secondary" onClick={onCancel}>
           Cancel
         </Button>
