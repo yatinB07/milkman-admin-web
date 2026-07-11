@@ -4,6 +4,7 @@ import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
+import { publishStatusSelectOptions } from '../../lib/filterOptions'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import type { ProductFormValues, ProductRow } from './productTypes'
 
@@ -18,11 +19,6 @@ type ProductFormProps = {
   onCancel: () => void
   onSubmit: (values: ProductFormValues) => void
 }
-
-const statusOptions: AdminSelectOption[] = [
-  { label: 'Publish', value: '1' },
-  { label: 'Unpublish', value: '0' },
-]
 
 export function ProductForm({
   product,
@@ -107,7 +103,7 @@ export function ProductForm({
 
         <label className="form-field">
           <FieldLabel label="Status" />
-          <AdminSelect isSearchable={false} options={statusOptions} value={status} onChange={setStatus} />
+          <AdminSelect isSearchable={false} options={publishStatusSelectOptions} value={status} onChange={setStatus} />
         </label>
       </FormSection>
 

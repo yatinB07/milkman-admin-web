@@ -7,6 +7,7 @@ import { AdminMultiSelect, AdminSelect, type AdminSelectOption } from '../../com
 import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
 import { FieldLabel } from '../../components/forms/FormLayout'
 import { StoreLocationMap } from '../../components/maps/StoreLocationMap'
+import { publishStatusSelectOptions } from '../../lib/filterOptions'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import {
   splitCategoryReference,
@@ -30,11 +31,6 @@ type StoreFormProps = {
   onCancel: () => void
   onSubmit: (values: StoreFormValues) => void
 }
-
-const publishOptions: AdminSelectOption[] = [
-  { label: 'Publish', value: '1' },
-  { label: 'Unpublish', value: '0' },
-]
 
 const pickupOptions: AdminSelectOption[] = [
   { label: 'Yes', value: '1' },
@@ -188,7 +184,7 @@ export function StoreForm({
                 <FieldLabel label="Store Status" required />
                 <AdminSelect
                   isSearchable={false}
-                  options={publishOptions}
+                  options={publishStatusSelectOptions}
                   value={formIsActive}
                   onChange={(value) => setFormValue('is_active', value === '1')}
                 />

@@ -1,4 +1,5 @@
 import type { MasterFilterOption } from '../components/master'
+import type { AdminSelectOption } from '../components/forms/AdminSelect'
 
 export function publishStatusFilterOptions(allLabel: string): MasterFilterOption[] {
   return [
@@ -7,3 +8,8 @@ export function publishStatusFilterOptions(allLabel: string): MasterFilterOption
     { label: 'Unpublish', value: 'inactive' },
   ]
 }
+
+export const publishStatusSelectOptions: AdminSelectOption[] = [
+  { label: 'Publish', value: '1' },
+  { label: 'Unpublish', value: '0' },
+]

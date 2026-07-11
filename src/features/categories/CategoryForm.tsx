@@ -1,8 +1,9 @@
 import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
-import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
+import { AdminSelect } from '../../components/forms/AdminSelect'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
+import { publishStatusSelectOptions } from '../../lib/filterOptions'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import type { CategoryFormValues, CategoryRow } from './categoryTypes'
 
@@ -13,11 +14,6 @@ type CategoryFormProps = {
   onCancel: () => void
   onSubmit: (values: CategoryFormValues) => void
 }
-
-const statusOptions: AdminSelectOption[] = [
-  { label: 'Publish', value: '1' },
-  { label: 'Unpublish', value: '0' },
-]
 
 export function CategoryForm({ category, formErrors, isSaving, onCancel, onSubmit }: CategoryFormProps) {
   const [status, setStatus] = useState(category?.is_active === false ? '0' : '1')
@@ -52,7 +48,7 @@ export function CategoryForm({ category, formErrors, isSaving, onCancel, onSubmi
 
         <label className="form-field">
           <FieldLabel label="Status" />
-          <AdminSelect isSearchable={false} options={statusOptions} value={status} onChange={setStatus} />
+          <AdminSelect isSearchable={false} options={publishStatusSelectOptions} value={status} onChange={setStatus} />
         </label>
 
         <label className="form-field">
