@@ -1,6 +1,6 @@
 import { api } from '../../lib/api'
 import { normalizePaginationMeta, toApiListParams, type PaginatedResponse } from '../../lib/apiTypes'
-import type { ZonePayload, ZoneRow, ZonesApiResponse } from './zoneTypes'
+import type { ZoneApiResponse, ZonePayload, ZoneRow, ZonesApiResponse } from './zoneTypes'
 
 export async function listZones(query: {
   page: number
@@ -20,6 +20,12 @@ export async function listZones(query: {
 
 export async function createZone(values: ZonePayload): Promise<ZoneRow> {
   const response = await api.post<{ data: ZoneRow }>('/api/v1/admin/zones', values)
+
+  return response.data.data
+}
+
+export async function getZone(zoneId: number): Promise<ZoneRow> {
+  const response = await api.get<ZoneApiResponse>(`/api/v1/admin/zones/${zoneId}`)
 
   return response.data.data
 }

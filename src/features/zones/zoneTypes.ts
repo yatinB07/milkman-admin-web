@@ -30,3 +30,4 @@ export type ZonesApiResponse = {
   data: ZoneRow[]
   meta: Parameters<typeof normalizePaginationMeta>[0]
 }
+export type ZoneApiResponse = { data: ZoneRow }

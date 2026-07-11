@@ -1,6 +1,6 @@
 import { Edit3, MapPinned, Plus, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import {
   MasterDataTable,
   MasterFilterBar,
@@ -16,7 +16,7 @@ import { getModuleActionPermission } from '../../routes/adminModules'
 import { adminStore, useAdminStore } from '../../store/adminStore'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { ZoneForm } from './ZoneForm'
-import { createZone, deleteZone as removeZone, listZones, updateZone } from './zoneRepository'
+import { createZone, deleteZone as removeZone, getZone, listZones, updateZone } from './zoneRepository'
 import { toZonePayload } from './zoneService'
 import type { ZoneFormErrors, ZoneFormValues, ZoneRow } from './zoneTypes'
 
@@ -32,11 +32,12 @@ const defaultMeta: PaginationMeta = {
 export function ZonesPage() {
   const { listPerPage } = useAdminStore()
   const queryClient = useQueryClient()
+  const activePath = useHashPath()
+  const formRoute = parseZoneFormRoute(activePath)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
   const [editingZone, setEditingZone] = useState<ZoneRow | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
   const [formErrors, setFormErrors] = useState<ZoneFormErrors>({})
   const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { zone: ZoneRow }) | null>(null)
   const canCreate = adminStore.can(getModuleActionPermission('zones', 'create'))
@@ -49,11 +50,20 @@ export function ZonesPage() {
     retry: false,
   })
 
+  const routeZone = useQuery({
+    queryKey: ['admin-zone', formRoute?.mode === 'edit' ? formRoute.zoneId : null],
+    queryFn: () => getZone(formRoute?.mode === 'edit' ? formRoute.zoneId : 0),
+    enabled: formRoute?.mode === 'edit',
+    retry: false,
+  })
+
+  const currentEditingZone = formRoute?.mode === 'edit' ? routeZone.data ?? editingZone : editingZone
+
   const saveZone = useMutation({
     mutationFn: async (values: ZoneFormValues) => {
       const payload = toZonePayload(values)
 
-      return editingZone ? updateZone(editingZone.id, payload) : createZone(payload)
+      return currentEditingZone ? updateZone(currentEditingZone.id, payload) : createZone(payload)
     },
     onSuccess: async (savedZone) => {
       queryClient.setQueriesData<PaginatedResponse<ZoneRow>>(
@@ -70,7 +80,7 @@ export function ZonesPage() {
         },
       )
       await queryClient.invalidateQueries({ queryKey: ['admin-zones'] })
-      toast.success(editingZone ? 'Zone updated successfully.' : 'Zone created successfully.')
+      toast.success(currentEditingZone ? 'Zone updated successfully.' : 'Zone created successfully.')
       closeForm(true)
     },
     onError: () => {
@@ -175,14 +185,14 @@ export function ZonesPage() {
     dirtyFormStore.reset()
     setEditingZone(null)
     setFormErrors({})
-    setIsFormOpen(true)
+    navigateToHash('/zones/create')
   }
 
   function openEditForm(zone: ZoneRow) {
     dirtyFormStore.reset()
     setEditingZone(zone)
     setFormErrors({})
-    setIsFormOpen(true)
+    navigateToHash(`/zones/edit/${zone.id}`)
   }
 
   function closeForm(force = false) {
@@ -191,11 +201,58 @@ export function ZonesPage() {
     dirtyFormStore.reset()
     setEditingZone(null)
     setFormErrors({})
-    setIsFormOpen(false)
+    navigateToHash('/zones')
   }
 
   function handleSubmit(values: ZoneFormValues) {
     saveZone.mutate(values)
+  }
+
+  if (formRoute) {
+    if (formRoute.mode === 'edit' && !currentEditingZone && routeZone.isLoading) {
+      return <MasterPageHeader title="Edit Zone" description="Loading zone..." />
+    }
+
+    if (formRoute.mode === 'edit' && !currentEditingZone) {
+      return (
+        <>
+          <MasterPageHeader
+            title="Edit Zone"
+            description="The requested zone could not be loaded."
+            actions={
+              <Button variant="secondary" size="compact" onClick={() => closeForm(true)}>
+                Back to Zones
+              </Button>
+            }
+          />
+          <div className="master-error">Zone could not be loaded. Check the record or try again.</div>
+        </>
+      )
+    }
+
+    return (
+      <>
+        <MasterPageHeader
+          title={currentEditingZone ? 'Edit Zone' : 'Add Zone'}
+          description="Draw the delivery boundary and manage zone status."
+          actions={
+            <Button variant="secondary" size="compact" onClick={() => closeForm()}>
+              Back to Zones
+            </Button>
+          }
+        />
+        <section className="data-panel">
+          <ZoneForm
+            zone={currentEditingZone}
+            formErrors={formErrors}
+            isSaving={saveZone.isPending}
+            onErrorsChange={setFormErrors}
+            onCancel={closeForm}
+            onSubmit={handleSubmit}
+          />
+        </section>
+      </>
+    )
   }
 
   return (
@@ -275,34 +332,6 @@ export function ZonesPage() {
         />
       </section>
 
-      {isFormOpen ? (
-        <div className="modal-backdrop" role="presentation">
-          <section
-            className="store-form-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="zone-form-title"
-          >
-            <div className="modal-header">
-              <div>
-                <h3 id="zone-form-title">{editingZone ? 'Edit Zone' : 'Add Zone'}</h3>
-              </div>
-              <Button variant="secondary" onClick={() => closeForm()}>
-                Close
-              </Button>
-            </div>
-
-            <ZoneForm
-              zone={editingZone}
-              formErrors={formErrors}
-              isSaving={saveZone.isPending}
-              onErrorsChange={setFormErrors}
-              onCancel={closeForm}
-              onSubmit={handleSubmit}
-            />
-          </section>
-        </div>
-      ) : null}
       <ConfirmDialog
         options={confirmDelete}
         onCancel={() => setConfirmDelete(null)}
@@ -329,4 +358,38 @@ function formatDate(value: string) {
     day: 'numeric',
     year: 'numeric',
   }).format(date)
+}
+
+function parseZoneFormRoute(path: string) {
+  if (path === '/zones/create') return { mode: 'create' as const }
+
+  const editMatch = path.match(/^\/zones\/edit\/(\d+)$/)
+
+  if (editMatch) return { mode: 'edit' as const, zoneId: Number(editMatch[1]) }
+
+  return null
+}
+
+function useHashPath() {
+  return useSyncExternalStore(subscribeToHash, getHashPath, getHashPath)
+}
+
+function subscribeToHash(listener: () => void) {
+  window.addEventListener('hashchange', listener)
+
+  return () => window.removeEventListener('hashchange', listener)
+}
+
+function getHashPath() {
+  const path = window.location.hash.replace(/^#/, '')
+
+  if (!path || path === '#') return '/'
+
+  return path.startsWith('/') ? path : `/${path}`
+}
+
+function navigateToHash(path: string) {
+  if (getHashPath() === path) return
+
+  window.location.hash = path
 }
