@@ -1,19 +1,12 @@
 import { lazy, type ComponentType } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
-  Banknote,
-  Bike,
-  CalendarDays,
-  Gauge,
   LayoutDashboard,
   ListTree,
   MapPinned,
   Package,
   Shapes,
-  ShoppingCart,
   Store,
-  Users,
-  Settings,
 } from 'lucide-react'
 
 export type AdminModule = {
@@ -44,15 +37,12 @@ const StoreCategoriesPage = lazy(() =>
 const StoresPage = lazy(() => import('../pages/StoresPage').then((module) => ({ default: module.StoresPage })))
 const ZonesPage = lazy(() => import('../pages/ZonesPage').then((module) => ({ default: module.ZonesPage })))
 
-const PlaceholderPage = DashboardPage
 const productPermissions = crudPermissions('products.manage')
 const storePermissions = crudPermissions('stores.manage')
 const settingsPermissions = crudPermissions('settings.update')
 
 export const adminModules: AdminModule[] = [
   { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard, component: DashboardPage },
-  { id: 'reports', path: '/reports', label: 'Reports', icon: Gauge, component: PlaceholderPage, permission: 'reports.view' },
-  { id: 'catalog', path: '/catalog', label: 'Catalog', icon: Package, component: PlaceholderPage, permission: 'products.manage' },
   {
     id: 'categories',
     path: '/categories',
@@ -107,19 +97,6 @@ export const adminModules: AdminModule[] = [
     permission: settingsPermissions.view,
     permissions: settingsPermissions,
   },
-  { id: 'riders', path: '/riders', label: 'Riders', icon: Bike, component: PlaceholderPage, permission: 'riders.manage' },
-  { id: 'customers', path: '/customers', label: 'Customers', icon: Users, component: PlaceholderPage, permission: 'users.manage' },
-  { id: 'orders', path: '/orders', label: 'Orders', icon: ShoppingCart, component: PlaceholderPage, permission: 'orders.view', badge: '18' },
-  {
-    id: 'subscriptions',
-    path: '/subscriptions',
-    label: 'Subscriptions',
-    icon: CalendarDays,
-    component: PlaceholderPage,
-    permission: 'subscriptions.manage',
-  },
-  { id: 'payouts', path: '/payouts', label: 'Payouts', icon: Banknote, component: PlaceholderPage, permission: 'payouts.approve', badge: '12' },
-  { id: 'settings', path: '/settings', label: 'Settings', icon: Settings, component: PlaceholderPage, permission: 'settings.update' },
 ]
 
 export function getModuleActionPermission(moduleId: string, action: keyof NonNullable<AdminModule['permissions']>) {

@@ -6,10 +6,10 @@ import {
   CalendarDays,
   ClipboardList,
   PanelLeftClose,
-  Search,
   Store,
   Users,
 } from 'lucide-react'
+import type { DashboardChartPoint } from '../components/dashboard'
 
 export type Metric = {
   label: string
@@ -42,6 +42,23 @@ export const dashboardMetrics: Metric[] = [
   { label: 'Sales', value: '$42,850', trend: '+15%', icon: BadgeDollarSign },
   { label: 'Earnings', value: '$6,427', trend: '+5%', icon: Banknote },
   { label: 'Pending Payouts', value: '1,840', trend: '12 total', icon: PanelLeftClose, tone: 'warning' },
+]
+
+export const orderTrend: DashboardChartPoint[] = [
+  { label: 'Mon', value: 840 },
+  { label: 'Tue', value: 1020 },
+  { label: 'Wed', value: 920 },
+  { label: 'Thu', value: 1180 },
+  { label: 'Fri', value: 1240 },
+  { label: 'Sat', value: 1360 },
+  { label: 'Sun', value: 1208 },
+]
+
+export const payoutTrend: DashboardChartPoint[] = [
+  { label: 'W1', value: 4200 },
+  { label: 'W2', value: 3800 },
+  { label: 'W3', value: 5100 },
+  { label: 'W4', value: 6427 },
 ]
 
 export const storeEarnings: StoreEarning[] = [
@@ -111,5 +128,3 @@ export const storeEarnings: StoreEarning[] = [
     rating: '4.7',
   },
 ]
-
-export const globalSearchIcon = Search

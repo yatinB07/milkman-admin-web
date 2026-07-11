@@ -1,8 +1,9 @@
 import { Download, Filter, Star } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { dashboardMetrics, storeEarnings } from '../data/adminDashboard'
+import { dashboardMetrics, orderTrend, payoutTrend, storeEarnings } from '../data/adminDashboard'
 import { api } from '../lib/api'
 import { StatusPill } from '../components/StatusPill'
+import { DashboardBarChart, MetricCard } from '../components/dashboard'
 
 type HealthResponse = {
   data: {
@@ -53,15 +54,28 @@ export function DashboardPage() {
 
       <section className="metric-grid" aria-label="Operational metrics">
         {dashboardMetrics.map((metric) => (
-          <article className={`metric-card tone-${metric.tone ?? 'success'}`} key={metric.label}>
-            <div>
-              <p>{metric.label}</p>
-              <metric.icon aria-hidden="true" size={21} />
-            </div>
-            <strong>{metric.value}</strong>
-            <span>{metric.trend}</span>
-          </article>
+          <MetricCard
+            icon={metric.icon}
+            key={metric.label}
+            label={metric.label}
+            tone={metric.tone}
+            trend={metric.trend}
+            value={metric.value}
+          />
         ))}
+      </section>
+
+      <section className="dashboard-chart-grid" aria-label="Dashboard charts">
+        <DashboardBarChart
+          title="Order Trend"
+          description="Dummy weekly order volume until analytics API is connected."
+          points={orderTrend}
+        />
+        <DashboardBarChart
+          title="Earning Trend"
+          description="Dummy payout trend until finance API is connected."
+          points={payoutTrend}
+        />
       </section>
 
       <section className="data-panel" aria-labelledby="store-earning-heading">
