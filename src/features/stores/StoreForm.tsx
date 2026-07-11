@@ -3,7 +3,7 @@ import { type FormEvent, type InputHTMLAttributes, type MouseEvent, type ReactNo
 import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminMultiSelect, AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
-import { AdminTextarea } from '../../components/forms/AdminTextarea'
+import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
 import { FieldLabel } from '../../components/forms/FormLayout'
 import { StoreLocationMap } from '../../components/maps/StoreLocationMap'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
@@ -312,7 +312,7 @@ export function StoreForm({
 
               <label className="form-field is-wide">
                 <FieldLabel label="Short Description" required />
-                <AdminTextarea
+                <AdminRichTextEditor
                   name="content_description"
                   placeholder="Write the store description shown to customers"
                   value={contentDescription}
@@ -324,7 +324,7 @@ export function StoreForm({
 
               <label className="form-field is-wide">
                 <FieldLabel label="Cancel Policy" required />
-                <AdminTextarea
+                <AdminRichTextEditor
                   name="cancel_policy"
                   placeholder="Write the cancellation policy for this store"
                   value={cancelPolicy}

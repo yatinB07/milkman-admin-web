@@ -1,8 +1,8 @@
 import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
+import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
-import { AdminTextarea } from '../../components/forms/AdminTextarea'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import type { ProductFormValues, ProductRow } from './productTypes'
@@ -119,7 +119,7 @@ export function ProductForm({
 
         <label className="form-field">
           <FieldLabel label="Product Description" />
-          <AdminTextarea
+          <AdminRichTextEditor
             name="description"
             value={description}
             maxLength={1200}
