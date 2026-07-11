@@ -1,4 +1,4 @@
-import { Download, Filter, Star } from 'lucide-react'
+import { Star } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { StatusPill } from '../../components/StatusPill'
 import { DashboardBarChart, MetricCard } from '../../components/dashboard'
@@ -29,14 +29,6 @@ export function DashboardPage() {
                 ? `${health.data.name} ${health.data.version}`
                 : 'API offline'}
           </div>
-          <button className="secondary-button" type="button">
-            <Filter aria-hidden="true" size={17} />
-            Filters
-          </button>
-          <button className="primary-button is-compact" type="button">
-            <Download aria-hidden="true" size={17} />
-            Export CSV
-          </button>
         </div>
       </section>
 
@@ -56,12 +48,12 @@ export function DashboardPage() {
       <section className="dashboard-chart-grid" aria-label="Dashboard charts">
         <DashboardBarChart
           title="Order Trend"
-          description="Dummy weekly order volume until analytics API is connected."
+          description="Sample weekly order volume until analytics API is connected."
           points={orderTrend}
         />
         <DashboardBarChart
           title="Earning Trend"
-          description="Dummy payout trend until finance API is connected."
+          description="Sample payout trend until finance API is connected."
           points={payoutTrend}
         />
       </section>
@@ -70,12 +62,8 @@ export function DashboardPage() {
         <div className="data-panel-header">
           <div>
             <h3 id="store-earning-heading">Store Earning Report</h3>
-            <p>Showing 1 to 5 of 124 stores</p>
+            <p>Sample earning data until the reporting API is connected.</p>
           </div>
-          <label className="table-search">
-            <span className="sr-only">Search store name</span>
-            <input placeholder="Search store name..." type="search" />
-          </label>
         </div>
 
         <div className="table-scroll">
@@ -124,24 +112,6 @@ export function DashboardPage() {
           </table>
         </div>
 
-        <div className="pagination-row">
-          <span>Showing 1 to 5 of 124 stores</span>
-          <div className="pagination-controls">
-            <button type="button" aria-label="Previous page">
-              {'<'}
-            </button>
-            <button className="is-active" type="button">
-              1
-            </button>
-            <button type="button">2</button>
-            <button type="button">3</button>
-            <span>...</span>
-            <button type="button">25</button>
-            <button type="button" aria-label="Next page">
-              {'>'}
-            </button>
-          </div>
-        </div>
       </section>
 
       <section className="dashboard-support-grid">
