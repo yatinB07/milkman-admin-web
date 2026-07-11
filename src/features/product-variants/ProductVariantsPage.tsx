@@ -70,8 +70,8 @@ export function ProductVariantsPage() {
   const canDelete = adminStore.can(getModuleActionPermission('product-variants', 'delete'))
 
   const variants = useQuery({
-    queryKey: ['admin-product-variants', search, page, listPerPage],
-    queryFn: () => listProductVariants({ page, perPage: listPerPage, search }),
+    queryKey: ['admin-product-variants', search, stockStatus, page, listPerPage],
+    queryFn: () => listProductVariants({ page, perPage: listPerPage, search, stockStatus }),
     retry: false,
   })
 
@@ -134,12 +134,8 @@ export function ProductVariantsPage() {
   })
 
   const apiRows = variants.data?.data ?? []
-  const filteredRows =
-    stockStatus === 'all'
-      ? apiRows
-      : apiRows.filter((variant) => variant.is_out_of_stock === (stockStatus === 'out-of-stock'))
   const meta = variants.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
-  const rows: ProductVariantListRow[] = filteredRows.map((variant, index) => ({
+  const rows: ProductVariantListRow[] = apiRows.map((variant, index) => ({
     ...variant,
     serialNumber: (meta.from || 1) + index,
   }))

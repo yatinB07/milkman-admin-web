@@ -6,9 +6,13 @@ export async function listStores(query: {
   page: number
   perPage: number
   search: string
+  status?: string
 }): Promise<PaginatedResponse<StoreRow>> {
   const response = await api.get<StoresApiResponse>('/api/v1/admin/stores', {
-    params: toApiListParams(query),
+    params: toApiListParams({
+      ...query,
+      filters: { is_active: query.status === 'all' ? undefined : query.status === 'active' },
+    }),
   })
 
   return { data: response.data.data, meta: normalizePaginationMeta(response.data.meta) }

@@ -55,8 +55,8 @@ export function ProductsPage() {
   const canDelete = adminStore.can(getModuleActionPermission('products', 'delete'))
 
   const products = useQuery({
-    queryKey: ['admin-products', search, page, listPerPage],
-    queryFn: () => listProducts({ page, perPage: listPerPage, search }),
+    queryKey: ['admin-products', search, status, page, listPerPage],
+    queryFn: () => listProducts({ page, perPage: listPerPage, search, status }),
     retry: false,
   })
 
@@ -116,10 +116,8 @@ export function ProductsPage() {
   })
 
   const apiRows = products.data?.data ?? []
-  const filteredRows =
-    status === 'all' ? apiRows : apiRows.filter((product) => product.is_active === (status === 'active'))
   const meta = products.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
-  const rows: ProductListRow[] = filteredRows.map((product, index) => ({
+  const rows: ProductListRow[] = apiRows.map((product, index) => ({
     ...product,
     serialNumber: (meta.from || 1) + index,
   }))

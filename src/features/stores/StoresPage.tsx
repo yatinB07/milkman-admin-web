@@ -60,8 +60,8 @@ export function StoresPage() {
   const canDelete = adminStore.can(getModuleActionPermission('stores', 'delete'))
 
   const stores = useQuery<PaginatedResponse<StoreRow>>({
-    queryKey: ['admin-stores', search, page, listPerPage],
-    queryFn: () => listStores({ page, perPage: listPerPage, search }),
+    queryKey: ['admin-stores', search, status, page, listPerPage],
+    queryFn: () => listStores({ page, perPage: listPerPage, search, status }),
     retry: false,
   })
 
@@ -120,12 +120,8 @@ export function StoresPage() {
   })
 
   const apiRows = stores.data?.data ?? []
-  const filteredRows =
-    status === 'all'
-      ? apiRows
-      : apiRows.filter((store) => store.is_active === (status === 'active'))
   const meta = stores.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
-  const rows: StoreListRow[] = filteredRows.map((store, index) => ({
+  const rows: StoreListRow[] = apiRows.map((store, index) => ({
     ...store,
     serialNumber: serialNumber(meta, index),
   }))

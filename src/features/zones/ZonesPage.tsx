@@ -44,8 +44,8 @@ export function ZonesPage() {
   const canDelete = adminStore.can(getModuleActionPermission('zones', 'delete'))
 
   const zones = useQuery<PaginatedResponse<ZoneRow>>({
-    queryKey: ['admin-zones', search, page, listPerPage],
-    queryFn: () => listZones({ page, perPage: listPerPage, search }),
+    queryKey: ['admin-zones', search, status, page, listPerPage],
+    queryFn: () => listZones({ page, perPage: listPerPage, search, status }),
     retry: false,
   })
 
@@ -168,9 +168,7 @@ export function ZonesPage() {
     [canDelete, canUpdate],
   )
 
-  const apiRows = zones.data?.data ?? []
-  const rows =
-    status === 'all' ? apiRows : apiRows.filter((zone) => zone.is_active === (status === 'active'))
+  const rows = zones.data?.data ?? []
   const meta = zones.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
 
   function openCreateForm() {

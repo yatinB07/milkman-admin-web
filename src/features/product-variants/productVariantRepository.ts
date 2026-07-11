@@ -13,9 +13,15 @@ export async function listProductVariants(query: {
   page: number
   perPage: number
   search: string
+  stockStatus?: string
 }): Promise<PaginatedResponse<ProductVariantRow>> {
   const response = await api.get<ProductVariantsApiResponse>('/api/v1/admin/product-variants', {
-    params: toApiListParams(query),
+    params: toApiListParams({
+      ...query,
+      filters: {
+        is_out_of_stock: query.stockStatus === 'all' ? undefined : query.stockStatus === 'out-of-stock',
+      },
+    }),
   })
 
   return { data: response.data.data, meta: normalizePaginationMeta(response.data.meta) }

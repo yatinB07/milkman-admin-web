@@ -52,8 +52,8 @@ export function CategoriesPage() {
   const canDelete = adminStore.can(getModuleActionPermission('categories', 'delete'))
 
   const categories = useQuery({
-    queryKey: ['admin-categories', search, page, listPerPage],
-    queryFn: () => listCategories({ page, perPage: listPerPage, search }),
+    queryKey: ['admin-categories', search, status, page, listPerPage],
+    queryFn: () => listCategories({ page, perPage: listPerPage, search, status }),
     retry: false,
   })
 
@@ -97,12 +97,8 @@ export function CategoriesPage() {
   })
 
   const apiRows = categories.data?.data ?? []
-  const filteredRows =
-    status === 'all'
-      ? apiRows
-      : apiRows.filter((category) => category.is_active === (status === 'active'))
   const meta = categories.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
-  const rows: CategoryListRow[] = filteredRows.map((category, index) => ({
+  const rows: CategoryListRow[] = apiRows.map((category, index) => ({
     ...category,
     serialNumber: (meta.from || 1) + index,
   }))

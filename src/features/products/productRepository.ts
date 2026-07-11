@@ -9,9 +9,17 @@ import type {
   StoreOption,
 } from './productTypes'
 
-export async function listProducts(query: { page: number; perPage: number; search: string }): Promise<PaginatedResponse<ProductRow>> {
+export async function listProducts(query: {
+  page: number
+  perPage: number
+  search: string
+  status?: string
+}): Promise<PaginatedResponse<ProductRow>> {
   const response = await api.get<ProductsApiResponse>('/api/v1/admin/products', {
-    params: toApiListParams(query),
+    params: toApiListParams({
+      ...query,
+      filters: { is_active: query.status === 'all' ? undefined : query.status === 'active' },
+    }),
   })
 
   return { data: response.data.data, meta: normalizePaginationMeta(response.data.meta) }

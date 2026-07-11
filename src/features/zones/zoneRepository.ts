@@ -6,9 +6,13 @@ export async function listZones(query: {
   page: number
   perPage: number
   search: string
+  status?: string
 }): Promise<PaginatedResponse<ZoneRow>> {
   const response = await api.get<ZonesApiResponse>('/api/v1/admin/zones', {
-    params: toApiListParams(query),
+    params: toApiListParams({
+      ...query,
+      filters: { is_active: query.status === 'all' ? undefined : query.status === 'active' },
+    }),
   })
 
   return { data: response.data.data, meta: normalizePaginationMeta(response.data.meta) }
