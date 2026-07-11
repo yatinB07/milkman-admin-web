@@ -1,11 +1,11 @@
 import { Suspense, useEffect, useRef } from 'react'
-import { useSyncExternalStore } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AdminShell } from './components/AdminShell'
 import { ErrorBoundary, PageSkeleton, ToastHost } from './components/common'
 import { LoginPage } from './components/LoginPage'
 import { api, setUnauthorizedHandler } from './lib/api'
 import { adminModules, getActiveAdminModule } from './routes/adminModules'
+import { navigateToHash, useHashPath } from './routes/hashRouting'
 import { shouldRedirectUnauthorizedRoute } from './routes/routeGuards'
 import { adminStore, canAccess, type AdminUser, useAdminStore } from './store/adminStore'
 import { dirtyFormStore } from './store/dirtyFormStore'
@@ -54,7 +54,7 @@ function App() {
     },
     onSuccess: (result) => {
       adminStore.login(result.token, result.user)
-      navigateToPath('/')
+      navigateToHash('/')
     },
   })
 
@@ -102,13 +102,13 @@ function App() {
       return
     }
 
-    navigateToPath(confirmedPathRef.current)
+    navigateToHash(confirmedPathRef.current)
   }, [activePath])
 
   useEffect(() => {
     if (!shouldRedirectUnauthorizedRoute(activePath, user)) return
 
-    navigateToPath('/')
+    navigateToHash('/')
   }, [activePath, user])
 
   if (!token) {
@@ -156,7 +156,7 @@ function App() {
         activePath={activePath}
         onNavigate={(module) => {
           if (dirtyFormStore.confirmDiscard()) {
-            navigateToPath(module.path)
+            navigateToHash(module.path)
           }
         }}
         theme={theme}
@@ -186,33 +186,3 @@ function App() {
 }
 
 export default App
-
-function useHashPath() {
-  return useSyncExternalStore(subscribeToHash, getHashPath, getHashPath)
-}
-
-function subscribeToHash(listener: () => void) {
-  window.addEventListener('hashchange', listener)
-
-  return () => window.removeEventListener('hashchange', listener)
-}
-
-function getHashPath() {
-  const path = window.location.hash.replace(/^#/, '')
-
-  return normalizePath(path)
-}
-
-function navigateToPath(path: string) {
-  const nextPath = normalizePath(path)
-
-  if (getHashPath() === nextPath) return
-
-  window.location.hash = nextPath
-}
-
-function normalizePath(path: string) {
-  if (!path || path === '#') return '/'
-
-  return path.startsWith('/') ? path : `/${path}`
-}

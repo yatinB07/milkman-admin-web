@@ -1,7 +1,7 @@
 import { Edit3, ImageIcon, PackageOpen, Plus, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import { useMemo, useState, useSyncExternalStore } from 'react'
+import { useMemo, useState } from 'react'
 import {
   MasterDataTable,
   MasterFilterBar,
@@ -14,6 +14,7 @@ import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/commo
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
+import { navigateToHash, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { ProductForm } from './ProductForm'
@@ -413,28 +414,4 @@ function parseProductFormRoute(path: string) {
   if (editMatch) return { mode: 'edit' as const, productId: Number(editMatch[1]) }
 
   return null
-}
-
-function useHashPath() {
-  return useSyncExternalStore(subscribeToHash, getHashPath, getHashPath)
-}
-
-function subscribeToHash(listener: () => void) {
-  window.addEventListener('hashchange', listener)
-
-  return () => window.removeEventListener('hashchange', listener)
-}
-
-function getHashPath() {
-  const path = window.location.hash.replace(/^#/, '')
-
-  if (!path || path === '#') return '/'
-
-  return path.startsWith('/') ? path : `/${path}`
-}
-
-function navigateToHash(path: string) {
-  if (getHashPath() === path) return
-
-  window.location.hash = path
 }
