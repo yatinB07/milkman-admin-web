@@ -11,3 +11,7 @@ export function formatAdminDate(value?: string | null, fallback = 'Never') {
     year: 'numeric',
   }).format(date)
 }
+
+export function serialNumber(meta: { from: number | null }, index: number) {
+  return (meta.from || 1) + index
+}

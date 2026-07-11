@@ -13,6 +13,7 @@ import { Button, ListLoadError, PageSkeleton, RecordLoadError, RowActionMenu, to
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import { emptyPaginationMeta } from '../../lib/apiTypes'
+import { serialNumber } from '../../lib/formatters'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
@@ -143,7 +144,7 @@ export function ProductVariantsPage() {
   const meta = variants.data?.meta ?? emptyPaginationMeta(listPerPage)
   const rows: ProductVariantListRow[] = apiRows.map((variant, index) => ({
     ...variant,
-    serialNumber: (meta.from || 1) + index,
+    serialNumber: serialNumber(meta, index),
   }))
 
   const columns = useMemo<MasterTableColumn<ProductVariantListRow>[]>(

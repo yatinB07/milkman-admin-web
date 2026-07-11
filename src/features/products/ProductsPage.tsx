@@ -21,7 +21,7 @@ import {
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import { emptyPaginationMeta } from '../../lib/apiTypes'
-import { formatAdminDate } from '../../lib/formatters'
+import { formatAdminDate, serialNumber } from '../../lib/formatters'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
@@ -132,7 +132,7 @@ export function ProductsPage() {
   const meta = products.data?.meta ?? emptyPaginationMeta(listPerPage)
   const rows: ProductListRow[] = apiRows.map((product, index) => ({
     ...product,
-    serialNumber: (meta.from || 1) + index,
+    serialNumber: serialNumber(meta, index),
   }))
 
   const columns = useMemo<MasterTableColumn<ProductListRow>[]>(

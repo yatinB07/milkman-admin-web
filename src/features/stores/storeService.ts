@@ -280,10 +280,6 @@ export function toSelectOptions(options?: SelectOption[]): AdminSelectOption[] {
   return options?.map((option) => ({ label: option.title, value: String(option.id) })) ?? []
 }
 
-export function serialNumber(meta: { from: number | null }, index: number) {
-  return (meta.from || 1) + index
-}
-
 export function stringifyValue(value: string | number | null) {
   return value === null ? '' : String(value)
 }

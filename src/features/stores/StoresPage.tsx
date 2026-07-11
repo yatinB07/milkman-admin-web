@@ -21,6 +21,7 @@ import {
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import { emptyPaginationMeta, type PaginatedResponse } from '../../lib/apiTypes'
+import { serialNumber } from '../../lib/formatters'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
@@ -35,12 +36,7 @@ import {
   listStoreZones,
   updateStore,
 } from './storeRepository'
-import {
-  serialNumber,
-  storeValidationFields,
-  toSelectOptions,
-  toStorePayload,
-} from './storeService'
+import { storeValidationFields, toSelectOptions, toStorePayload } from './storeService'
 import type { StoreFormErrors, StoreFormTabId, StoreFormValues, StoreListRow, StoreRow } from './storeTypes'
 
 export function StoresPage() {
