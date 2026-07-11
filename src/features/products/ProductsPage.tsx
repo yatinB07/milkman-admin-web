@@ -20,7 +20,7 @@ import {
 } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
-import type { PaginationMeta } from '../../lib/apiTypes'
+import { emptyPaginationMeta } from '../../lib/apiTypes'
 import { formatAdminDate } from '../../lib/formatters'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
@@ -40,15 +40,6 @@ import { toProductPayload, toStoreCategorySelectOptions, toStoreSelectOptions } 
 import type { ProductFormValues, ProductListRow, ProductRow } from './productTypes'
 
 type ProductFormErrors = Partial<Record<'store_id' | 'store_category_id' | 'title', string>>
-
-const defaultMeta: PaginationMeta = {
-  currentPage: 1,
-  from: 0,
-  lastPage: 1,
-  perPage: 10,
-  to: 0,
-  total: 0,
-}
 
 export function ProductsPage() {
   const { listPerPage } = useAdminStore()
@@ -138,7 +129,7 @@ export function ProductsPage() {
   })
 
   const apiRows = products.data?.data ?? []
-  const meta = products.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
+  const meta = products.data?.meta ?? emptyPaginationMeta(listPerPage)
   const rows: ProductListRow[] = apiRows.map((product, index) => ({
     ...product,
     serialNumber: (meta.from || 1) + index,

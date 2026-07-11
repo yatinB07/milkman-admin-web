@@ -20,7 +20,7 @@ import {
 } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
-import type { PaginationMeta } from '../../lib/apiTypes'
+import { emptyPaginationMeta } from '../../lib/apiTypes'
 import { formatAdminDate } from '../../lib/formatters'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
@@ -38,15 +38,6 @@ import { toCategoryPayload } from './categoryService'
 import type { CategoryFormValues, CategoryListRow, CategoryRow } from './categoryTypes'
 
 type CategoryFormErrors = Partial<Record<'title', string>>
-
-const defaultMeta: PaginationMeta = {
-  currentPage: 1,
-  from: 0,
-  lastPage: 1,
-  perPage: 10,
-  to: 0,
-  total: 0,
-}
 
 export function CategoriesPage() {
   const { listPerPage } = useAdminStore()
@@ -120,7 +111,7 @@ export function CategoriesPage() {
   })
 
   const apiRows = categories.data?.data ?? []
-  const meta = categories.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
+  const meta = categories.data?.meta ?? emptyPaginationMeta(listPerPage)
   const rows: CategoryListRow[] = apiRows.map((category, index) => ({
     ...category,
     serialNumber: (meta.from || 1) + index,

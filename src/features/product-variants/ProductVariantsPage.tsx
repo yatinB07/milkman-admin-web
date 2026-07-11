@@ -12,7 +12,7 @@ import {
 import { Button, ListLoadError, PageSkeleton, RecordLoadError, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
-import type { PaginationMeta } from '../../lib/apiTypes'
+import { emptyPaginationMeta } from '../../lib/apiTypes'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
@@ -38,15 +38,6 @@ import type { ProductVariantFormValues, ProductVariantListRow, ProductVariantRow
 type ProductVariantFormErrors = Partial<
   Record<'store_id' | 'product_id' | 'title' | 'discount' | 'normal_price' | 'subscribe_price', string>
 >
-
-const defaultMeta: PaginationMeta = {
-  currentPage: 1,
-  from: 0,
-  lastPage: 1,
-  perPage: 10,
-  to: 0,
-  total: 0,
-}
 
 const stockFilterOptions = [
   { label: 'All variants', value: 'all' },
@@ -149,7 +140,7 @@ export function ProductVariantsPage() {
   })
 
   const apiRows = variants.data?.data ?? []
-  const meta = variants.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
+  const meta = variants.data?.meta ?? emptyPaginationMeta(listPerPage)
   const rows: ProductVariantListRow[] = apiRows.map((variant, index) => ({
     ...variant,
     serialNumber: (meta.from || 1) + index,

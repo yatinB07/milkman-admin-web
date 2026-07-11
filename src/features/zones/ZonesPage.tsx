@@ -11,7 +11,7 @@ import {
 import { Button, ListLoadError, PageSkeleton, RecordLoadError, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
-import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
+import { emptyPaginationMeta, type PaginatedResponse } from '../../lib/apiTypes'
 import { formatAdminDate } from '../../lib/formatters'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
@@ -21,15 +21,6 @@ import { ZoneForm } from './ZoneForm'
 import { createZone, deleteZone as removeZone, getZone, listZones, updateZone } from './zoneRepository'
 import { toZonePayload } from './zoneService'
 import type { ZoneFormErrors, ZoneFormValues, ZoneRow } from './zoneTypes'
-
-const defaultMeta: PaginationMeta = {
-  currentPage: 1,
-  from: 0,
-  lastPage: 1,
-  perPage: 10,
-  to: 0,
-  total: 0,
-}
 
 export function ZonesPage() {
   const { listPerPage } = useAdminStore()
@@ -181,7 +172,7 @@ export function ZonesPage() {
   )
 
   const rows = zones.data?.data ?? []
-  const meta = zones.data?.meta ?? { ...defaultMeta, perPage: listPerPage }
+  const meta = zones.data?.meta ?? emptyPaginationMeta(listPerPage)
 
   function openCreateForm() {
     dirtyFormStore.reset()

@@ -50,3 +50,14 @@ export function normalizePaginationMeta(meta: ApiPaginationMeta): PaginationMeta
     total: meta.total,
   }
 }
+
+export function emptyPaginationMeta(perPage: number): PaginationMeta {
+  return {
+    currentPage: 1,
+    from: 0,
+    lastPage: 1,
+    perPage,
+    to: 0,
+    total: 0,
+  }
+}
