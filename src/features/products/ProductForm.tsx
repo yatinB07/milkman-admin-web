@@ -5,7 +5,7 @@ import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import { publishStatusSelectOptions } from '../../lib/filterOptions'
-import { dirtyFormStore } from '../../store/dirtyFormStore'
+import { dirtyFormCaptureProps } from '../../store/dirtyFormStore'
 import type { ProductFormValues, ProductRow } from './productTypes'
 
 type ProductFormProps = {
@@ -58,7 +58,7 @@ export function ProductForm({
   }
 
   return (
-    <form className="store-form" onInputCapture={dirtyFormStore.markDirty} onChangeCapture={dirtyFormStore.markDirty} onSubmit={handleSubmit}>
+    <form className="store-form" {...dirtyFormCaptureProps} onSubmit={handleSubmit}>
       <FormSection title="Product Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Store" required />

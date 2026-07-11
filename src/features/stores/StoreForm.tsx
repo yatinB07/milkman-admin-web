@@ -8,7 +8,7 @@ import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
 import { FieldLabel } from '../../components/forms/FormLayout'
 import { StoreLocationMap } from '../../components/maps/StoreLocationMap'
 import { publishStatusSelectOptions, yesNoSelectOptions } from '../../lib/filterOptions'
-import { dirtyFormStore } from '../../store/dirtyFormStore'
+import { dirtyFormCaptureProps, dirtyFormStore } from '../../store/dirtyFormStore'
 import {
   splitCategoryReference,
   storeFormTabs,
@@ -143,8 +143,7 @@ export function StoreForm({
         id="store-admin-form"
         className="store-form"
         noValidate
-        onInputCapture={dirtyFormStore.markDirty}
-        onChangeCapture={dirtyFormStore.markDirty}
+        {...dirtyFormCaptureProps}
         onSubmit={submitForm(handleValidSubmit)}
       >
         <div className="store-form-steps" aria-label="Store form steps">

@@ -3,7 +3,7 @@ import { Button, Input } from '../../components/common'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
 import { FieldLabel } from '../../components/forms/FormLayout'
 import { ZonePolygonMap } from '../../components/maps/ZonePolygonMap'
-import { dirtyFormStore } from '../../store/dirtyFormStore'
+import { dirtyFormCaptureProps } from '../../store/dirtyFormStore'
 import { resolveZoneAlias, validateZoneForm } from './zoneService'
 import type { ZoneFormErrors, ZoneFormValues, ZoneRow } from './zoneTypes'
 
@@ -54,7 +54,7 @@ export function ZoneForm({
   }
 
   return (
-    <form className="store-form" onInputCapture={dirtyFormStore.markDirty} onChangeCapture={dirtyFormStore.markDirty} onSubmit={handleSubmit}>
+    <form className="store-form" {...dirtyFormCaptureProps} onSubmit={handleSubmit}>
       <div className="form-grid">
         <label className="form-field">
           <FieldLabel label="Zone Title" required />

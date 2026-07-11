@@ -19,3 +19,8 @@ export const dirtyFormStore = {
     return true
   },
 }
+
+export const dirtyFormCaptureProps = {
+  onInputCapture: dirtyFormStore.markDirty,
+  onChangeCapture: dirtyFormStore.markDirty,
+}

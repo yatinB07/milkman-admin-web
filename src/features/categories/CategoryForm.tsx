@@ -4,7 +4,7 @@ import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminSelect } from '../../components/forms/AdminSelect'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import { publishStatusSelectOptions } from '../../lib/filterOptions'
-import { dirtyFormStore } from '../../store/dirtyFormStore'
+import { dirtyFormCaptureProps } from '../../store/dirtyFormStore'
 import type { CategoryFormValues, CategoryRow } from './categoryTypes'
 
 type CategoryFormProps = {
@@ -33,7 +33,7 @@ export function CategoryForm({ category, formErrors, isSaving, onCancel, onSubmi
   }
 
   return (
-    <form className="store-form" onInputCapture={dirtyFormStore.markDirty} onChangeCapture={dirtyFormStore.markDirty} onSubmit={handleSubmit}>
+    <form className="store-form" {...dirtyFormCaptureProps} onSubmit={handleSubmit}>
       <FormSection title="Category Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Category Name" required />
