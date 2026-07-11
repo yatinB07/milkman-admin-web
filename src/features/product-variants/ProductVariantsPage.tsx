@@ -9,7 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, RowActionMenu, toast } from '../../components/common'
+import { Button, PageSkeleton, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -263,7 +263,7 @@ export function ProductVariantsPage() {
 
   if (formRoute) {
     if (formRoute.mode === 'edit' && !currentEditingVariant && routeVariant.isLoading) {
-      return <MasterPageHeader title="Edit Product Variant" description="Loading product variant..." />
+      return <PageSkeleton label="Loading product variant" />
     }
 
     if (formRoute.mode === 'edit' && !currentEditingVariant) {

@@ -9,7 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, RowActionMenu, toast } from '../../components/common'
+import { Button, PageSkeleton, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -234,7 +234,7 @@ export function CategoriesPage() {
 
   if (formRoute) {
     if (formRoute.mode === 'edit' && !currentEditingCategory && routeCategory.isLoading) {
-      return <MasterPageHeader title="Edit Category" description="Loading category..." />
+      return <PageSkeleton label="Loading category" />
     }
 
     if (formRoute.mode === 'edit' && !currentEditingCategory) {

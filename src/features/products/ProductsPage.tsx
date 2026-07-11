@@ -9,7 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, RowActionMenu, toast } from '../../components/common'
+import { Button, PageSkeleton, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -248,7 +248,7 @@ export function ProductsPage() {
 
   if (formRoute) {
     if (formRoute.mode === 'edit' && !currentEditingProduct && routeProduct.isLoading) {
-      return <MasterPageHeader title="Edit Product" description="Loading product..." />
+      return <PageSkeleton label="Loading product" />
     }
 
     if (formRoute.mode === 'edit' && !currentEditingProduct) {

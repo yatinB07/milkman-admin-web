@@ -8,7 +8,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
-import { Button, RowActionMenu, toast } from '../../components/common'
+import { Button, PageSkeleton, RowActionMenu, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
@@ -211,7 +211,7 @@ export function ZonesPage() {
 
   if (formRoute) {
     if (formRoute.mode === 'edit' && !currentEditingZone && routeZone.isLoading) {
-      return <MasterPageHeader title="Edit Zone" description="Loading zone..." />
+      return <PageSkeleton label="Loading zone" />
     }
 
     if (formRoute.mode === 'edit' && !currentEditingZone) {
