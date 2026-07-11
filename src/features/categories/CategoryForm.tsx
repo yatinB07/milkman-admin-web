@@ -2,12 +2,12 @@ import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
-import { FieldLabel, FormErrorSummary, FormSection } from '../../components/forms/FormLayout'
+import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import type { CategoryFormValues, CategoryRow } from './categoryTypes'
 
 type CategoryFormProps = {
   category: CategoryRow | null
-  formError: string | null
+  formErrors: Partial<Record<'title', string>>
   isSaving: boolean
   onCancel: () => void
   onSubmit: (values: CategoryFormValues) => void
@@ -18,7 +18,7 @@ const statusOptions: AdminSelectOption[] = [
   { label: 'Unpublish', value: '0' },
 ]
 
-export function CategoryForm({ category, formError, isSaving, onCancel, onSubmit }: CategoryFormProps) {
+export function CategoryForm({ category, formErrors, isSaving, onCancel, onSubmit }: CategoryFormProps) {
   const [status, setStatus] = useState(category?.is_active === false ? '0' : '1')
   const [imagePath, setImagePath] = useState(category?.image_path ?? '')
   const [coverPath, setCoverPath] = useState(category?.cover_path ?? '')
@@ -40,7 +40,13 @@ export function CategoryForm({ category, formError, isSaving, onCancel, onSubmit
       <FormSection title="Category Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Category Name" required />
-          <Input name="title" maxLength={255} defaultValue={category?.title ?? ''} />
+          <Input
+            name="title"
+            maxLength={255}
+            aria-invalid={Boolean(formErrors.title)}
+            defaultValue={category?.title ?? ''}
+          />
+          {formErrors.title ? <small className="field-error">{formErrors.title}</small> : null}
         </label>
 
         <label className="form-field">
@@ -58,8 +64,6 @@ export function CategoryForm({ category, formError, isSaving, onCancel, onSubmit
           <AdminFilePicker name="cover_path" label="Category cover" value={coverPath} onChange={setCoverPath} />
         </label>
       </FormSection>
-
-      <FormErrorSummary errors={[formError]} />
 
       <div className="modal-actions">
         <Button variant="secondary" onClick={onCancel}>

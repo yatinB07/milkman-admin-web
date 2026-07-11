@@ -25,6 +25,8 @@ import {
 import { toCategoryPayload } from './categoryService'
 import type { CategoryFormValues, CategoryListRow, CategoryRow } from './categoryTypes'
 
+type CategoryFormErrors = Partial<Record<'title', string>>
+
 const defaultMeta: PaginationMeta = {
   currentPage: 1,
   from: 0,
@@ -42,7 +44,7 @@ export function CategoriesPage() {
   const [page, setPage] = useState(1)
   const [editingCategory, setEditingCategory] = useState<CategoryRow | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [formError, setFormError] = useState<string | null>(null)
+  const [formErrors, setFormErrors] = useState<CategoryFormErrors>({})
   const [confirmDelete, setConfirmDelete] = useState<(ConfirmDialogOptions & { category: CategoryRow }) | null>(null)
   const canCreate = adminStore.can(getModuleActionPermission('categories', 'create'))
   const canUpdate = adminStore.can(getModuleActionPermission('categories', 'update'))
@@ -71,7 +73,7 @@ export function CategoriesPage() {
     onError: (error) => {
       if (isAxiosError(error) && error.response?.status === 422) {
         const errors = error.response.data as { errors?: Record<string, string[]> }
-        setFormError(errors.errors?.title?.[0] ?? 'Check the highlighted fields and try again.')
+        setFormErrors({ title: errors.errors?.title?.[0] ?? 'Category Name is required.' })
         return
       }
 
@@ -197,29 +199,29 @@ export function CategoriesPage() {
 
   function openCreateForm() {
     setEditingCategory(null)
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(true)
   }
 
   function openEditForm(category: CategoryRow) {
     setEditingCategory(category)
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(true)
   }
 
   function closeForm() {
     setEditingCategory(null)
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(false)
   }
 
   function handleSubmit(values: CategoryFormValues) {
     if (!values.title) {
-      setFormError('Category Name is required.')
+      setFormErrors({ title: 'Category Name is required.' })
       return
     }
 
-    setFormError(null)
+    setFormErrors({})
     saveCategory.mutate(values)
   }
 
@@ -315,7 +317,7 @@ export function CategoriesPage() {
 
             <CategoryForm
               category={editingCategory}
-              formError={formError}
+              formErrors={formErrors}
               isSaving={saveCategory.isPending}
               onCancel={closeForm}
               onSubmit={handleSubmit}
