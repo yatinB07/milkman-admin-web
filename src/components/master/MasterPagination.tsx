@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { PaginationMeta } from '../../lib/apiTypes'
+import { AdminSelect } from '../forms/AdminSelect'
 
 type MasterPaginationProps = {
   meta: PaginationMeta
@@ -8,7 +9,10 @@ type MasterPaginationProps = {
   perPage?: number
 }
 
-const perPageOptions = [10, 15, 25, 50, 100]
+const perPageOptions = [10, 15, 25, 50, 100].map((option) => ({
+  label: String(option),
+  value: String(option),
+}))
 
 export function MasterPagination({ meta, onPageChange, onPerPageChange, perPage }: MasterPaginationProps) {
   const canGoBack = meta.currentPage > 1
@@ -24,16 +28,13 @@ export function MasterPagination({ meta, onPageChange, onPerPageChange, perPage 
       {onPerPageChange ? (
         <label className="master-per-page">
           <span>Rows per page</span>
-          <select
-            value={perPage ?? meta.perPage}
-            onChange={(event) => onPerPageChange(Number(event.target.value))}
-          >
-            {perPageOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+          <AdminSelect
+            ariaLabel="Rows per page"
+            isSearchable={false}
+            options={perPageOptions}
+            value={String(perPage ?? meta.perPage)}
+            onChange={(value) => onPerPageChange(Number(value))}
+          />
         </label>
       ) : null}
 

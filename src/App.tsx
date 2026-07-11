@@ -22,9 +22,11 @@ type CurrentUserResponse = {
 }
 
 function App() {
-  const { theme, token, user } = useAdminStore()
+  const { sidebarCollapsed, theme, token, user } = useAdminStore()
   const activePath = useHashPath()
   const visibleModules = adminModules.filter((module) => canAccess(user, module.permission))
+  const sidebarModules = visibleModules.filter((module) => module.showInSidebar !== false)
+  const profileModule = visibleModules.find((module) => module.id === 'profile')
   const activeModule = visibleModules.find((module) => module.path === activePath) ?? visibleModules[0]
   const ActivePage = activeModule.component
 
@@ -101,10 +103,13 @@ function App() {
       activeModuleId={activeModule.id}
       onNavigate={(module) => navigateToPath(module.path)}
       theme={theme}
+      sidebarCollapsed={sidebarCollapsed}
+      onToggleSidebar={adminStore.toggleSidebar}
       onToggleTheme={adminStore.toggleTheme}
       onLogout={adminStore.logout}
       user={user}
-      navigationItems={visibleModules}
+      navigationItems={sidebarModules}
+      profileModule={profileModule}
     >
       <Suspense fallback={<div className="module-loading">Loading module...</div>}>
         <ActivePage />

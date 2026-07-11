@@ -4,6 +4,7 @@ import { clearAuthToken, getAuthToken, setAuthToken } from '../lib/api'
 const userStorageKey = 'milkman_admin_user'
 const themeStorageKey = 'milkman_admin_theme'
 const listPerPageStorageKey = 'milkman_admin_list_per_page'
+const sidebarCollapsedStorageKey = 'milkman_admin_sidebar_collapsed'
 const defaultListPerPage = 10
 const allowedListPerPage = [10, 15, 25, 50, 100]
 
@@ -18,6 +19,7 @@ export type AdminUser = {
 
 type AdminState = {
   listPerPage: number
+  sidebarCollapsed: boolean
   theme: 'light' | 'dark'
   token: string | null
   user: AdminUser | null
@@ -27,6 +29,7 @@ type Listener = () => void
 
 let state: AdminState = {
   listPerPage: readListPerPage(),
+  sidebarCollapsed: window.localStorage.getItem(sidebarCollapsedStorageKey) === '1',
   theme: window.localStorage.getItem(themeStorageKey) === 'dark' ? 'dark' : 'light',
   token: getAuthToken(),
   user: null,
@@ -59,6 +62,11 @@ export const adminStore = {
     const nextListPerPage = allowedListPerPage.includes(listPerPage) ? listPerPage : defaultListPerPage
     window.localStorage.setItem(listPerPageStorageKey, String(nextListPerPage))
     updateState({ listPerPage: nextListPerPage })
+  },
+  toggleSidebar() {
+    const sidebarCollapsed = !state.sidebarCollapsed
+    window.localStorage.setItem(sidebarCollapsedStorageKey, sidebarCollapsed ? '1' : '0')
+    updateState({ sidebarCollapsed })
   },
   toggleTheme() {
     const theme = state.theme === 'dark' ? 'light' : 'dark'

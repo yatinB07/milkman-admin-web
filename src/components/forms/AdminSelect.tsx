@@ -8,6 +8,8 @@ export type AdminSelectOption = {
 type AdminSelectProps = {
   value: string
   options: AdminSelectOption[]
+  ariaLabel?: string
+  inputId?: string
   placeholder?: string
   isSearchable?: boolean
   onChange: (value: string) => void
@@ -23,6 +25,8 @@ type AdminMultiSelectProps = {
 export function AdminSelect({
   value,
   options,
+  ariaLabel,
+  inputId,
   placeholder = 'Select option',
   isSearchable = true,
   onChange,
@@ -31,8 +35,10 @@ export function AdminSelect({
 
   return (
     <Select<AdminSelectOption, false>
+      aria-label={ariaLabel}
       className="admin-react-select"
       classNamePrefix="admin-react-select"
+      inputId={inputId}
       isSearchable={isSearchable}
       menuPortalTarget={menuPortalTarget}
       menuPosition="fixed"

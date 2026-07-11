@@ -1,4 +1,4 @@
-import { ArrowLeft, Banknote, Edit3, History, ImageIcon, Plus, Store, Trash2 } from 'lucide-react'
+import { ArrowLeft, Edit3, ImageIcon, Plus, Store, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { type FormEvent, type ReactNode, useMemo, useState } from 'react'
@@ -414,28 +414,6 @@ export function StoresPage() {
                 <Edit3 aria-hidden="true" size={16} />
               </button>
             ) : null}
-            <button
-              type="button"
-              aria-label="Add received cash"
-              data-tooltip="Add received cash"
-              title="Add received cash"
-              onClick={() => {
-                window.alert('Received cash workflow will use the Cash Collections API in the next store slice.')
-              }}
-            >
-              <Banknote aria-hidden="true" size={16} />
-            </button>
-            <button
-              type="button"
-              aria-label="View cash log"
-              data-tooltip="View cash log"
-              title="View cash log"
-              onClick={() => {
-                window.alert('Cash log workflow will use the Cash Collections API in the next store slice.')
-              }}
-            >
-              <History aria-hidden="true" size={16} />
-            </button>
             {canDelete ? (
               <button
                 type="button"

@@ -7,6 +7,7 @@ import {
   Package,
   Shapes,
   Store,
+  UserRound,
 } from 'lucide-react'
 
 export type AdminModule = {
@@ -16,6 +17,7 @@ export type AdminModule = {
   icon: LucideIcon
   component: ComponentType
   permission?: string
+  showInSidebar?: boolean
   permissions?: {
     view?: string
     create?: string
@@ -31,6 +33,7 @@ const ProductVariantsPage = lazy(() =>
   import('../pages/ProductVariantsPage').then((module) => ({ default: module.ProductVariantsPage })),
 )
 const ProductsPage = lazy(() => import('../pages/ProductsPage').then((module) => ({ default: module.ProductsPage })))
+const ProfilePage = lazy(() => import('../pages/ProfilePage').then((module) => ({ default: module.ProfilePage })))
 const StoreCategoriesPage = lazy(() =>
   import('../pages/StoreCategoriesPage').then((module) => ({ default: module.StoreCategoriesPage })),
 )
@@ -96,6 +99,14 @@ export const adminModules: AdminModule[] = [
     component: ZonesPage,
     permission: settingsPermissions.view,
     permissions: settingsPermissions,
+  },
+  {
+    id: 'profile',
+    path: '/profile',
+    label: 'My Profile',
+    icon: UserRound,
+    component: ProfilePage,
+    showInSidebar: false,
   },
 ]
 
