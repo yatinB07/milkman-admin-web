@@ -21,6 +21,7 @@ import {
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
+import { formatAdminDate } from '../../lib/formatters'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
@@ -172,7 +173,7 @@ export function CategoriesPage() {
       {
         key: 'updated',
         header: 'Updated',
-        render: (category) => formatDate(category.updated_at),
+        render: (category) => formatAdminDate(category.updated_at),
       },
       {
         key: 'actions',
@@ -365,14 +366,4 @@ export function CategoriesPage() {
       />
     </>
   )
-}
-
-function formatDate(value?: string | null) {
-  return value
-    ? new Intl.DateTimeFormat('en', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }).format(new Date(value))
-    : 'Never'
 }

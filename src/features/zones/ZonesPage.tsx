@@ -12,6 +12,7 @@ import { Button, ListLoadError, PageSkeleton, RecordLoadError, RowActionMenu, to
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginatedResponse, PaginationMeta } from '../../lib/apiTypes'
+import { formatAdminDate } from '../../lib/formatters'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
@@ -144,7 +145,7 @@ export function ZonesPage() {
       {
         key: 'updated',
         header: 'Updated',
-        render: (zone) => formatDate(zone.updated_at),
+        render: (zone) => formatAdminDate(zone.updated_at, 'Not available'),
       },
       {
         key: 'actions',
@@ -335,18 +336,4 @@ export function ZonesPage() {
       />
     </>
   )
-}
-
-function formatDate(value: string) {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return 'Not available'
-  }
-
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(date)
 }
