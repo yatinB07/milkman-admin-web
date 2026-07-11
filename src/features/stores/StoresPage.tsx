@@ -21,6 +21,7 @@ import {
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import { emptyPaginationMeta, type PaginatedResponse } from '../../lib/apiTypes'
+import { publishStatusFilterOptions } from '../../lib/filterOptions'
 import { serialNumber } from '../../lib/formatters'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
@@ -289,11 +290,7 @@ export function StoresPage() {
               setStatus(value)
               setPage(1)
             },
-            options: [
-              { label: 'All stores', value: 'all' },
-              { label: 'Publish', value: 'active' },
-              { label: 'Unpublish', value: 'inactive' },
-            ],
+            options: publishStatusFilterOptions('All stores'),
           },
         ]}
       />
