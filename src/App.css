@@ -554,7 +554,6 @@
 
 .icon-action:hover,
 .secondary-button:hover,
-.danger-button:hover,
 .pagination-controls button:hover,
 .profile-menu:hover {
   background: var(--color-surface-muted);
@@ -657,6 +656,22 @@
   border-color: var(--color-danger);
   background: var(--color-danger);
   color: #ffffff;
+}
+
+.danger-button:hover {
+  border-color: color-mix(in srgb, var(--color-danger) 82%, #000000);
+  background: color-mix(in srgb, var(--color-danger) 88%, #000000);
+}
+
+.admin-layout[data-theme='dark'] .danger-button {
+  border-color: #ef635c;
+  background: #8f2b2b;
+  color: #ffffff;
+}
+
+.admin-layout[data-theme='dark'] .danger-button:hover {
+  border-color: #ff8178;
+  background: #a93737;
 }
 
 .primary-button {
@@ -1778,6 +1793,10 @@
   place-items: start center;
   background: rgb(20 27 43 / 46%);
   padding: 40px 18px;
+}
+
+.admin-layout[data-theme='dark'] .modal-backdrop {
+  background: rgb(0 0 0 / 68%);
 }
 
 .store-form-modal {
