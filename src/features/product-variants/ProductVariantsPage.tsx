@@ -9,6 +9,7 @@ import {
   MasterPagination,
   type MasterTableColumn,
 } from '../../components/master'
+import { Button, toast } from '../../components/common'
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import type { PaginationMeta } from '../../lib/apiTypes'
@@ -30,6 +31,10 @@ import {
   toStoreSelectOptions,
 } from './productVariantService'
 import type { ProductVariantFormValues, ProductVariantListRow, ProductVariantRow } from './productVariantTypes'
+
+type ProductVariantFormErrors = Partial<
+  Record<'store_id' | 'product_id' | 'title' | 'discount' | 'normal_price' | 'subscribe_price', string>
+>
 
 const defaultMeta: PaginationMeta = {
   currentPage: 1,
@@ -55,7 +60,7 @@ export function ProductVariantsPage() {
   const [editingVariant, setEditingVariant] = useState<ProductVariantRow | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formStoreId, setFormStoreId] = useState('')
-  const [formError, setFormError] = useState<string | null>(null)
+  const [formErrors, setFormErrors] = useState<ProductVariantFormErrors>({})
   const [confirmDelete, setConfirmDelete] = useState<
     (ConfirmDialogOptions & { variant: ProductVariantRow }) | null
   >(null)
@@ -95,23 +100,24 @@ export function ProductVariantsPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-product-variants'] })
+      toast.success(editingVariant ? 'Product variant updated successfully.' : 'Product variant created successfully.')
       closeForm()
     },
     onError: (error) => {
       if (isAxiosError(error) && error.response?.status === 422) {
         const data = error.response.data as { errors?: Record<string, string[]> }
-        setFormError(
-          data.errors?.store_id?.[0] ??
-            data.errors?.product_id?.[0] ??
-            data.errors?.title?.[0] ??
-            data.errors?.normal_price?.[0] ??
-            data.errors?.subscribe_price?.[0] ??
-            'Check required fields.',
-        )
+        setFormErrors({
+          store_id: data.errors?.store_id?.[0],
+          product_id: data.errors?.product_id?.[0],
+          title: data.errors?.title?.[0],
+          discount: data.errors?.discount?.[0],
+          normal_price: data.errors?.normal_price?.[0],
+          subscribe_price: data.errors?.subscribe_price?.[0],
+        })
         return
       }
 
-      setFormError('Product variant could not be saved.')
+      toast.error('Product variant could not be saved.')
     },
   })
 
@@ -119,6 +125,10 @@ export function ProductVariantsPage() {
     mutationFn: async (variant: ProductVariantRow) => deleteProductVariant(variant.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-product-variants'] })
+      toast.success('Product variant deleted successfully.')
+    },
+    onError: () => {
+      toast.error('Product variant could not be deleted. Try again.')
     },
   })
 
@@ -206,31 +216,40 @@ export function ProductVariantsPage() {
   function openCreateForm() {
     setEditingVariant(null)
     setFormStoreId('')
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(true)
   }
 
   function openEditForm(variant: ProductVariantRow) {
     setEditingVariant(variant)
     setFormStoreId(String(variant.store_id))
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(true)
   }
 
   function closeForm() {
     setEditingVariant(null)
     setFormStoreId('')
-    setFormError(null)
+    setFormErrors({})
     setIsFormOpen(false)
   }
 
   function handleSubmit(values: ProductVariantFormValues) {
-    if (!values.store_id || !values.product_id || !values.title || !values.normal_price || !values.subscribe_price) {
-      setFormError('Store, Product, Type, Price, and Subscription Price are required.')
+    const nextErrors: ProductVariantFormErrors = {
+      store_id: values.store_id ? undefined : 'Store is required.',
+      product_id: values.product_id ? undefined : 'Product is required.',
+      title: values.title ? undefined : 'Product Type is required.',
+      discount: values.discount ? undefined : 'Discount is required.',
+      normal_price: values.normal_price ? undefined : 'Product Price is required.',
+      subscribe_price: values.subscribe_price ? undefined : 'Subscription Price is required.',
+    }
+
+    if (Object.values(nextErrors).some(Boolean)) {
+      setFormErrors(nextErrors)
       return
     }
 
-    setFormError(null)
+    setFormErrors({})
     saveVariant.mutate(values)
   }
 
@@ -240,10 +259,10 @@ export function ProductVariantsPage() {
         title="Product Variants"
         description="Manage product prices, discounts, stock, and subscription availability."
         actions={canCreate ? (
-          <button className="primary-button is-compact" type="button" onClick={openCreateForm}>
+          <Button variant="primary" size="compact" onClick={openCreateForm}>
             <Plus aria-hidden="true" size={17} />
             Add Variant
-          </button>
+          </Button>
         ) : null}
       />
 
@@ -309,16 +328,16 @@ export function ProductVariantsPage() {
               <div>
                 <h3 id="variant-form-title">{editingVariant ? 'Edit Product Variant' : 'Add Product Variant'}</h3>
               </div>
-              <button type="button" className="secondary-button" onClick={closeForm}>
+              <Button variant="secondary" onClick={closeForm}>
                 Close
-              </button>
+              </Button>
             </div>
 
             <ProductVariantForm
               variant={editingVariant}
               storeOptions={storeOptions}
               productOptions={productOptions}
-              formError={formError}
+              formErrors={formErrors}
               optionError={stores.isError || products.isError}
               isSaving={saveVariant.isPending}
               onStoreChange={setFormStoreId}

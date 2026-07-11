@@ -1,13 +1,16 @@
 import { type FormEvent, useState } from 'react'
+import { Button, Input } from '../../components/common'
 import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
-import { FieldLabel, FormErrorSummary, FormSection } from '../../components/forms/FormLayout'
+import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import type { ProductVariantFormValues, ProductVariantRow } from './productVariantTypes'
 
 type ProductVariantFormProps = {
   variant: ProductVariantRow | null
   storeOptions: AdminSelectOption[]
   productOptions: AdminSelectOption[]
-  formError: string | null
+  formErrors: Partial<
+    Record<'store_id' | 'product_id' | 'title' | 'discount' | 'normal_price' | 'subscribe_price', string>
+  >
   optionError: boolean
   isSaving: boolean
   onStoreChange: (storeId: string) => void
@@ -24,7 +27,7 @@ export function ProductVariantForm({
   variant,
   storeOptions,
   productOptions,
-  formError,
+  formErrors,
   optionError,
   isSaving,
   onStoreChange,
@@ -68,7 +71,13 @@ export function ProductVariantForm({
             placeholder="Search and select store"
             value={storeId}
             onChange={handleStoreChange}
+            hasError={Boolean(formErrors.store_id || optionError)}
           />
+          {formErrors.store_id || optionError ? (
+            <small className="field-error">
+              {formErrors.store_id ?? 'Store or product options could not be loaded.'}
+            </small>
+          ) : null}
         </label>
 
         <label className="form-field">
@@ -78,33 +87,61 @@ export function ProductVariantForm({
             placeholder={storeId ? 'Search and select product' : 'Select store first'}
             value={productId}
             onChange={setProductId}
+            hasError={Boolean(formErrors.product_id)}
           />
+          {formErrors.product_id ? <small className="field-error">{formErrors.product_id}</small> : null}
         </label>
 
         <label className="form-field">
           <FieldLabel label="Product Type" required />
-          <input name="title" maxLength={255} defaultValue={variant?.title ?? ''} />
+          <Input
+            name="title"
+            maxLength={255}
+            aria-invalid={Boolean(formErrors.title)}
+            defaultValue={variant?.title ?? ''}
+          />
+          {formErrors.title ? <small className="field-error">{formErrors.title}</small> : null}
         </label>
 
         <label className="form-field">
           <FieldLabel label="Discount %" required />
-          <input name="discount" type="number" min="0" step="any" defaultValue={variant?.discount ?? 0} />
+          <Input
+            name="discount"
+            type="number"
+            min="0"
+            step="any"
+            aria-invalid={Boolean(formErrors.discount)}
+            defaultValue={variant?.discount ?? 0}
+          />
+          {formErrors.discount ? <small className="field-error">{formErrors.discount}</small> : null}
         </label>
 
         <label className="form-field">
           <FieldLabel label="Product Price" required />
-          <input name="normal_price" type="number" min="0" step="any" defaultValue={variant?.normal_price ?? ''} />
+          <Input
+            name="normal_price"
+            type="number"
+            min="0"
+            step="any"
+            aria-invalid={Boolean(formErrors.normal_price)}
+            defaultValue={variant?.normal_price ?? ''}
+          />
+          {formErrors.normal_price ? <small className="field-error">{formErrors.normal_price}</small> : null}
         </label>
 
         <label className="form-field">
           <FieldLabel label="Subscription Price" required />
-          <input
+          <Input
             name="subscribe_price"
             type="number"
             min="0"
             step="any"
+            aria-invalid={Boolean(formErrors.subscribe_price)}
             defaultValue={variant?.subscribe_price ?? ''}
           />
+          {formErrors.subscribe_price ? (
+            <small className="field-error">{formErrors.subscribe_price}</small>
+          ) : null}
         </label>
 
         <label className="form-field">
@@ -123,15 +160,13 @@ export function ProductVariantForm({
         </label>
       </FormSection>
 
-      <FormErrorSummary errors={[formError, optionError && 'Store or product options could not be loaded.']} />
-
       <div className="modal-actions">
-        <button className="secondary-button" type="button" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           Cancel
-        </button>
-        <button className="primary-button is-compact" type="submit" disabled={isSaving}>
+        </Button>
+        <Button variant="primary" size="compact" type="submit" disabled={isSaving}>
           {isSaving ? 'Saving...' : variant ? 'Save Variant' : 'Add Variant'}
-        </button>
+        </Button>
       </div>
     </form>
   )
