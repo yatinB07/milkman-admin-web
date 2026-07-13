@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { PaginationMeta } from '../../lib/apiTypes'
+import { allowedListPerPage } from '../../store/adminStore'
 import { AdminSelect } from '../forms/AdminSelect'
 
 type MasterPaginationProps = {
@@ -9,7 +10,7 @@ type MasterPaginationProps = {
   perPage?: number
 }
 
-const perPageOptions = [10, 15, 25, 50, 100].map((option) => ({
+const perPageOptions = allowedListPerPage.map((option) => ({
   label: String(option),
   value: String(option),
 }))
