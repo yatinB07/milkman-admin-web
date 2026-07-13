@@ -1,6 +1,5 @@
 import { Edit3, Package, Plus, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { isAxiosError } from 'axios'
 import { useMemo, useState } from 'react'
 import {
   MasterDataTable,
@@ -23,6 +22,7 @@ import { StatusPill } from '../../components/StatusPill'
 import { emptyPaginationMeta } from '../../lib/apiTypes'
 import { publishStatusFilterOptions } from '../../lib/filterOptions'
 import { formatDate, serialNumber } from '../../lib/formatters'
+import { readFieldErrors } from '../../lib/validationErrors'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
@@ -87,9 +87,12 @@ export function CategoriesPage() {
       closeForm(true)
     },
     onError: (error) => {
-      if (isAxiosError(error) && error.response?.status === 422) {
-        const errors = error.response.data as { errors?: Record<string, string[]> }
-        setFormErrors({ title: errors.errors?.title?.[0] ?? 'Category Name is required.' })
+      const errors = readFieldErrors<keyof CategoryFormErrors>(error, ['title'], {
+        title: 'Category Name is required.',
+      })
+
+      if (errors.title) {
+        setFormErrors(errors)
         return
       }
 

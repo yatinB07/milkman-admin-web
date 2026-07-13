@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { isAxiosError } from 'axios'
 import { ShieldCheck, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { ListLoadError, PageSkeleton, toast } from '../../components/common'
 import { SelectField } from '../../components/forms/SelectField'
 import { FieldLabel } from '../../components/forms/FormLayout'
+import { readFieldErrors } from '../../lib/validationErrors'
 import { adminStore, allowedListPerPage, useAdminStore } from '../../store/adminStore'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import {
@@ -49,7 +49,7 @@ export function ProfilePage() {
       toast.success('Profile updated successfully.')
     },
     onError: (error) => {
-      setProfileErrors(readValidationErrors<keyof AdminProfileFormValues>(error, ['name', 'username']))
+      setProfileErrors(readFieldErrors<keyof AdminProfileFormValues>(error, ['name', 'username']))
       toast.error('Profile could not be saved. Check the highlighted fields.')
     },
   })
@@ -64,11 +64,11 @@ export function ProfilePage() {
     },
     onError: (error) => {
       setPasswordErrors(
-        readValidationErrors<keyof AdminPasswordFormValues>(error, [
-          'current_password',
-          'password',
-          'password_confirmation',
-        ]),
+        readFieldErrors<keyof AdminPasswordFormValues>(
+          error,
+          ['current_password', 'password', 'password_confirmation'],
+          { current_password: 'Current Password is invalid.' },
+        ),
       )
       toast.error('Password could not be changed. Check the highlighted fields.')
     },
@@ -186,20 +186,4 @@ export function ProfilePage() {
       />
     </section>
   )
-}
-
-function readValidationErrors<Field extends string>(error: unknown, fields: Field[]) {
-  if (!isAxiosError(error) || error.response?.status !== 422) return {}
-
-  const data = error.response.data as { message?: string; errors?: Record<string, string[]> }
-
-  return fields.reduce<Partial<Record<Field, string>>>((errors, field) => {
-    const message = data.errors?.[field]?.[0] ?? (field === 'current_password' ? data.message : undefined)
-
-    if (message) {
-      errors[field] = message
-    }
-
-    return errors
-  }, {})
 }

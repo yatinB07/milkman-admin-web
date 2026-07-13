@@ -1,6 +1,5 @@
 import { Edit3, PackageOpen, Plus, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { isAxiosError } from 'axios'
 import { useMemo, useState } from 'react'
 import {
   MasterDataTable,
@@ -23,6 +22,7 @@ import { StatusPill } from '../../components/StatusPill'
 import { emptyPaginationMeta } from '../../lib/apiTypes'
 import { publishStatusFilterOptions } from '../../lib/filterOptions'
 import { formatDate, serialNumber } from '../../lib/formatters'
+import { readFieldErrors } from '../../lib/validationErrors'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
@@ -104,13 +104,10 @@ export function ProductsPage() {
       closeForm(true)
     },
     onError: (error) => {
-      if (isAxiosError(error) && error.response?.status === 422) {
-        const data = error.response.data as { errors?: Record<string, string[]> }
-        setFormErrors({
-          store_id: data.errors?.store_id?.[0],
-          store_category_id: data.errors?.store_category_id?.[0],
-          title: data.errors?.title?.[0],
-        })
+      const errors = readFieldErrors<keyof ProductFormErrors>(error, ['store_id', 'store_category_id', 'title'])
+
+      if (errors.store_id || errors.store_category_id || errors.title) {
+        setFormErrors(errors)
         return
       }
 

@@ -1,6 +1,5 @@
 import { Edit3, Plus, Store, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { isAxiosError } from 'axios'
 import { useMemo, useState } from 'react'
 import {
   MasterDataTable,
@@ -23,6 +22,7 @@ import { StatusPill } from '../../components/StatusPill'
 import { emptyPaginationMeta, type PaginatedResponse } from '../../lib/apiTypes'
 import { publishStatusFilterOptions } from '../../lib/filterOptions'
 import { serialNumber } from '../../lib/formatters'
+import { getValidationErrorResponse, readFieldErrors } from '../../lib/validationErrors'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
@@ -343,28 +343,19 @@ export function StoresPage() {
 }
 
 function extractStoreApiValidationError(error: unknown) {
-  if (!isAxiosError(error) || error.response?.status !== 422) {
+  const responseData = getValidationErrorResponse(error)
+  if (!responseData?.errors) {
     return null
   }
 
-  const responseData = error.response.data as {
-    message?: string
-    errors?: Record<string, string[]>
-  }
-  const errors = responseData.errors
-
-  if (!errors) {
-    return null
-  }
-
-  const fieldErrors: StoreFormErrors = {}
+  const fieldErrors = readFieldErrors(
+    error,
+    storeValidationFields.map((field) => field.name),
+  ) as StoreFormErrors
   let tab: StoreFormTabId | null = null
 
   for (const field of storeValidationFields) {
-    const messages = errors[field.name]
-
-    if (messages?.length) {
-      fieldErrors[field.name] = messages[0]
+    if (fieldErrors[field.name]) {
       tab ??= field.tab
     }
   }
@@ -373,8 +364,8 @@ function extractStoreApiValidationError(error: unknown) {
     return { errors: fieldErrors, tab }
   }
 
-  const firstErrorKey = Object.keys(errors)[0]
-  const firstMessage = firstErrorKey ? errors[firstErrorKey]?.[0] : responseData.message
+  const firstErrorKey = Object.keys(responseData.errors)[0]
+  const firstMessage = firstErrorKey ? responseData.errors[firstErrorKey]?.[0] : responseData.message
 
   if (!firstMessage) {
     return null
