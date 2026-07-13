@@ -46,3 +46,11 @@ export function setAuthToken(token: string) {
 export function clearAuthToken() {
   window.localStorage.removeItem(authTokenKey)
 }
+
+export function assetUrl(path: string) {
+  if (/^https?:\/\//i.test(path) || path.startsWith('blob:')) {
+    return path
+  }
+
+  return new URL(path.replace(/^\/+/, ''), `${api.defaults.baseURL}/`).toString()
+}

@@ -1,5 +1,6 @@
 import { ImageIcon, Upload, X } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
+import { assetUrl } from '../../lib/api'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { uploadAdminFile } from './adminUploadRepository'
 
@@ -139,12 +140,4 @@ function displayFileName(path: string) {
   } catch {
     return path.split('/').filter(Boolean).at(-1) ?? path
   }
-}
-
-function assetUrl(path: string) {
-  if (/^https?:\/\//i.test(path) || path.startsWith('blob:')) {
-    return path
-  }
-
-  return `/${path.replace(/^\/+/, '')}`
 }

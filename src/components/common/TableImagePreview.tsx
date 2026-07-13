@@ -1,4 +1,5 @@
 import { ImageIcon } from 'lucide-react'
+import { assetUrl } from '../../lib/api'
 
 type TableImagePreviewProps = {
   src: string | null
@@ -16,9 +17,4 @@ export function TableImagePreview({ src, alt }: TableImagePreviewProps) {
   }
 
   return <img className="store-table-image" src={assetUrl(src)} alt={alt} />
-}
-
-function assetUrl(path: string) {
-  if (/^https?:\/\//i.test(path)) return path
-  return `/${path.replace(/^\/+/, '')}`
 }
