@@ -4,6 +4,7 @@ import {
   BadgePercent,
   LayoutDashboard,
   Clock3,
+  HelpCircle,
   Images,
   ListTree,
   MapPinned,
@@ -34,6 +35,7 @@ export type AdminModule = {
 const CategoriesPage = lazy(() => import('../pages/CategoriesPage').then((module) => ({ default: module.CategoriesPage })))
 const CouponsPage = lazy(() => import('../pages/CouponsPage').then((module) => ({ default: module.CouponsPage })))
 const DashboardPage = lazy(() => import('../pages/DashboardPage').then((module) => ({ default: module.DashboardPage })))
+const FaqsPage = lazy(() => import('../pages/FaqsPage').then((module) => ({ default: module.FaqsPage })))
 const DeliveryOptionsPage = lazy(() =>
   import('../pages/DeliveryOptionsPage').then((module) => ({ default: module.DeliveryOptionsPage })),
 )
@@ -148,6 +150,15 @@ export const adminModules: AdminModule[] = [
     label: 'Coupons',
     icon: BadgePercent,
     component: CouponsPage,
+    permission: storePermissions.view,
+    permissions: storePermissions,
+  },
+  {
+    id: 'faqs',
+    path: '/faqs',
+    label: 'FAQs',
+    icon: HelpCircle,
+    component: FaqsPage,
     permission: storePermissions.view,
     permissions: storePermissions,
   },
