@@ -1204,6 +1204,10 @@
   text-transform: uppercase;
 }
 
+.profile-preference {
+  margin-top: 16px;
+}
+
 .master-page-header {
   display: flex;
   align-items: flex-end;

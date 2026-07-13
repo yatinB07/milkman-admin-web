@@ -6,7 +6,7 @@ const themeStorageKey = 'milkman_admin_theme'
 const listPerPageStorageKey = 'milkman_admin_list_per_page'
 const sidebarCollapsedStorageKey = 'milkman_admin_sidebar_collapsed'
 const defaultListPerPage = 10
-const allowedListPerPage = [10, 15, 25, 50, 100]
+export const allowedListPerPage = [10, 15, 25, 50, 100]
 
 export type AdminUser = {
   id: number

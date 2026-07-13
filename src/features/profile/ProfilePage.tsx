@@ -3,7 +3,9 @@ import { isAxiosError } from 'axios'
 import { ShieldCheck, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { ListLoadError, PageSkeleton, toast } from '../../components/common'
-import { adminStore, useAdminStore } from '../../store/adminStore'
+import { AdminSelect } from '../../components/forms/AdminSelect'
+import { FieldLabel } from '../../components/forms/FormLayout'
+import { adminStore, allowedListPerPage, useAdminStore } from '../../store/adminStore'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { PasswordForm, ProfileForm, type PasswordFormErrors, type ProfileFormErrors } from './ProfileForm'
 import { getAdminProfile, updateAdminPassword, updateAdminProfile } from './profileRepository'
@@ -11,7 +13,7 @@ import { toAdminProfilePayload } from './profileService'
 import type { AdminPasswordFormValues, AdminProfileFormValues } from './profileTypes'
 
 export function ProfilePage() {
-  const { user } = useAdminStore()
+  const { listPerPage, user } = useAdminStore()
   const queryClient = useQueryClient()
   const [profileErrors, setProfileErrors] = useState<ProfileFormErrors>({})
   const [passwordErrors, setPasswordErrors] = useState<PasswordFormErrors>({})
@@ -141,6 +143,23 @@ export function ProfilePage() {
               </span>
             ))}
           </div>
+        </article>
+
+        <article className="profile-panel">
+          <h3>Preferences</h3>
+          <label className="form-field profile-preference">
+            <FieldLabel label="Default Rows Per Page" />
+            <AdminSelect
+              ariaLabel="Default rows per page"
+              isSearchable={false}
+              options={allowedListPerPage.map((value) => ({ label: String(value), value: String(value) }))}
+              value={String(listPerPage)}
+              onChange={(value) => {
+                adminStore.setListPerPage(Number(value))
+                toast.success('List preference updated.')
+              }}
+            />
+          </label>
         </article>
       </div>
 
