@@ -2,6 +2,7 @@ import { lazy, type ComponentType } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard,
+  Images,
   ListTree,
   MapPinned,
   Package,
@@ -31,6 +32,9 @@ const CategoriesPage = lazy(() => import('../pages/CategoriesPage').then((module
 const DashboardPage = lazy(() => import('../pages/DashboardPage').then((module) => ({ default: module.DashboardPage })))
 const ProductVariantsPage = lazy(() =>
   import('../pages/ProductVariantsPage').then((module) => ({ default: module.ProductVariantsPage })),
+)
+const ProductImagesPage = lazy(() =>
+  import('../pages/ProductImagesPage').then((module) => ({ default: module.ProductImagesPage })),
 )
 const ProductsPage = lazy(() => import('../pages/ProductsPage').then((module) => ({ default: module.ProductsPage })))
 const ProfilePage = lazy(() => import('../pages/ProfilePage').then((module) => ({ default: module.ProfilePage })))
@@ -79,6 +83,15 @@ export const adminModules: AdminModule[] = [
     label: 'Product Variants',
     icon: Package,
     component: ProductVariantsPage,
+    permission: productPermissions.view,
+    permissions: productPermissions,
+  },
+  {
+    id: 'product-images',
+    path: '/product-images',
+    label: 'Product Images',
+    icon: Images,
+    component: ProductImagesPage,
     permission: productPermissions.view,
     permissions: productPermissions,
   },
