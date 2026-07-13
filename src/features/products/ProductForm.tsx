@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
-import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
+import { FilePickerField } from '../../components/forms/FilePickerField'
 import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
 import { SelectField, type SelectFieldOption } from '../../components/forms/SelectField'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
@@ -110,7 +110,7 @@ export function ProductForm({
       <FormSection title="Media And Description" columns={2}>
         <label className="form-field">
           <FieldLabel label="Product Image" />
-          <AdminFilePicker
+          <FilePickerField
             name="image_path"
             directory="products"
             label="Product image"

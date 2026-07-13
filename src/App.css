@@ -2114,7 +2114,7 @@
   min-width: 0;
 }
 
-.admin-file-picker {
+.file-picker-field {
   position: relative;
   display: grid;
   grid-template-columns: minmax(86px, 96px) minmax(0, 1fr);
@@ -2126,7 +2126,7 @@
   padding: 12px;
 }
 
-.admin-file-preview {
+.file-picker-preview {
   display: grid;
   min-height: 96px;
   aspect-ratio: 1;
@@ -2139,13 +2139,13 @@
   text-align: center;
 }
 
-.admin-file-preview img {
+.file-picker-preview img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.admin-file-preview span {
+.file-picker-preview span {
   display: grid;
   gap: 7px;
   justify-items: center;
@@ -2153,21 +2153,21 @@
   font-size: 12px;
 }
 
-.admin-file-body {
+.file-picker-body {
   display: grid;
   align-content: start;
   min-width: 0;
   gap: 9px;
 }
 
-.admin-file-actions {
+.file-picker-actions {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 8px;
 }
 
-.admin-file-button {
+.file-picker-button {
   display: inline-flex;
   width: fit-content;
   align-items: center;
@@ -2180,16 +2180,16 @@
   padding: 9px 12px;
 }
 
-.admin-file-button span {
+.file-picker-button span {
   white-space: nowrap;
 }
 
-.admin-file-button.is-disabled {
+.file-picker-button.is-disabled {
   cursor: wait;
   opacity: 0.72;
 }
 
-.admin-file-link {
+.file-picker-link {
   border: 0;
   background: transparent;
   color: var(--color-danger);
@@ -2199,7 +2199,7 @@
   padding: 6px;
 }
 
-.admin-file-meta {
+.file-picker-meta {
   display: grid;
   min-width: 0;
   gap: 3px;
@@ -2209,8 +2209,8 @@
   padding: 9px 10px;
 }
 
-.admin-file-meta strong,
-.admin-file-meta span {
+.file-picker-meta strong,
+.file-picker-meta span {
   display: block;
   overflow: hidden;
   min-width: 0;
@@ -2218,28 +2218,28 @@
   white-space: nowrap;
 }
 
-.admin-file-meta strong {
+.file-picker-meta strong {
   color: var(--color-text);
   font-size: 13px;
 }
 
-.admin-file-meta span {
+.file-picker-meta span {
   color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 700;
 }
 
-.admin-file-body small {
+.file-picker-body small {
   color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 700;
 }
 
-.admin-file-body .field-error {
+.file-picker-body .field-error {
   color: var(--color-danger);
 }
 
-.admin-file-clear {
+.file-picker-clear {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -2259,11 +2259,11 @@
     grid-template-columns: 1fr;
   }
 
-  .admin-file-picker {
+  .file-picker-field {
     grid-template-columns: 1fr;
   }
 
-  .admin-file-preview {
+  .file-picker-preview {
     aspect-ratio: 16 / 9;
   }
 }

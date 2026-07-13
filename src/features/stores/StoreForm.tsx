@@ -2,7 +2,7 @@ import { ArrowLeft } from 'lucide-react'
 import { type InputHTMLAttributes, type ReactNode, useState } from 'react'
 import { useForm, useWatch, type UseFormRegister } from 'react-hook-form'
 import { Button, Input } from '../../components/common'
-import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
+import { FilePickerField } from '../../components/forms/FilePickerField'
 import { MultiSelectField, SelectField, type SelectFieldOption } from '../../components/forms/SelectField'
 import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
 import { FieldLabel } from '../../components/forms/FormLayout'
@@ -293,7 +293,7 @@ export function StoreForm({
             <StoreFormSection title="Store Media" columns={2}>
               <label className="form-field">
                 <FieldLabel label="Store Logo" required />
-                <AdminFilePicker
+                <FilePickerField
                   name="image_path"
                   required
                   directory="stores"
@@ -306,7 +306,7 @@ export function StoreForm({
 
               <label className="form-field">
                 <FieldLabel label="Store Cover Image" required />
-                <AdminFilePicker
+                <FilePickerField
                   name="cover_image_path"
                   required
                   directory="stores"

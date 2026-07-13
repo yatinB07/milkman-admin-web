@@ -4,7 +4,7 @@ import { assetUrl } from '../../lib/api'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 import { uploadAdminFile } from './adminUploadRepository'
 
-type AdminFilePickerProps = {
+type FilePickerFieldProps = {
   name: string
   value: string
   label: string
@@ -15,7 +15,7 @@ type AdminFilePickerProps = {
   onChange: (value: string) => void
 }
 
-export function AdminFilePicker({
+export function FilePickerField({
   name,
   value,
   label,
@@ -24,7 +24,7 @@ export function AdminFilePicker({
   accept = 'image/*',
   placeholder = 'images/store/example.png',
   onChange,
-}: AdminFilePickerProps) {
+}: FilePickerFieldProps) {
   const inputId = useId()
   const [previewUrl, setPreviewUrl] = useState('')
   const [failedPreviewSource, setFailedPreviewSource] = useState('')
@@ -80,10 +80,10 @@ export function AdminFilePicker({
   }
 
   return (
-    <div className="admin-file-picker">
+    <div className="file-picker-field">
       <input name={name} required={required} type="hidden" value={value} />
 
-      <div className="admin-file-preview">
+      <div className="file-picker-preview">
         {hasPreview ? (
           <img
             src={previewUrl || assetUrl(value)}
@@ -98,14 +98,14 @@ export function AdminFilePicker({
         )}
       </div>
 
-      <div className="admin-file-body">
-        <div className="admin-file-actions">
-          <label className={`admin-file-button${isUploading ? ' is-disabled' : ''}`} htmlFor={inputId}>
+      <div className="file-picker-body">
+        <div className="file-picker-actions">
+          <label className={`file-picker-button${isUploading ? ' is-disabled' : ''}`} htmlFor={inputId}>
             <Upload aria-hidden="true" size={16} />
             <span>{isUploading ? 'Uploading...' : value ? 'Replace file' : 'Choose file'}</span>
           </label>
           {value ? (
-            <button className="admin-file-link" type="button" disabled={isUploading} onClick={clearFile}>
+            <button className="file-picker-link" type="button" disabled={isUploading} onClick={clearFile}>
               Remove
             </button>
           ) : null}
@@ -119,7 +119,7 @@ export function AdminFilePicker({
           onChange={(event) => handleFileChange(event.target.files?.[0])}
         />
 
-        <div className="admin-file-meta">
+        <div className="file-picker-meta">
           <strong title={fileName}>{fileName || 'No file selected'}</strong>
           <span title={value || placeholder}>{value || placeholder}</span>
         </div>
@@ -129,7 +129,7 @@ export function AdminFilePicker({
       </div>
 
       {value ? (
-        <button className="admin-file-clear" type="button" aria-label={`Clear ${label}`} onClick={clearFile}>
+        <button className="file-picker-clear" type="button" aria-label={`Clear ${label}`} onClick={clearFile}>
           <X aria-hidden="true" size={15} />
         </button>
       ) : null}

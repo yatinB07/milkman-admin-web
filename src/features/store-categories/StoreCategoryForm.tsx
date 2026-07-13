@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
-import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
+import { FilePickerField } from '../../components/forms/FilePickerField'
 import { SelectField, type SelectFieldOption } from '../../components/forms/SelectField'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import { publishStatusSelectOptions } from '../../lib/filterOptions'
@@ -74,7 +74,7 @@ export function StoreCategoryForm({
 
         <label className="form-field">
           <FieldLabel label="Category Image" />
-          <AdminFilePicker
+          <FilePickerField
             name="image_path"
             directory="store-categories"
             label="Category image"
