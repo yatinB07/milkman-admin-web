@@ -160,6 +160,7 @@ export function ProfilePage() {
               ariaLabel="Default rows per page"
               isSearchable={false}
               options={allowedListPerPage.map((value) => ({ label: String(value), value: String(value) }))}
+              trackDirty={false}
               value={String(listPerPage)}
               onChange={(value) => {
                 adminStore.setListPerPage(Number(value))

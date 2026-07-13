@@ -14,6 +14,7 @@ type AdminSelectProps = {
   placeholder?: string
   isSearchable?: boolean
   hasError?: boolean
+  trackDirty?: boolean
   onChange: (value: string) => void
 }
 
@@ -22,6 +23,7 @@ type AdminMultiSelectProps = {
   options: AdminSelectOption[]
   placeholder?: string
   hasError?: boolean
+  trackDirty?: boolean
   onChange: (values: string[]) => void
 }
 
@@ -33,6 +35,7 @@ export function AdminSelect({
   placeholder = 'Select option',
   isSearchable = true,
   hasError = false,
+  trackDirty = true,
   onChange,
 }: AdminSelectProps) {
   const selected = options.find((option) => option.value === value) ?? null
@@ -51,7 +54,7 @@ export function AdminSelect({
       styles={selectStyles(hasError)}
       value={selected}
       onChange={(option: SingleValue<AdminSelectOption>) => {
-        dirtyFormStore.markDirty()
+        if (trackDirty) dirtyFormStore.markDirty()
         onChange(option?.value ?? '')
       }}
     />
@@ -63,6 +66,7 @@ export function AdminMultiSelect({
   options,
   placeholder = 'Select options',
   hasError = false,
+  trackDirty = true,
   onChange,
 }: AdminMultiSelectProps) {
   const selected = options.filter((option) => values.includes(option.value))
@@ -81,7 +85,7 @@ export function AdminMultiSelect({
       styles={selectStyles(hasError)}
       value={selected}
       onChange={(nextValues: MultiValue<AdminSelectOption>) => {
-        dirtyFormStore.markDirty()
+        if (trackDirty) dirtyFormStore.markDirty()
         onChange(nextValues.map((option) => option.value))
       }}
     />
