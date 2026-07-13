@@ -1,4 +1,5 @@
 import { ImageIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { assetUrl } from '../../lib/api'
 
 type TableImagePreviewProps = {
@@ -7,7 +8,11 @@ type TableImagePreviewProps = {
 }
 
 export function TableImagePreview({ src, alt }: TableImagePreviewProps) {
-  if (!src) {
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => setFailed(false), [src])
+
+  if (!src || failed) {
     return (
       <span className="store-image-placeholder">
         <ImageIcon aria-hidden="true" size={22} />
@@ -16,5 +21,5 @@ export function TableImagePreview({ src, alt }: TableImagePreviewProps) {
     )
   }
 
-  return <img className="store-table-image" src={assetUrl(src)} alt={alt} />
+  return <img className="store-table-image" src={assetUrl(src)} alt={alt} onError={() => setFailed(true)} />
 }

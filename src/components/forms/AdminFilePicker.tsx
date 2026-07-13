@@ -27,12 +27,15 @@ export function AdminFilePicker({
 }: AdminFilePickerProps) {
   const inputId = useId()
   const [previewUrl, setPreviewUrl] = useState('')
+  const [previewFailed, setPreviewFailed] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
-  const hasPreview = Boolean(previewUrl || value)
+  const hasPreview = Boolean(previewUrl || value) && !previewFailed
   const fileName = displayFileName(value)
 
   useEffect(() => {
+    setPreviewFailed(false)
+
     return () => {
       if (previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl)
@@ -50,6 +53,7 @@ export function AdminFilePicker({
     }
 
     setPreviewUrl(URL.createObjectURL(file))
+    setPreviewFailed(false)
     setUploadError('')
     setIsUploading(true)
 
@@ -70,6 +74,7 @@ export function AdminFilePicker({
     }
 
     setPreviewUrl('')
+    setPreviewFailed(false)
     setUploadError('')
     dirtyFormStore.markDirty()
     onChange('')
@@ -81,7 +86,7 @@ export function AdminFilePicker({
 
       <div className="admin-file-preview">
         {hasPreview ? (
-          <img src={previewUrl || assetUrl(value)} alt={`${label} preview`} />
+          <img src={previewUrl || assetUrl(value)} alt={`${label} preview`} onError={() => setPreviewFailed(true)} />
         ) : (
           <span>
             <ImageIcon aria-hidden="true" size={26} />
