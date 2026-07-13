@@ -2,6 +2,7 @@ import { lazy, type ComponentType } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard,
+  Clock3,
   Images,
   ListTree,
   MapPinned,
@@ -49,6 +50,7 @@ const StoresPage = lazy(() => import('../pages/StoresPage').then((module) => ({ 
 const StoreGalleryImagesPage = lazy(() =>
   import('../pages/StoreGalleryImagesPage').then((module) => ({ default: module.StoreGalleryImagesPage })),
 )
+const TimeSlotsPage = lazy(() => import('../pages/TimeSlotsPage').then((module) => ({ default: module.TimeSlotsPage })))
 const ZonesPage = lazy(() => import('../pages/ZonesPage').then((module) => ({ default: module.ZonesPage })))
 
 const productPermissions = crudPermissions('products.manage')
@@ -126,6 +128,15 @@ export const adminModules: AdminModule[] = [
     label: 'Delivery Options',
     icon: Truck,
     component: DeliveryOptionsPage,
+    permission: storePermissions.view,
+    permissions: storePermissions,
+  },
+  {
+    id: 'time-slots',
+    path: '/time-slots',
+    label: 'Time Slots',
+    icon: Clock3,
+    component: TimeSlotsPage,
     permission: storePermissions.view,
     permissions: storePermissions,
   },
