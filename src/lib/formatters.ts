@@ -1,4 +1,4 @@
-export function formatAdminDate(value?: string | null, fallback = 'Never') {
+export function formatDate(value?: string | null, fallback = 'Never') {
   if (!value) return fallback
 
   const date = new Date(value)

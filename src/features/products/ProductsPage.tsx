@@ -22,7 +22,7 @@ import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/commo
 import { StatusPill } from '../../components/StatusPill'
 import { emptyPaginationMeta } from '../../lib/apiTypes'
 import { publishStatusFilterOptions } from '../../lib/filterOptions'
-import { formatAdminDate, serialNumber } from '../../lib/formatters'
+import { formatDate, serialNumber } from '../../lib/formatters'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
@@ -171,7 +171,7 @@ export function ProductsPage() {
           </StatusPill>
         ),
       },
-      { key: 'updated', header: 'Updated', render: (product) => formatAdminDate(product.updated_at) },
+      { key: 'updated', header: 'Updated', render: (product) => formatDate(product.updated_at) },
       {
         key: 'actions',
         header: 'Action',

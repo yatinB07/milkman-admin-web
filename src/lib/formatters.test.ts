@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { formatAdminDate, serialNumber } from './formatters'
+import { formatDate, serialNumber } from './formatters'
 
-describe('formatAdminDate', () => {
+describe('formatDate', () => {
   it('formats valid dates and returns the fallback for empty or invalid dates', () => {
-    expect(formatAdminDate('2026-07-08T00:00:00.000Z')).toBe('Jul 8, 2026')
-    expect(formatAdminDate(null)).toBe('Never')
-    expect(formatAdminDate('not-a-date', 'Not available')).toBe('Not available')
+    expect(formatDate('2026-07-08T00:00:00.000Z')).toBe('Jul 8, 2026')
+    expect(formatDate(null)).toBe('Never')
+    expect(formatDate('not-a-date', 'Not available')).toBe('Not available')
   })
 })
 

@@ -12,7 +12,7 @@ import { Button, ListLoadError, PageSkeleton, RecordLoadError, RowActionMenu, to
 import { ConfirmDialog, type ConfirmDialogOptions } from '../../components/common/ConfirmDialog'
 import { StatusPill } from '../../components/StatusPill'
 import { emptyPaginationMeta, type PaginatedResponse } from '../../lib/apiTypes'
-import { formatAdminDate } from '../../lib/formatters'
+import { formatDate } from '../../lib/formatters'
 import { getModuleActionPermission } from '../../routes/adminModules'
 import { navigateToHash, parseCrudFormRoute, useHashPath } from '../../routes/hashRouting'
 import { adminStore, useAdminStore } from '../../store/adminStore'
@@ -136,7 +136,7 @@ export function ZonesPage() {
       {
         key: 'updated',
         header: 'Updated',
-        render: (zone) => formatAdminDate(zone.updated_at, 'Not available'),
+        render: (zone) => formatDate(zone.updated_at, 'Not available'),
       },
       {
         key: 'actions',
