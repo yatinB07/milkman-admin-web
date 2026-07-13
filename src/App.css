@@ -1358,7 +1358,7 @@
   padding: 16px 24px;
 }
 
-.master-pagination > span {
+.master-pagination-summary {
   color: var(--color-text-muted);
   font-size: 13px;
 }
@@ -1920,6 +1920,10 @@
   padding: 24px;
 }
 
+.admin-form > .form-actions {
+  padding: 0 20px 20px;
+}
+
 .store-form-steps {
   display: flex;
   overflow-x: auto;
@@ -2022,6 +2026,7 @@
 .admin-form-section {
   display: grid;
   gap: 16px;
+  padding: 20px;
 }
 
 .admin-form-section h4 {

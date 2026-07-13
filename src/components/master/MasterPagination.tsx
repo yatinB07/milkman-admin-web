@@ -22,10 +22,6 @@ export function MasterPagination({ meta, onPageChange, onPerPageChange, perPage 
 
   return (
     <nav className="master-pagination" aria-label="Pagination">
-      <span>
-        Showing {meta.from ?? 0} to {meta.to ?? 0} of {meta.total} records
-      </span>
-
       {onPerPageChange ? (
         <label className="master-per-page">
           <span>Rows per page</span>
@@ -38,6 +34,10 @@ export function MasterPagination({ meta, onPageChange, onPerPageChange, perPage 
           />
         </label>
       ) : null}
+
+      <span className="master-pagination-summary">
+        Showing {meta.from ?? 0} to {meta.to ?? 0} of {meta.total} records
+      </span>
 
       <div className="master-pagination-controls">
         <button
