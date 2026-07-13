@@ -42,6 +42,9 @@ const StoreCategoriesPage = lazy(() =>
   import('../pages/StoreCategoriesPage').then((module) => ({ default: module.StoreCategoriesPage })),
 )
 const StoresPage = lazy(() => import('../pages/StoresPage').then((module) => ({ default: module.StoresPage })))
+const StoreGalleryImagesPage = lazy(() =>
+  import('../pages/StoreGalleryImagesPage').then((module) => ({ default: module.StoreGalleryImagesPage })),
+)
 const ZonesPage = lazy(() => import('../pages/ZonesPage').then((module) => ({ default: module.ZonesPage })))
 
 const productPermissions = crudPermissions('products.manage')
@@ -101,6 +104,15 @@ export const adminModules: AdminModule[] = [
     label: 'Stores',
     icon: Store,
     component: StoresPage,
+    permission: storePermissions.view,
+    permissions: storePermissions,
+  },
+  {
+    id: 'store-gallery-images',
+    path: '/store-gallery-images',
+    label: 'Store Gallery Images',
+    icon: Images,
+    component: StoreGalleryImagesPage,
     permission: storePermissions.view,
     permissions: storePermissions,
   },
