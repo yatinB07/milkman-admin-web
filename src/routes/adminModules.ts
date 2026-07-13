@@ -1,6 +1,7 @@
 import { lazy, type ComponentType } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
+  BadgePercent,
   LayoutDashboard,
   Clock3,
   Images,
@@ -31,6 +32,7 @@ export type AdminModule = {
 }
 
 const CategoriesPage = lazy(() => import('../pages/CategoriesPage').then((module) => ({ default: module.CategoriesPage })))
+const CouponsPage = lazy(() => import('../pages/CouponsPage').then((module) => ({ default: module.CouponsPage })))
 const DashboardPage = lazy(() => import('../pages/DashboardPage').then((module) => ({ default: module.DashboardPage })))
 const DeliveryOptionsPage = lazy(() =>
   import('../pages/DeliveryOptionsPage').then((module) => ({ default: module.DeliveryOptionsPage })),
@@ -137,6 +139,15 @@ export const adminModules: AdminModule[] = [
     label: 'Time Slots',
     icon: Clock3,
     component: TimeSlotsPage,
+    permission: storePermissions.view,
+    permissions: storePermissions,
+  },
+  {
+    id: 'coupons',
+    path: '/coupons',
+    label: 'Coupons',
+    icon: BadgePercent,
+    component: CouponsPage,
     permission: storePermissions.view,
     permissions: storePermissions,
   },
