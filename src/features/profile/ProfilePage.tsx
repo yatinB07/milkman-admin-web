@@ -7,7 +7,14 @@ import { AdminSelect } from '../../components/forms/AdminSelect'
 import { FieldLabel } from '../../components/forms/FormLayout'
 import { adminStore, allowedListPerPage, useAdminStore } from '../../store/adminStore'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
-import { PasswordForm, ProfileForm, type PasswordFormErrors, type ProfileFormErrors } from './ProfileForm'
+import {
+  passwordFormDirtyKey,
+  PasswordForm,
+  profileFormDirtyKey,
+  ProfileForm,
+  type PasswordFormErrors,
+  type ProfileFormErrors,
+} from './ProfileForm'
 import { getAdminProfile, updateAdminPassword, updateAdminProfile } from './profileRepository'
 import { toAdminProfilePayload } from './profileService'
 import type { AdminPasswordFormValues, AdminProfileFormValues } from './profileTypes'
@@ -36,7 +43,7 @@ export function ProfilePage() {
         roles: user?.roles ?? [],
         permissions: user?.permissions ?? [],
       })
-      dirtyFormStore.reset()
+      dirtyFormStore.reset(profileFormDirtyKey)
       setProfileErrors({})
       await queryClient.invalidateQueries({ queryKey: ['admin-auth-me'] })
       toast.success('Profile updated successfully.')
@@ -50,7 +57,7 @@ export function ProfilePage() {
   const savePassword = useMutation({
     mutationFn: updateAdminPassword,
     onSuccess: () => {
-      dirtyFormStore.reset()
+      dirtyFormStore.reset(passwordFormDirtyKey)
       setPasswordErrors({})
       setPasswordFormKey((key) => key + 1)
       toast.success('Password changed successfully.')

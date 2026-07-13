@@ -1,9 +1,11 @@
 import { type FormEvent } from 'react'
 import { Button, Input } from '../../components/common'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
-import { dirtyFormCaptureProps } from '../../store/dirtyFormStore'
+import { createDirtyFormCaptureProps } from '../../store/dirtyFormStore'
 import type { AdminPasswordFormValues, AdminProfile, AdminProfileFormValues } from './profileTypes'
 
+export const profileFormDirtyKey = 'profile-details'
+export const passwordFormDirtyKey = 'profile-password'
 export type ProfileFormErrors = Partial<Record<keyof AdminProfileFormValues, string>>
 export type PasswordFormErrors = Partial<Record<keyof AdminPasswordFormValues, string>>
 
@@ -26,7 +28,7 @@ export function ProfileForm({ formErrors, isSaving, profile, onSubmit }: Profile
   }
 
   return (
-    <form className="admin-form profile-form" {...dirtyFormCaptureProps} onSubmit={handleSubmit}>
+    <form className="admin-form profile-form" {...createDirtyFormCaptureProps(profileFormDirtyKey)} onSubmit={handleSubmit}>
       <FormSection title="Profile Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Name" required />
@@ -74,7 +76,7 @@ export function PasswordForm({ formErrors, isSaving, onSubmit }: PasswordFormPro
   }
 
   return (
-    <form className="admin-form profile-form" {...dirtyFormCaptureProps} onSubmit={handleSubmit}>
+    <form className="admin-form profile-form" {...createDirtyFormCaptureProps(passwordFormDirtyKey)} onSubmit={handleSubmit}>
       <FormSection title="Password" columns={3}>
         <label className="form-field">
           <FieldLabel label="Current Password" required />
