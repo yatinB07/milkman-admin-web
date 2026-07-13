@@ -4,6 +4,7 @@ import {
   BadgePercent,
   LayoutDashboard,
   Clock3,
+  FileText,
   HelpCircle,
   Images,
   ListTree,
@@ -36,6 +37,7 @@ const CategoriesPage = lazy(() => import('../pages/CategoriesPage').then((module
 const CouponsPage = lazy(() => import('../pages/CouponsPage').then((module) => ({ default: module.CouponsPage })))
 const DashboardPage = lazy(() => import('../pages/DashboardPage').then((module) => ({ default: module.DashboardPage })))
 const FaqsPage = lazy(() => import('../pages/FaqsPage').then((module) => ({ default: module.FaqsPage })))
+const PagesPage = lazy(() => import('../pages/PagesPage').then((module) => ({ default: module.PagesPage })))
 const DeliveryOptionsPage = lazy(() =>
   import('../pages/DeliveryOptionsPage').then((module) => ({ default: module.DeliveryOptionsPage })),
 )
@@ -161,6 +163,15 @@ export const adminModules: AdminModule[] = [
     component: FaqsPage,
     permission: storePermissions.view,
     permissions: storePermissions,
+  },
+  {
+    id: 'pages',
+    path: '/pages',
+    label: 'Pages',
+    icon: FileText,
+    component: PagesPage,
+    permission: settingsPermissions.view,
+    permissions: settingsPermissions,
   },
   {
     id: 'zones',
