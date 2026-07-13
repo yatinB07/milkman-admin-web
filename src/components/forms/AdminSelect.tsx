@@ -21,6 +21,8 @@ type AdminSelectProps = {
 type AdminMultiSelectProps = {
   values: string[]
   options: AdminSelectOption[]
+  ariaLabel?: string
+  inputId?: string
   placeholder?: string
   hasError?: boolean
   trackDirty?: boolean
@@ -64,6 +66,8 @@ export function AdminSelect({
 export function AdminMultiSelect({
   values,
   options,
+  ariaLabel,
+  inputId,
   placeholder = 'Select options',
   hasError = false,
   trackDirty = true,
@@ -73,9 +77,11 @@ export function AdminMultiSelect({
 
   return (
     <Select<AdminSelectOption, true>
+      aria-label={ariaLabel}
       className="admin-react-select"
       classNamePrefix="admin-react-select"
       closeMenuOnSelect={false}
+      inputId={inputId}
       isMulti
       isSearchable
       menuPortalTarget={menuPortalTarget}

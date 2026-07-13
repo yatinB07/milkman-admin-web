@@ -349,6 +349,8 @@ export function StoreForm({
               <label className="form-field">
                 <FieldLabel label="Store Category" required />
                 <AdminMultiSelect
+                  ariaLabel="Store category"
+                  inputId="store-category"
                   options={categoryOptions}
                   placeholder="Search and select store categories"
                   values={formCategoryIds}
