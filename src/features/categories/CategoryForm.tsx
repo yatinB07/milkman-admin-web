@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
-import { AdminSelect } from '../../components/forms/AdminSelect'
+import { SelectField } from '../../components/forms/SelectField'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import { publishStatusSelectOptions } from '../../lib/filterOptions'
 import { dirtyFormCaptureProps } from '../../store/dirtyFormStore'
@@ -48,7 +48,7 @@ export function CategoryForm({ category, formErrors, isSaving, onCancel, onSubmi
 
         <label className="form-field">
           <FieldLabel label="Status" />
-          <AdminSelect isSearchable={false} options={publishStatusSelectOptions} value={status} onChange={setStatus} />
+          <SelectField isSearchable={false} options={publishStatusSelectOptions} value={status} onChange={setStatus} />
         </label>
 
         <label className="form-field">

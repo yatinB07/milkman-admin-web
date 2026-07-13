@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { PaginationMeta } from '../../lib/apiTypes'
 import { allowedListPerPage } from '../../store/adminStore'
-import { AdminSelect } from '../forms/AdminSelect'
+import { SelectField } from '../forms/SelectField'
 
 type MasterPaginationProps = {
   meta: PaginationMeta
@@ -25,7 +25,7 @@ export function MasterPagination({ meta, onPageChange, onPerPageChange, perPage 
       {onPerPageChange ? (
         <label className="master-per-page">
           <span>Rows per page</span>
-          <AdminSelect
+          <SelectField
             ariaLabel="Rows per page"
             isSearchable={false}
             options={perPageOptions}

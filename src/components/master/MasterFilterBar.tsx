@@ -1,6 +1,6 @@
 import { Search } from 'lucide-react'
 import type { ChangeEventHandler, ReactNode } from 'react'
-import { AdminSelect } from '../forms/AdminSelect'
+import { SelectField } from '../forms/SelectField'
 
 export type MasterFilterOption = {
   label: string
@@ -51,7 +51,7 @@ export function MasterFilterBar({
       {filters.map((filter) => (
         <label className="master-select" key={filter.label}>
           <span>{filter.label}</span>
-          <AdminSelect
+          <SelectField
             ariaLabel={filter.label}
             isSearchable={false}
             options={filter.options}

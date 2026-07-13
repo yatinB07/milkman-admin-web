@@ -1,5 +1,5 @@
 import type { MasterFilterOption } from '../components/master'
-import type { AdminSelectOption } from '../components/forms/AdminSelect'
+import type { SelectFieldOption } from '../components/forms/SelectField'
 
 export function publishStatusFilterOptions(allLabel: string): MasterFilterOption[] {
   return [
@@ -9,12 +9,12 @@ export function publishStatusFilterOptions(allLabel: string): MasterFilterOption
   ]
 }
 
-export const publishStatusSelectOptions: AdminSelectOption[] = [
+export const publishStatusSelectOptions: SelectFieldOption[] = [
   { label: 'Publish', value: '1' },
   { label: 'Unpublish', value: '0' },
 ]
 
-export const yesNoSelectOptions: AdminSelectOption[] = [
+export const yesNoSelectOptions: SelectFieldOption[] = [
   { label: 'Yes', value: '1' },
   { label: 'No', value: '0' },
 ]

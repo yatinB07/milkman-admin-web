@@ -3,7 +3,7 @@ import { isAxiosError } from 'axios'
 import { ShieldCheck, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { ListLoadError, PageSkeleton, toast } from '../../components/common'
-import { AdminSelect } from '../../components/forms/AdminSelect'
+import { SelectField } from '../../components/forms/SelectField'
 import { FieldLabel } from '../../components/forms/FormLayout'
 import { adminStore, allowedListPerPage, useAdminStore } from '../../store/adminStore'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
@@ -156,7 +156,7 @@ export function ProfilePage() {
           <h3>Preferences</h3>
           <label className="form-field profile-preference">
             <FieldLabel label="Default Rows Per Page" />
-            <AdminSelect
+            <SelectField
               ariaLabel="Default rows per page"
               isSearchable={false}
               options={allowedListPerPage.map((value) => ({ label: String(value), value: String(value) }))}

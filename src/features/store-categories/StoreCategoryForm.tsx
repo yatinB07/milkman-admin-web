@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
-import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
+import { SelectField, type SelectFieldOption } from '../../components/forms/SelectField'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import { publishStatusSelectOptions } from '../../lib/filterOptions'
 import { dirtyFormCaptureProps } from '../../store/dirtyFormStore'
@@ -9,7 +9,7 @@ import type { StoreCategoryFormValues, StoreCategoryRow } from './storeCategoryT
 
 type StoreCategoryFormProps = {
   category: StoreCategoryRow | null
-  storeOptions: AdminSelectOption[]
+  storeOptions: SelectFieldOption[]
   formErrors: Partial<Record<'store_id' | 'title', string>>
   optionError: boolean
   isSaving: boolean
@@ -47,7 +47,7 @@ export function StoreCategoryForm({
       <FormSection title="Store Category Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Store" required />
-          <AdminSelect
+          <SelectField
             options={storeOptions}
             placeholder="Search and select store"
             value={storeId}
@@ -85,7 +85,7 @@ export function StoreCategoryForm({
 
         <label className="form-field">
           <FieldLabel label="Status" />
-          <AdminSelect isSearchable={false} options={publishStatusSelectOptions} value={status} onChange={setStatus} />
+          <SelectField isSearchable={false} options={publishStatusSelectOptions} value={status} onChange={setStatus} />
         </label>
       </FormSection>
 

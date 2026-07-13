@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { AdminSelectOption } from '../../components/forms/AdminSelect'
+import type { SelectFieldOption } from '../../components/forms/SelectField'
 import type {
   SelectOption,
   StoreFormErrors,
@@ -276,7 +276,7 @@ export function splitCategoryReference(value?: string | null) {
     : []
 }
 
-export function toSelectOptions(options?: SelectOption[]): AdminSelectOption[] {
+export function toSelectOptions(options?: SelectOption[]): SelectFieldOption[] {
   return options?.map((option) => ({ label: option.title, value: String(option.id) })) ?? []
 }
 

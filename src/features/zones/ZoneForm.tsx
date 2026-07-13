@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
-import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
+import { SelectField, type SelectFieldOption } from '../../components/forms/SelectField'
 import { FieldLabel } from '../../components/forms/FormLayout'
 import { ZonePolygonMap } from '../../components/maps/ZonePolygonMap'
 import { dirtyFormCaptureProps } from '../../store/dirtyFormStore'
@@ -16,7 +16,7 @@ type ZoneFormProps = {
   onSubmit: (values: ZoneFormValues) => void
 }
 
-const statusOptions: AdminSelectOption[] = [
+const statusOptions: SelectFieldOption[] = [
   { label: 'Active', value: 'true' },
   { label: 'Inactive', value: 'false' },
 ]
@@ -106,7 +106,7 @@ export function ZoneForm({
 
         <label className="form-field">
           <FieldLabel label="Status" required />
-          <AdminSelect
+          <SelectField
             isSearchable={false}
             options={statusOptions}
             value={status}

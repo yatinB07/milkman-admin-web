@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
-import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
+import { SelectField, type SelectFieldOption } from '../../components/forms/SelectField'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import { yesNoSelectOptions } from '../../lib/filterOptions'
 import { dirtyFormCaptureProps } from '../../store/dirtyFormStore'
@@ -8,8 +8,8 @@ import type { ProductVariantFormValues, ProductVariantRow } from './productVaria
 
 type ProductVariantFormProps = {
   variant: ProductVariantRow | null
-  storeOptions: AdminSelectOption[]
-  productOptions: AdminSelectOption[]
+  storeOptions: SelectFieldOption[]
+  productOptions: SelectFieldOption[]
   formErrors: Partial<
     Record<'store_id' | 'product_id' | 'title' | 'discount' | 'normal_price' | 'subscribe_price', string>
   >
@@ -63,7 +63,7 @@ export function ProductVariantForm({
       <FormSection title="Variant Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Store" required />
-          <AdminSelect
+          <SelectField
             options={storeOptions}
             placeholder="Search and select store"
             value={storeId}
@@ -79,7 +79,7 @@ export function ProductVariantForm({
 
         <label className="form-field">
           <FieldLabel label="Product" required />
-          <AdminSelect
+          <SelectField
             options={productOptions}
             placeholder={storeId ? 'Search and select product' : 'Select store first'}
             value={productId}
@@ -143,12 +143,12 @@ export function ProductVariantForm({
 
         <label className="form-field">
           <FieldLabel label="Out Of Stock?" required />
-          <AdminSelect isSearchable={false} options={yesNoSelectOptions} value={stock} onChange={setStock} />
+          <SelectField isSearchable={false} options={yesNoSelectOptions} value={stock} onChange={setStock} />
         </label>
 
         <label className="form-field">
           <FieldLabel label="Subscription Required?" required />
-          <AdminSelect
+          <SelectField
             isSearchable={false}
             options={yesNoSelectOptions}
             value={subscriptionRequired}

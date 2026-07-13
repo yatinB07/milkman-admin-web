@@ -2,7 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
 import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
-import { AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
+import { SelectField, type SelectFieldOption } from '../../components/forms/SelectField'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import { publishStatusSelectOptions } from '../../lib/filterOptions'
 import { dirtyFormCaptureProps } from '../../store/dirtyFormStore'
@@ -10,8 +10,8 @@ import type { ProductFormValues, ProductRow } from './productTypes'
 
 type ProductFormProps = {
   product: ProductRow | null
-  storeOptions: AdminSelectOption[]
-  categoryOptions: AdminSelectOption[]
+  storeOptions: SelectFieldOption[]
+  categoryOptions: SelectFieldOption[]
   formErrors: Partial<Record<'store_id' | 'store_category_id' | 'title', string>>
   optionError: boolean
   isSaving: boolean
@@ -62,7 +62,7 @@ export function ProductForm({
       <FormSection title="Product Information" columns={2}>
         <label className="form-field">
           <FieldLabel label="Store" required />
-          <AdminSelect
+          <SelectField
             options={storeOptions}
             placeholder="Search and select store"
             value={storeId}
@@ -78,7 +78,7 @@ export function ProductForm({
 
         <label className="form-field">
           <FieldLabel label="Product Category" required />
-          <AdminSelect
+          <SelectField
             options={categoryOptions}
             placeholder={storeId ? 'Search and select category' : 'Select store first'}
             value={categoryId}
@@ -103,7 +103,7 @@ export function ProductForm({
 
         <label className="form-field">
           <FieldLabel label="Status" />
-          <AdminSelect isSearchable={false} options={publishStatusSelectOptions} value={status} onChange={setStatus} />
+          <SelectField isSearchable={false} options={publishStatusSelectOptions} value={status} onChange={setStatus} />
         </label>
       </FormSection>
 

@@ -1,14 +1,14 @@
-import type { AdminSelectOption } from '../../components/forms/AdminSelect'
+import type { SelectFieldOption } from '../../components/forms/SelectField'
 import type { ProductFormValues, ProductPayload, StoreCategoryOption, StoreOption } from './productTypes'
 
-export function toStoreSelectOptions(stores: StoreOption[] = []): AdminSelectOption[] {
+export function toStoreSelectOptions(stores: StoreOption[] = []): SelectFieldOption[] {
   return stores.map((store) => ({ label: store.title, value: String(store.id) }))
 }
 
 export function toStoreCategorySelectOptions(
   categories: StoreCategoryOption[] = [],
   storeId: string,
-): AdminSelectOption[] {
+): SelectFieldOption[] {
   return categories
     .filter((category) => !storeId || String(category.store_id) === storeId)
     .map((category) => ({ label: category.title, value: String(category.id) }))

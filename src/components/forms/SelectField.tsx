@@ -1,14 +1,14 @@
 import Select, { type MultiValue, type SingleValue, type StylesConfig } from 'react-select'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 
-export type AdminSelectOption = {
+export type SelectFieldOption = {
   label: string
   value: string
 }
 
-type AdminSelectProps = {
+type SelectFieldProps = {
   value: string
-  options: AdminSelectOption[]
+  options: SelectFieldOption[]
   ariaLabel?: string
   inputId?: string
   placeholder?: string
@@ -18,9 +18,9 @@ type AdminSelectProps = {
   onChange: (value: string) => void
 }
 
-type AdminMultiSelectProps = {
+type MultiSelectFieldProps = {
   values: string[]
-  options: AdminSelectOption[]
+  options: SelectFieldOption[]
   ariaLabel?: string
   inputId?: string
   placeholder?: string
@@ -29,7 +29,7 @@ type AdminMultiSelectProps = {
   onChange: (values: string[]) => void
 }
 
-export function AdminSelect({
+export function SelectField({
   value,
   options,
   ariaLabel,
@@ -39,14 +39,14 @@ export function AdminSelect({
   hasError = false,
   trackDirty = true,
   onChange,
-}: AdminSelectProps) {
+}: SelectFieldProps) {
   const selected = options.find((option) => option.value === value) ?? null
 
   return (
-    <Select<AdminSelectOption, false>
+    <Select<SelectFieldOption, false>
       aria-label={ariaLabel}
-      className="admin-react-select"
-      classNamePrefix="admin-react-select"
+      className="select-field"
+      classNamePrefix="select-field"
       inputId={inputId}
       isSearchable={isSearchable}
       menuPortalTarget={menuPortalTarget}
@@ -55,7 +55,7 @@ export function AdminSelect({
       placeholder={placeholder}
       styles={selectStyles(hasError)}
       value={selected}
-      onChange={(option: SingleValue<AdminSelectOption>) => {
+      onChange={(option: SingleValue<SelectFieldOption>) => {
         if (trackDirty) dirtyFormStore.markDirty()
         onChange(option?.value ?? '')
       }}
@@ -63,7 +63,7 @@ export function AdminSelect({
   )
 }
 
-export function AdminMultiSelect({
+export function MultiSelectField({
   values,
   options,
   ariaLabel,
@@ -72,14 +72,14 @@ export function AdminMultiSelect({
   hasError = false,
   trackDirty = true,
   onChange,
-}: AdminMultiSelectProps) {
+}: MultiSelectFieldProps) {
   const selected = options.filter((option) => values.includes(option.value))
 
   return (
-    <Select<AdminSelectOption, true>
+    <Select<SelectFieldOption, true>
       aria-label={ariaLabel}
-      className="admin-react-select"
-      classNamePrefix="admin-react-select"
+      className="select-field"
+      classNamePrefix="select-field"
       closeMenuOnSelect={false}
       inputId={inputId}
       isMulti
@@ -90,7 +90,7 @@ export function AdminMultiSelect({
       placeholder={placeholder}
       styles={selectStyles(hasError)}
       value={selected}
-      onChange={(nextValues: MultiValue<AdminSelectOption>) => {
+      onChange={(nextValues: MultiValue<SelectFieldOption>) => {
         if (trackDirty) dirtyFormStore.markDirty()
         onChange(nextValues.map((option) => option.value))
       }}
@@ -98,7 +98,7 @@ export function AdminMultiSelect({
   )
 }
 
-const selectStyles = (hasError: boolean): StylesConfig<AdminSelectOption, boolean> => ({
+const selectStyles = (hasError: boolean): StylesConfig<SelectFieldOption, boolean> => ({
   control: (base, state) => ({
     ...base,
     minHeight: 42,

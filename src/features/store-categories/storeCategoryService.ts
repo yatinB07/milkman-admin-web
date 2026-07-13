@@ -1,7 +1,7 @@
-import type { AdminSelectOption } from '../../components/forms/AdminSelect'
+import type { SelectFieldOption } from '../../components/forms/SelectField'
 import type { StoreCategoryFormValues, StoreCategoryPayload, StoreOption } from './storeCategoryTypes'
 
-export function toStoreOptions(stores: StoreOption[] = []): AdminSelectOption[] {
+export function toStoreOptions(stores: StoreOption[] = []): SelectFieldOption[] {
   return stores.map((store) => ({ label: store.title, value: String(store.id) }))
 }
 

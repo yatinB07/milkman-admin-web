@@ -3,7 +3,7 @@ import { type InputHTMLAttributes, type ReactNode, useState } from 'react'
 import { useForm, useWatch, type UseFormRegister } from 'react-hook-form'
 import { Button, Input } from '../../components/common'
 import { AdminFilePicker } from '../../components/forms/AdminFilePicker'
-import { AdminMultiSelect, AdminSelect, type AdminSelectOption } from '../../components/forms/AdminSelect'
+import { MultiSelectField, SelectField, type SelectFieldOption } from '../../components/forms/SelectField'
 import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
 import { FieldLabel } from '../../components/forms/FormLayout'
 import { StoreLocationMap } from '../../components/maps/StoreLocationMap'
@@ -20,8 +20,8 @@ import type { StoreFormErrors, StoreFormTabId, StoreFormValues, StoreRow } from 
 
 type StoreFormProps = {
   store: StoreRow | null
-  categoryOptions: AdminSelectOption[]
-  zoneOptions: AdminSelectOption[]
+  categoryOptions: SelectFieldOption[]
+  zoneOptions: SelectFieldOption[]
   formErrors: StoreFormErrors
   optionError: boolean
   isSaving: boolean
@@ -32,7 +32,7 @@ type StoreFormProps = {
   onSubmit: (values: StoreFormValues) => void
 }
 
-const chargeTypeOptions: AdminSelectOption[] = [
+const chargeTypeOptions: SelectFieldOption[] = [
   { label: 'Fixed Charge', value: '1' },
   { label: 'Dynamic Charge', value: '2' },
 ]
@@ -176,7 +176,7 @@ export function StoreForm({
 
               <label className="form-field">
                 <FieldLabel label="Store Status" required />
-                <AdminSelect
+                <SelectField
                   isSearchable={false}
                   options={publishStatusSelectOptions}
                   value={formIsActive}
@@ -249,7 +249,7 @@ export function StoreForm({
 
               <label className="form-field">
                 <FieldLabel label="Store Pickup Status" required />
-                <AdminSelect
+                <SelectField
                   isSearchable={false}
                   options={yesNoSelectOptions}
                   value={formPickupStatus}
@@ -348,7 +348,7 @@ export function StoreForm({
             <StoreFormSection title="Store Category Information" columns={1}>
               <label className="form-field">
                 <FieldLabel label="Store Category" required />
-                <AdminMultiSelect
+                <MultiSelectField
                   ariaLabel="Store category"
                   inputId="store-category"
                   options={categoryOptions}
@@ -393,7 +393,7 @@ export function StoreForm({
 
               <label className="form-field">
                 <FieldLabel label="Select Zone" required />
-                <AdminSelect
+                <SelectField
                   options={zoneOptions}
                   placeholder="Search and select zone"
                   value={formZoneId}
@@ -451,7 +451,7 @@ export function StoreForm({
             <StoreFormSection title="Select Service Charge Type">
               <label className="form-field is-wide">
                 <FieldLabel label="Service Charge Type" required />
-                <AdminSelect
+                <SelectField
                   isSearchable={false}
                   options={chargeTypeOptions}
                   value={formChargeType}
