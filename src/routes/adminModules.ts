@@ -8,6 +8,7 @@ import {
   Package,
   Shapes,
   Store,
+  Truck,
   UserRound,
 } from 'lucide-react'
 
@@ -30,6 +31,9 @@ export type AdminModule = {
 
 const CategoriesPage = lazy(() => import('../pages/CategoriesPage').then((module) => ({ default: module.CategoriesPage })))
 const DashboardPage = lazy(() => import('../pages/DashboardPage').then((module) => ({ default: module.DashboardPage })))
+const DeliveryOptionsPage = lazy(() =>
+  import('../pages/DeliveryOptionsPage').then((module) => ({ default: module.DeliveryOptionsPage })),
+)
 const ProductVariantsPage = lazy(() =>
   import('../pages/ProductVariantsPage').then((module) => ({ default: module.ProductVariantsPage })),
 )
@@ -113,6 +117,15 @@ export const adminModules: AdminModule[] = [
     label: 'Store Gallery Images',
     icon: Images,
     component: StoreGalleryImagesPage,
+    permission: storePermissions.view,
+    permissions: storePermissions,
+  },
+  {
+    id: 'delivery-options',
+    path: '/delivery-options',
+    label: 'Delivery Options',
+    icon: Truck,
+    component: DeliveryOptionsPage,
     permission: storePermissions.view,
     permissions: storePermissions,
   },
