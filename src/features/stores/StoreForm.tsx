@@ -4,7 +4,7 @@ import { useForm, useWatch, type UseFormRegister } from 'react-hook-form'
 import { Button, Input } from '../../components/common'
 import { FilePickerField } from '../../components/forms/FilePickerField'
 import { MultiSelectField, SelectField, type SelectFieldOption } from '../../components/forms/SelectField'
-import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
+import { RichTextField } from '../../components/forms/RichTextField'
 import { FieldLabel } from '../../components/forms/FormLayout'
 import { StoreLocationMap } from '../../components/maps/StoreLocationMap'
 import { publishStatusSelectOptions, yesNoSelectOptions } from '../../lib/filterOptions'
@@ -265,7 +265,7 @@ export function StoreForm({
 
               <label className="form-field is-wide">
                 <FieldLabel label="Short Description" required />
-                <AdminRichTextEditor
+                <RichTextField
                   name="content_description"
                   placeholder="Write the store description shown to customers"
                   value={contentDescription}
@@ -277,7 +277,7 @@ export function StoreForm({
 
               <label className="form-field is-wide">
                 <FieldLabel label="Cancel Policy" required />
-                <AdminRichTextEditor
+                <RichTextField
                   name="cancel_policy"
                   placeholder="Write the cancellation policy for this store"
                   value={cancelPolicy}

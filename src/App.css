@@ -2308,7 +2308,7 @@
   white-space: nowrap;
 }
 
-.admin-rich-editor {
+.rich-text-field {
   display: grid;
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -2316,12 +2316,12 @@
   background: var(--color-surface);
 }
 
-.admin-rich-editor:focus-within {
+.rich-text-field:focus-within {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgb(0 121 111 / 14%);
 }
 
-.admin-rich-editor-toolbar {
+.rich-text-field-toolbar {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -2330,7 +2330,7 @@
   padding: 6px;
 }
 
-.admin-rich-editor-toolbar button {
+.rich-text-field-toolbar button {
   display: grid;
   width: 30px;
   height: 30px;
@@ -2342,12 +2342,12 @@
   cursor: pointer;
 }
 
-.admin-rich-editor-toolbar button:hover {
+.rich-text-field-toolbar button:hover {
   border-color: var(--color-border);
   background: var(--color-surface);
 }
 
-.admin-rich-editor textarea {
+.rich-text-field textarea {
   min-height: 132px;
   border: 0;
   background: transparent;
@@ -2357,7 +2357,7 @@
   outline: 0;
 }
 
-.admin-rich-editor-footer {
+.rich-text-field-footer {
   display: flex;
   justify-content: space-between;
   gap: 12px;

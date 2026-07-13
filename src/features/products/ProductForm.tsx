@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import { Button, Input } from '../../components/common'
 import { FilePickerField } from '../../components/forms/FilePickerField'
-import { AdminRichTextEditor } from '../../components/forms/AdminRichTextEditor'
+import { RichTextField } from '../../components/forms/RichTextField'
 import { SelectField, type SelectFieldOption } from '../../components/forms/SelectField'
 import { FieldLabel, FormSection } from '../../components/forms/FormLayout'
 import { publishStatusSelectOptions } from '../../lib/filterOptions'
@@ -121,7 +121,7 @@ export function ProductForm({
 
         <label className="form-field">
           <FieldLabel label="Product Description" />
-          <AdminRichTextEditor
+          <RichTextField
             name="description"
             value={description}
             maxLength={1200}

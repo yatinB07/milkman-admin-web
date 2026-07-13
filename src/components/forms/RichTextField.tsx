@@ -2,7 +2,7 @@ import { Bold, Italic, List, Quote } from 'lucide-react'
 import { useRef } from 'react'
 import { dirtyFormStore } from '../../store/dirtyFormStore'
 
-type AdminRichTextEditorProps = {
+type RichTextFieldProps = {
   name: string
   value: string
   placeholder?: string
@@ -18,14 +18,14 @@ const actions = [
   { label: 'List', icon: List, before: '- ', after: '' },
 ]
 
-export function AdminRichTextEditor({
+export function RichTextField({
   name,
   value,
   placeholder,
   helpText,
   maxLength,
   onChange,
-}: AdminRichTextEditorProps) {
+}: RichTextFieldProps) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   function applyFormat(before: string, after: string) {
@@ -46,8 +46,8 @@ export function AdminRichTextEditor({
   }
 
   return (
-    <div className="admin-rich-editor">
-      <div className="admin-rich-editor-toolbar" aria-label={`${name} formatting`}>
+    <div className="rich-text-field">
+      <div className="rich-text-field-toolbar" aria-label={`${name} formatting`}>
         {actions.map((action) => (
           <button
             key={action.label}
@@ -71,7 +71,7 @@ export function AdminRichTextEditor({
           onChange(event.target.value)
         }}
       />
-      <div className="admin-rich-editor-footer">
+      <div className="rich-text-field-footer">
         <span>{helpText}</span>
         {maxLength ? <span>{value.length}/{maxLength}</span> : null}
       </div>
